@@ -12,7 +12,7 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 
-__all__ = ['VOCReader', 'VOCSegReader', 'SBDReader', 'VOCCLSReader']
+__all__ = ['VOCReader', 'VOCSegReader', 'SBDReader', 'VOCCLSReader', 'VOCLikeSegReader']
 
 
 class VOCReader(Reader):
@@ -331,3 +331,88 @@ class VOCCLSReader(Reader):
 
     def __repr__(self):
         return 'VOCCLSReader(root={}, obj_name={}, classes={}, split={}, {})'.format(self.root, self.obj_name, self.classes, self.split, super(VOCCLSReader, self).__repr__())
+
+
+class VOCLikeSegReader(Reader):
+    def __init__(self, root, cls_and_clr, split=None, **kwargs):
+        super(VOCLikeSegReader, self).__init__(**kwargs)
+
+        self.root = root
+
+        self.classes = []
+        self.colors = []
+        if isinstance(cls_and_clr[0][1], tuple) or isinstance(cls_and_clr[0][1], list):
+            self.nc_clr = len(cls_and_clr[0][1])
+        else:
+            self.nc_clr = 1
+
+        for cls_, clr_ in cls_and_clr:
+            if isinstance(clr_, tuple) or isinstance(clr_, list):
+                nc_clr = len(clr_)
+            else:
+                nc_clr = 1
+
+            assert nc_clr == self.nc_clr
+
+            self.classes.append(cls_)
+            self.colors.append(clr_)
+
+        img_root = os.path.join(self.root, 'JPEGImages')
+        mask_root = os.path.join(self.root, 'Annotations')
+
+        assert os.path.exists(img_root)
+        assert os.path.exists(mask_root)
+        assert self.classes[0] == '__background__'
+
+        if split is None:
+            self.split = None
+            self.image_paths = read_image_paths(img_root)
+        else:
+            self.split = split
+            id_list_file = os.path.join(self.root, '{}.txt'.format(self.split))
+            assert os.path.exists(id_list_file)
+
+            self.image_paths = []
+            folders = []
+            for id_ in open(id_list_file):
+                if len(id_.strip()) > 0:
+                    folders.append(os.path.join(img_root, id_.strip()))
+            for folder in folders:
+                self.image_paths += read_image_paths(folder)
+
+        assert len(self.image_paths) > 0
+        self.mask_paths = [os.path.splitext(id_.replace('JPEGImages', 'Annotations'))[0] + '.png' for id_ in self.image_paths]
+
+    def get_dataset_info(self):
+        return range(len(self.image_paths)), Dict({'classes': self.classes})
+
+    def get_data_info(self, index):
+        img = Image.open(self.image_paths[index])
+        w, h = img.size
+        return dict(h=h, w=w)
+
+    def __call__(self, index):
+        img = self.read_image(self.image_paths[index])
+
+        mask = Image.open(self.mask_paths[index])
+        if self.nc_clr == 1:
+            mask = mask.convert('L')
+        else:
+            mask = mask.convert('RGB')
+        mask = np.array(mask)
+
+        for i, color in enumerate(self.colors):
+            mask[mask == color] = i
+
+        w, h = img.size
+        path = self.image_paths[index]
+
+        return dict(
+            image=img,
+            ori_size=np.array([h, w]).astype(np.float32),
+            path=path,
+            mask=Image.fromarray(mask)
+        )
+
+    def __repr__(self):
+        return 'VOCLikeSegReader(root={}, split={}, classes={}, {})'.format(self.root, self.split, self.classes, super(VOCLikeSegReader, self).__repr__())
