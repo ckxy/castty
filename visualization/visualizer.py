@@ -293,14 +293,19 @@ class VISBoxplot(VIS):
         if update:
             if 'x' not in self.data[k].keys():
                 self.data[k]['x'] = np.array(v['x'])
-                assert self.data[k]['x'].ndim == 0
+                if self.data[k]['x'].ndim == 0:
+                    self.data[k]['x'] = self.data[k]['x'].reshape(1, 1)
+                elif self.data[k]['x'].ndim == 1:
+                    self.data[k]['x'] = self.data[k]['x'][np.newaxis, ...]
+                else:
+                    raise ValueError
             else:
                 self.data[k]['x'] = np.vstack([self.data[k]['x'], v['x']])
         else:
             self.data[k]['x'] = v['x']
 
     def visdom_visualize(self, k, vis):
-        if np.size(self.data[k]['x']) == 1:
+        if self.data[k]['x'].shape[0] == 1:
             temp = np.vstack([self.data[k]['x'], self.data[k]['x']])
         else:
             temp = self.data[k]['x']
@@ -428,7 +433,7 @@ class Visualizer(object):
     def __init__(self, cfg):
         assert not cfg.test
 
-        save_path = os.path.join(cfg.general.checkpoints_dir, cfg.general.experiment_name)
+        save_path = os.path.join(cfg.general.checkpoints_dir, cfg.general.experiment_name, 'vis')
         self.use_visdom = True if cfg.visualizer.visdom else False
 
         self.vtgs = dict(
