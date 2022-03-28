@@ -32,7 +32,7 @@ def save(epoch, encryption, **kwargs):
 
 def load(path, encryption):
     if encryption is None:
-        return torch.load(path)
+        return torch.load(path, map_location=lambda storage, loc: storage)
     else:
         with open(path, "rb") as f:
             encrypted_data = f.read()
