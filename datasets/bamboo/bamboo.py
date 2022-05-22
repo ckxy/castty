@@ -32,15 +32,22 @@ class Bamboo(BaseInternode):
         return bamboo_str
 
     def rper(self):
-        if len(self.internodes) == 0:
-            return '(None)'
-        else:
-            res = 'Oobmab(\n'
-            for t in self.internodes[::-1]:
-                res += '  ' + t.rper() + '\n'
-            res = res[:-1]
-            res += '\n)'
-            return res
+        res = type(self).__name__
+        res = res[:1].lower() + res[1:]
+        res = res[::-1]
+        res = res[:1].upper() + res[1:] + '('
+
+        split_str = [i.rper() for i in self.internodes[::-1]]
+
+        for i in range(len(split_str)):
+            res += '\n  ' + split_str[i].replace('\n', '\n  ')
+        res = '{}\n)'.format(res)
+
+        # for t in self.internodes[::-1]:
+        #     res += '  ' + t.rper() + '\n'
+        # res = res[:-1]
+        # res += '\n)'
+        return res
 
     def have_internode(self, name):
         names = [type(i).__name__ for i in self.internodes]

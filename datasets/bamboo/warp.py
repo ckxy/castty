@@ -5,7 +5,7 @@ from .bamboo import Bamboo
 from .builder import INTERNODE
 from .builder import build_internode
 from .warp_internode import WarpInternode
-from ..utils.warp_tools import get_image_size, calc_expand_size_and_matrix
+from ..utils.warp_tools import get_image_size, calc_expand_size_and_matrix, warp_bbox, clip_bbox, filter_bbox
 
 
 __all__ = ['Warp', 'WarpPerspective', 'WarpResize', 'WarpScale', 'WarpStretch', 'WarpRotate', 'WarpShear', 'WarpTranslate']
@@ -173,30 +173,76 @@ class WarpResize(WarpInternode):
             oh = 0
 
         CI = np.eye(3)
+
+        # if self.center:
+        #     CI[0, 2] = self.size[0] / 2
+        #     CI[1, 2] = self.size[1] / 2
+        # else:
         CI[0, 2] = self.size[0] / 2 - ow
         CI[1, 2] = self.size[1] / 2 - oh
 
         return CI @ R @ C
+
+    def calc_scale(self, size):
+        w, h = size
+        tw, th = self.size
+        rw, rh = tw / w, th / h
+
+        if self.keep_ratio:
+            if self.short:
+                r = max(rh, rw)
+                scale = (r, r)
+            else:
+                r = min(rh, rw)
+                scale = (r, r)
+        else:
+            scale = (rw, rh)
+        return scale
 
     def __call__(self, data_dict):
         if 'warp_size' in data_dict.keys():
             size = data_dict['warp_size']
         else:
             size = get_image_size(data_dict['image'])
+
         M = self.build_matrix(size)
 
         if self.keep_ratio and (self.expand or self.short):
             _, new_size = calc_expand_size_and_matrix(M, size)
-            # M = E @ M
             size = new_size
         else:
             size = self.size
+
+        # print(M, 'M1')
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
         super(WarpResize, self).__call__(data_dict)
 
         return data_dict
+
+    def reverse(self, **kwargs):
+        if 'resize_and_padding_reverse_flag' not in kwargs.keys():
+            return kwargs
+
+        if 'ori_size' in kwargs.keys():
+            h, w = kwargs['ori_size']
+            h, w = int(h), int(w)
+            M = self.build_matrix((w, h))
+            # print(M, 'M2', type(M))
+            # print(np.matrix(M).I)
+            M = np.array(np.matrix(M).I)
+
+        if 'bbox' in kwargs.keys():
+            boxes = warp_bbox(kwargs['bbox'], M)
+            boxes = clip_bbox(boxes, (w, h))
+            keep = filter_bbox(boxes)
+            kwargs['bbox'] = boxes[keep]
+
+            if 'bbox_meta' in kwargs.keys():
+                kwargs['bbox_meta'].filter(keep)
+
+        return kwargs
 
     def __repr__(self):
         return 'WarpResize(size={}, keep_ratio={}, short={}, {})'.format(self.size, self.keep_ratio, self.short, super(WarpResize, self).__repr__())
