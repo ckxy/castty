@@ -35,9 +35,10 @@ test_data = dict(
     ),
     dataset=dict(
         max_size=-1,
-        reader=('VOCLikeSegReader', dict(root='/home/ubuntu/datasets/water_seg/water_v2', cls_and_clr=(('__background__', 0), ('water', 255)), split='val')),
+        # reader=('COCOAPIReader', dict(set_path='../datasets/coco/annotations/instances_train2017.json', img_root='../datasets/coco/train2017')),
+        # reader=('VOCLikeSegReader', dict(root='/home/ubuntu/datasets/water_seg/water_v2', cls_and_clr=(('__background__', 0), ('water', 255)), split='val')),
         # reader=('COCOAPIReader', dict(set_path='/home/ubuntu/datasets/coco/annotations/instances_val2017.json', img_root='/home/ubuntu/datasets/coco/images/val2017')),
-        # reader=('VOCReader', dict(root='/home/ubuntu/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes)),
+        reader=('VOCReader', dict(root='../datasets//VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes)),
         # reader=('LVISAPIReader', dict(set_path='/home/ubuntu/datasets/lvis/lvis_v1_train.json', img_root='/home/ubuntu/datasets/lvis/train2017')),
         # reader=('Market1501AttritubesReader', dict(root='/home/ubuntu/datasets/Market-1501', group='train', mode='ab')),
         internodes=[
@@ -59,13 +60,13 @@ test_data = dict(
             # ('RandomAreaCrop', dict()),
             # ('RandomFlip', dict(horizontal=True, p=1)),
             # ('ToCV2Image', dict()),
-            # ('Warp', dict(
-            #     internodes=[
-            #         ('WarpScale', dict(r=(0.5, 1.4), p=0.5)),
-            #         ('WarpTranslate', dict(rw=(-0.2, 0.2), rh=(-0.2, 0.2), p=0.5)),
-            #         ('WarpResize', dict(size=(416, 416), keep_ratio=True)),
-            #     ]
-            # )),
+            ('Warp', dict(
+                internodes=[
+                    ('WarpScale', dict(r=(0.5, 1.4), p=0.5)),
+                    ('WarpTranslate', dict(rw=(-0.2, 0.2), rh=(-0.2, 0.2), p=0.5)),
+                    ('WarpResize', dict(size=(416, 416), keep_ratio=True)),
+                ]
+            )),
             # ('WarpPerspective', dict(expand=True)),
             # ('WarpResize', dict(size=(416, 416), keep_ratio=True, expand=True)),
             # ('WarpRotate', dict(angle=(-30, 30))),
@@ -206,15 +207,15 @@ test_data = dict(
 #         pin_memory=False,
 #         collator=[
 #             ('BboxCollateFN', dict(names=('bbox',))),
-#             # ('ListCollateFN', dict(names=('ga_bbox', 'ga_index'))),
+#             ('ListCollateFN', dict(names=('ga_bbox', 'ga_index'))),
 #             # ('NanoCollateFN', dict()),
 #         ]
 #     ),
 #     dataset=dict(
 #         max_size=-1,
 #         # reader=('COCOBboxTxtReader', dict(txt_root='/home/ubuntu/datasets/coco/labels/val2017', img_root='/home/ubuntu/datasets/coco/images/val2017', classes=classes)),
-#         # reader=('COCOAPIReader', dict(set_path='/home/ubuntu/datasets/coco/annotations/instances_val2017.json', img_root='/home/ubuntu/datasets/coco/images/val2017', classes=classes)),
-#         reader=('VOCReader', dict(root='/home/ubuntu/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes)),
+#         reader=('COCOAPIReader', dict(set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017')),
+#         # reader=('VOCReader', dict(root='/home/ubuntu/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes)),
 #         # reader=('UniReader', dict(internodes=(
 #         #     ('LabelmeMaskReader', dict(root='/home/ubuntu/datasets/waterlevel', classes=('__background__', 'wlr'))), 
 #         #     ('LabelmeMaskReader', dict(root='/home/ubuntu/datasets/waterlevel/extra', classes=('__background__', 'wlr'))),
@@ -239,26 +240,26 @@ test_data = dict(
 #             #         )),
 #             #     ]
 #             # )),
-#             # ('Mosaic', dict(
-#             #     internodes=[
-#             #         ('MixUp', dict(
-#             #             internodes=[
-#             #                 ('Register', dict()),
-#             #                 ('EraseTags', dict(tags='bbox_ignore')),
-#             #                 ('ResizeAndPadding', dict(size=(416, 416), keep_ratio=True, warp=False)),
-#             #             ]
-#             #         )),
-#             #     ]
-#             # )),
-#             ('MixUp', dict(
+#             ('Mosaic', dict(
 #                 internodes=[
-#                     ('Register', dict()),
-#                     ('ResizeAndPadding', dict(size=(416, 416), keep_ratio=True, warp=False)),
+#                     ('MixUp', dict(
+#                         internodes=[
+#                             ('Register', dict()),
+#                             ('EraseTags', dict(tags='bbox_ignore')),
+#                             ('ResizeAndPadding', dict(size=(512, 512), keep_ratio=True, warp=False)),
+#                         ]
+#                     )),
 #                 ]
 #             )),
+#             # ('MixUp', dict(
+#             #     internodes=[
+#             #         ('Register', dict()),
+#             #         ('ResizeAndPadding', dict(size=(416, 416), keep_ratio=True, warp=False)),
+#             #     ]
+#             # )),
 #             # ('ResizeAndPadding', dict(size=(416, 416), keep_ratio=True, warp=True)),
 #             ('ToTensor', dict()),
-#             # ('CalcNanoGrids', dict(scale=5, top_k=9, strides=(8, 16, 32), num_classes=len(classes), analysis=True)),
+#             ('CalcNanoGrids', dict(scale=5, top_k=9, strides=(8, 16, 32), num_classes=len(classes), analysis=True)),
 #         ],
 #     ),
 # )
@@ -323,3 +324,64 @@ test_data = dict(
 #         ],
 #     ),
 # )
+
+test_data = dict(
+    data_loader=dict(
+        batch_size=1,
+        serial_batches=True,
+        num_threads=0,
+        pin_memory=False,
+        collator=[
+            ('BboxCollateFN', dict(names=('bbox',))),
+            # ('ListCollateFN', dict(names=('ga_bbox', 'ga_index'))),
+            # ('NanoCollateFN', dict()),
+        ]
+    ),
+    dataset=dict(
+        max_size=-1,
+        # reader=dict(type='COCOAPIReader', set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017'),
+        reader=dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        # reader=dict(type='UniReader', internodes=(
+        #         dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        #         dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        #     )
+        # ),
+        internodes=[
+            dict(type='DataSource'),
+            # dict(type='CopyTag', src_tag='image', dst_tag='ori_image'),
+            # dict(type='ToCV2Image'),
+            # dict(type='WarpResize', size=(416, 416), expand=False, keep_ratio=False, short=False),
+            dict(type='ResizeAndPadding', size=(416, 416), keep_ratio=True, short=True, warp=True, one_way='forward'),
+            # dict(type='Resize', size=(416, 416), keep_ratio=True, short=True),
+            # dict(type='ToPILImage'),
+            # dict(type='Warp', p=0.5, ccs=True, internodes=[
+            #     # dict(type='WarpPerspective', expand=True, ccs=True),
+            #     # dict(type='WarpStretch', rw=(0.5, 1.5), rh=(0.5, 1.5)),
+            #     # dict(type='WarpScale', r=(0.5, 1.4)),
+            #     # dict(type='WarpRotate', angle=(-30, 30)),
+            #     # dict(type='WarpShear', ax=(-30, 30), ay=(-30, 30)),
+            #     dict(type='WarpTranslate', rw=(-0.2, 0.2), rh=(-0.2, 0.2)),
+            #     # dict(type='WarpResize', size=(416, 416), expand=False, keep_ratio=True),
+            # ]),
+            # dict(type='WarpTranslate', rw=(-0.2, 0.2), rh=(-0.2, 0.2), expand=True),
+            # dict(type='ChooseOne', branchs=[
+            #     dict(type='Bamboo', internodes=[
+            #         dict(type='WarpRotate', angle=(0, 30)),
+            #     ]),
+            #     dict(type='WarpRotate', angle=(-30, 0)),
+            # ]),
+            # dict(type='ChooseSome', num=4,branchs=[
+            #     dict(type='Bamboo', internodes=[
+            #         dict(type='WarpStretch', rw=(0.5, 1.5), rh=(1, 1))
+            #     ]),
+            #     dict(type='WarpStretch', rw=(1, 1), rh=(0.5, 1.5)),
+            #     dict(type='Bamboo', internodes=[
+            #         dict(type='WarpRotate', angle=(0, 30)),
+            #     ]),
+            #     dict(type='WarpRotate', angle=(-30, 0)),
+            # ]),
+            dict(type='ToTensor'),
+        ],
+    ),
+)
+

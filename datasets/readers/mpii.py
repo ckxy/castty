@@ -3,11 +3,13 @@ import numpy as np
 from addict import Dict
 from PIL import Image
 from .reader import Reader
+from .builder import READER
 
 
 __all__ = ['MPIIH5Reader']
 
 
+@READER.register_module()
 class MPIIH5Reader(Reader):
     def __init__(self, root, set_path, length=200, **kwargs):
         super(Market1501AttritubesReader, self).__init__(**kwargs)

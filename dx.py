@@ -333,8 +333,8 @@ if __name__ == '__main__':
             #     print(torch.abs(p[i] - data['point'][i]).mean())
             # exit()
             # break
-            # ga(data, dataloader.dataset.info.classes, rc, 0)
-            ss(data, dataloader.dataset.info.classes, rc, 0)
+            ga(data, dataloader.dataset.info.classes, rc, 0)
+            # ss(data, dataloader.dataset.info.classes, rc, 0)
             # mst(data, dataloader.dataset.info.classes, rc, 0, 0)
             # im(data, rc, 0)
             # kp(data, rc, 0)

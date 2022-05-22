@@ -31,7 +31,7 @@ def calc_img_wh(img_w, img_h, heat=True, marginal=True):
         scatter=dict(
             oridatainfo_imgwh=dict(
                 x=img_wh,
-                y=np.ones(len(img_wh)).astype(np.int),
+                y=np.ones(len(img_wh)).astype(np.int32),
                 opts=dict(title='oridatainfo_imgwh', markersize=1, webgl=True),
             ),
         ),
@@ -41,7 +41,7 @@ def calc_img_wh(img_w, img_h, heat=True, marginal=True):
         max_w = int(np.ceil(np.max(img_wh[..., 0]) / 100) * 100)
         max_h = int(np.ceil(np.max(img_wh[..., 1]) / 100) * 100)
         heat = np.zeros((max_w // 100 + 1, max_h // 100 + 1))
-        tmp = np.round(img_wh / 100).astype(np.int)
+        tmp = np.round(img_wh / 100).astype(np.int32)
         for t in tmp:
             heat[t[0], t[1]] += 1
 
@@ -85,7 +85,7 @@ def calc_box_wh(box_w, box_h, heat=True, marginal=True):
         scatter=dict(
             oridatainfo_boxwh=dict(
                 x=box_wh,
-                y=np.ones(len(box_wh)).astype(np.int),
+                y=np.ones(len(box_wh)).astype(np.int32),
                 opts=dict(title='oridatainfo_boxwh', markersize=1, webgl=True),
             ),
         ),
@@ -99,7 +99,7 @@ def calc_box_wh(box_w, box_h, heat=True, marginal=True):
         s = max(10, math.ceil(max_v / 110) * 10)
 
         heat = np.zeros((max_w // 10 + 1, max_h // 10 + 1))
-        tmp = np.round(box_wh / 10).astype(np.int)
+        tmp = np.round(box_wh / 10).astype(np.int32)
         for t in tmp:
             heat[t[0], t[1]] += 1
 
@@ -139,7 +139,7 @@ def calc_box_whir(box_w, box_h, img_w, img_h, marginal=True):
 
     n = 10
     heat = np.zeros((n + 1, n + 1))
-    tmp = np.round(box_whir * n).astype(np.int)
+    tmp = np.round(box_whir * n).astype(np.int32)
     for t in tmp:
         heat[t[0], t[1]] += 1
 
@@ -187,7 +187,7 @@ def calc_box_cir(box_cx, box_cy, img_w, img_h):
 
     n = 10
     heat = np.zeros((n + 1, n + 1))
-    tmp = np.round(box_c * n).astype(np.int)
+    tmp = np.round(box_c * n).astype(np.int32)
     for t in tmp:
         heat[t[0], t[1]] += 1
 
@@ -209,7 +209,7 @@ def calc_box_cir(box_cx, box_cy, img_w, img_h):
 
 
 def calc_box_clscount(box_cls, num_classes):
-    box_cls_count = np.zeros(num_classes).astype(np.int)
+    box_cls_count = np.zeros(num_classes).astype(np.int32)
     for cs in box_cls:
         for c in cs.tolist():
             box_cls_count[c] += 1
@@ -267,7 +267,7 @@ if __name__ == '__main__':
         box_cy.append(boxes[:, 1])
         box_w.append(boxes[:, 2])
         box_h.append(boxes[:, 3])
-        box_cls.append(boxes[:, 4].astype(np.int))
+        box_cls.append(boxes[:, 4].astype(np.int32))
 
     vis_dict = dict()
 

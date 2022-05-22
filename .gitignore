@@ -122,3 +122,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+configs/spnx.py
+restore.py
+dx.py
+test.py
+
+test/

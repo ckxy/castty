@@ -72,7 +72,7 @@ def grid_analysis(img, grid_sizes, bboxes_groups, indices_groups, bboxes_num, as
         return [img for img in img_tmps]
 
 
-def draw_bbox(img, bboxes, classes):
+def draw_bbox(img, bboxes, scores, class_ids, classes):
     num_classes = len(classes)
     
     hsv_tuples = [(1.0 * x / num_classes, 1., 1.) for x in range(num_classes)]
@@ -85,10 +85,10 @@ def draw_bbox(img, bboxes, classes):
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype("fonts/arial.ttf", int(l * 1e-3 * 25))
 
-    for bbox in bboxes:
-        coor = np.array(bbox[:4], dtype=np.int32)
-        score = bbox[4]
-        class_ind = int(bbox[5])
+    for i, bbox in enumerate(bboxes):
+        coor = np.array(bbox, dtype=np.int32)
+        score = scores[i]
+        class_ind = int(class_ids[i])
         bbox_color = colors[class_ind]
         draw.rectangle(tuple(coor), outline=bbox_color, width=max(1, int(l / 600)))
 

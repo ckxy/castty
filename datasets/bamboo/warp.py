@@ -1,27 +1,32 @@
 import math
 import random
 import numpy as np
-from .bambusa import Bambusa
+from .bamboo import Bamboo
+from .builder import INTERNODE
+from .builder import build_internode
 from .warp_internode import WarpInternode
-from .utils.warp_tools import get_image_mode_and_size, calc_expand_size_and_matrix
+from ..utils.warp_tools import get_image_size, calc_expand_size_and_matrix
 
 
 __all__ = ['Warp', 'WarpPerspective', 'WarpResize', 'WarpScale', 'WarpStretch', 'WarpRotate', 'WarpShear', 'WarpTranslate']
 
 
-class Warp(Bambusa):
-    def __init__(self, internodes, ccs=True):
+@INTERNODE.register_module()
+class Warp(Bamboo):
+    def __init__(self, internodes, ccs=True, **kwargs):
         assert len(internodes) > 0
 
         self.internode = WarpInternode(ccs=ccs)
         self.internodes = []
-        for k, v in internodes:
-            v['ccs'] = False
-            self.internodes.append(eval(k)(**v))
+        self.ccs = ccs
+
+        for cfg in internodes:
+            cfg['ccs'] = False
+            self.internodes.append(build_internode(cfg))
 
     def __call__(self, data_dict):
         data_dict['warp_matrix'] = np.eye(3)
-        _, data_dict['warp_size'] = get_image_mode_and_size(data_dict['image'])
+        data_dict['warp_size'] = get_image_size(data_dict['image'])
 
         super(Warp, self).__call__(data_dict)
 
@@ -29,7 +34,6 @@ class Warp(Bambusa):
         data_dict['warp_tmp_size'] = data_dict.pop('warp_size')
 
         data_dict = self.internode(data_dict)
-        # print(data_dict.keys(), 'aaaaaa')
 
         return data_dict
 
@@ -37,20 +41,20 @@ class Warp(Bambusa):
         return kwargs
 
     def __repr__(self):
-        if len(self.internodes) == 0:
-            return 'Warp(None)'
-        else:
-            res = 'Warp(\n'
-            for t in self.internodes:
-                res += '    ' + t.__repr__() + '\n'
-            res = res[:-1]
-            res += '\n  )'
-            return res
+        split_str = [i.__repr__() for i in self.internodes]
+        bamboo_str = type(self).__name__ + '('
+        for i in range(len(split_str)):
+            bamboo_str += '\n  ' + split_str[i].replace('\n', '\n  ')
+        bamboo_str += '\n  ccs={}'.format(self.ccs)
+        bamboo_str = '{}\n)'.format(bamboo_str)
+
+        return bamboo_str
 
     def rper(self):
         return 'Warp(not available)'
 
 
+@INTERNODE.register_module()
 class WarpPerspective(WarpInternode):
     def __init__(self, distortion_scale=0.5, **kwargs):
         super(WarpPerspective, self).__init__(**kwargs)
@@ -98,53 +102,50 @@ class WarpPerspective(WarpInternode):
         return np.array(c)
 
     def __call__(self, data_dict):
-        from PIL import Image
-        if random.random() < self.p:
-            if 'warp_size' in data_dict.keys():
-                size = data_dict['warp_size']
-            else:
-                _, size = get_image_mode_and_size(data_dict['image'])
+        if 'warp_size' in data_dict.keys():
+            size = data_dict['warp_size']
+        else:
+            size = get_image_size(data_dict['image'])
 
-            width, height = size
-            startpoints, endpoints = self.get_params(width, height, self.distortion_scale)
-            M = self.build_matrix(startpoints, endpoints)
+        width, height = size
+        startpoints, endpoints = self.get_params(width, height, self.distortion_scale)
+        M = self.build_matrix(startpoints, endpoints)
 
-            if self.expand:
-                # print(startpoints, endpoints)
-                
-                xx = [e[0] for e in endpoints]
-                yy = [e[1] for e in endpoints]
-                nw = max(xx) - min(xx)
-                nh = max(yy) - min(yy)
-                E = np.eye(3)
-                E[0, 2] = -min(xx)
-                E[1, 2] = -min(yy)
+        if self.expand:
+            # print(startpoints, endpoints)
+            
+            xx = [e[0] for e in endpoints]
+            yy = [e[1] for e in endpoints]
+            nw = max(xx) - min(xx)
+            nh = max(yy) - min(yy)
+            E = np.eye(3)
+            E[0, 2] = -min(xx)
+            E[1, 2] = -min(yy)
 
-                M = E @ M
-                size = (nw, nh)
-                # print(size, 'new')
+            M = E @ M
+            size = (nw, nh)
+            # print(size, 'new')
 
-            data_dict['warp_tmp_matrix'] = M
-            data_dict['warp_tmp_size'] = size
-            super(WarpPerspective, self).__call__(data_dict)
+        data_dict['warp_tmp_matrix'] = M
+        data_dict['warp_tmp_size'] = size
+        super(WarpPerspective, self).__call__(data_dict)
 
         return data_dict
 
     def __repr__(self):
         return 'WarpPerspective(distortion_scale={}, {})'.format(self.distortion_scale, super(WarpPerspective, self).__repr__())
 
-    def rper(self):
-        return 'WarpPerspective(not available)'
 
-
+@INTERNODE.register_module()
 class WarpResize(WarpInternode):
-    def __init__(self, size, keep_ratio=True, **kwargs):
+    def __init__(self, size, keep_ratio=True, short=False, **kwargs):
         super(WarpResize, self).__init__(**kwargs)
 
         assert len(size) == 2
         assert size[0] > 0 and size[1] > 0
         self.size = size
         self.keep_ratio = keep_ratio
+        self.short = short
 
     def build_matrix(self, img_size):
         w, h = img_size
@@ -155,7 +156,10 @@ class WarpResize(WarpInternode):
 
         R = np.eye(3)
         if self.keep_ratio:
-            r = min(self.size[0] / w, self.size[1] / h)
+            if self.short:
+                r = max(self.size[0] / w, self.size[1] / h)
+            else:
+                r = min(self.size[0] / w, self.size[1] / h)
             R[0, 0] = r
             R[1, 1] = r
 
@@ -178,10 +182,10 @@ class WarpResize(WarpInternode):
         if 'warp_size' in data_dict.keys():
             size = data_dict['warp_size']
         else:
-            _, size = get_image_mode_and_size(data_dict['image'])
+            size = get_image_size(data_dict['image'])
         M = self.build_matrix(size)
 
-        if self.expand and self.keep_ratio:
+        if self.keep_ratio and (self.expand or self.short):
             _, new_size = calc_expand_size_and_matrix(M, size)
             # M = E @ M
             size = new_size
@@ -195,12 +199,10 @@ class WarpResize(WarpInternode):
         return data_dict
 
     def __repr__(self):
-        return 'WarpResize(size={}, keep_ratio={}, {})'.format(self.size, self.keep_ratio, super(WarpResize, self).__repr__())
-
-    def rper(self):
-        return 'WarpResize(not available)'
+        return 'WarpResize(size={}, keep_ratio={}, short={}, {})'.format(self.size, self.keep_ratio, self.short, super(WarpResize, self).__repr__())
 
 
+@INTERNODE.register_module()
 class WarpScale(WarpInternode):
     def __init__(self, r, **kwargs):
         super(WarpScale, self).__init__(**kwargs)
@@ -228,36 +230,32 @@ class WarpScale(WarpInternode):
         return CI @ R @ C
 
     def __call__(self, data_dict):
-        if random.random() < self.p:
-            if 'warp_size' in data_dict.keys():
-                size = data_dict['warp_size']
-            else:
-                _, size = get_image_mode_and_size(data_dict['image'])
+        if 'warp_size' in data_dict.keys():
+            size = data_dict['warp_size']
+        else:
+            size = get_image_size(data_dict['image'])
 
-            r = random.uniform(*self.r)
-            # print(r, 'lllllllll')
-            M = self.build_matrix(r, size)
+        r = random.uniform(*self.r)
+        M = self.build_matrix(r, size)
 
-            data_dict['warp_tmp_matrix'] = M
-            data_dict['warp_tmp_size'] = size
-            super(WarpScale, self).__call__(data_dict)
+        data_dict['warp_tmp_matrix'] = M
+        data_dict['warp_tmp_size'] = size
+        super(WarpScale, self).__call__(data_dict)
 
         return data_dict
 
     def __repr__(self):
         return 'WarpScale(r={}, {})'.format(self.r, super(WarpScale, self).__repr__())
 
-    def rper(self):
-        return 'WarpScale(not available)'
 
-
+@INTERNODE.register_module()
 class WarpStretch(WarpInternode):
     def __init__(self, rw, rh, **kwargs):
         super(WarpStretch, self).__init__(**kwargs)
 
         assert len(rw) == 2 and len(rh) == 2
-        assert rw[0] < rw[1] and rw[0] > 0
-        assert rh[0] < rh[1] and rh[0] > 0
+        assert rw[0] <= rw[1] and rw[0] > 0
+        assert rh[0] <= rh[1] and rh[0] > 0
         self.rw = tuple(rw)
         self.rh = tuple(rh)
 
@@ -280,30 +278,26 @@ class WarpStretch(WarpInternode):
         return CI @ R @ C
 
     def __call__(self, data_dict):
-        if random.random() < self.p:
-            if 'warp_size' in data_dict.keys():
-                size = data_dict['warp_size']
-            else:
-                _, size = get_image_mode_and_size(data_dict['image'])
+        if 'warp_size' in data_dict.keys():
+            size = data_dict['warp_size']
+        else:
+            size = get_image_size(data_dict['image'])
 
-            rw = random.uniform(*self.rw)
-            rh = random.uniform(*self.rh)
-            # print(r, 'lllllllll')
-            M = self.build_matrix((rw, rh), size)
+        rw = random.uniform(*self.rw)
+        rh = random.uniform(*self.rh)
+        M = self.build_matrix((rw, rh), size)
 
-            data_dict['warp_tmp_matrix'] = M
-            data_dict['warp_tmp_size'] = size
-            super(WarpStretch, self).__call__(data_dict)
+        data_dict['warp_tmp_matrix'] = M
+        data_dict['warp_tmp_size'] = size
+        super(WarpStretch, self).__call__(data_dict)
 
         return data_dict
 
     def __repr__(self):
         return 'WarpStretch(rw={}, rh={}, {})'.format(self.rw, self.rh, super(WarpStretch, self).__repr__())
 
-    def rper(self):
-        return 'WarpStretch(not available)'
 
-
+@INTERNODE.register_module()
 class WarpRotate(WarpInternode):
     def __init__(self, angle, **kwargs):
         super(WarpRotate, self).__init__(**kwargs)
@@ -335,43 +329,39 @@ class WarpRotate(WarpInternode):
         return CI @ R @ C
 
     def __call__(self, data_dict):
-        if random.random() < self.p:
-            angle = random.uniform(self.angle[0], self.angle[1])
-            # angle = 30
+        angle = random.uniform(self.angle[0], self.angle[1])
 
-            if angle != 0:
-                if 'warp_size' in data_dict.keys():
-                    size = data_dict['warp_size']
-                else:
-                    _, size = get_image_mode_and_size(data_dict['image'])
+        if angle != 0:
+            if 'warp_size' in data_dict.keys():
+                size = data_dict['warp_size']
+            else:
+                size = get_image_size(data_dict['image'])
 
-                M = self.build_matrix(angle, size)
+            M = self.build_matrix(angle, size)
 
-                if self.expand:
-                    E, new_size = calc_expand_size_and_matrix(M, size)
-                    M = E @ M
-                    size = new_size
+            if self.expand:
+                E, new_size = calc_expand_size_and_matrix(M, size)
+                M = E @ M
+                size = new_size
 
-                data_dict['warp_tmp_matrix'] = M
-                data_dict['warp_tmp_size'] = size
-                super(WarpRotate, self).__call__(data_dict)
+            data_dict['warp_tmp_matrix'] = M
+            data_dict['warp_tmp_size'] = size
+            super(WarpRotate, self).__call__(data_dict)
 
         return data_dict
 
     def __repr__(self):
         return 'WarpRotate(angle={}, {})'.format(self.angle, super(WarpRotate, self).__repr__())
 
-    def rper(self):
-        return 'WarpRotate(not available)'
 
-
+@INTERNODE.register_module()
 class WarpShear(WarpInternode):
     def __init__(self, ax, ay, **kwargs):
         super(WarpShear, self).__init__(**kwargs)
 
         assert len(ax) == 2 and len(ay) == 2
-        assert ax[0] < ax[1]
-        assert ay[0] < ay[1]
+        assert ax[0] <= ax[1]
+        assert ay[0] <= ay[1]
         self.ax = tuple(ax)
         self.ay = tuple(ay)
 
@@ -395,41 +385,38 @@ class WarpShear(WarpInternode):
         return CI @ S @ C
 
     def __call__(self, data_dict):
-        if random.random() < self.p:
-            if 'warp_size' in data_dict.keys():
-                size = data_dict['warp_size']
-            else:
-                _, size = get_image_mode_and_size(data_dict['image'])
+        if 'warp_size' in data_dict.keys():
+            size = data_dict['warp_size']
+        else:
+            size = get_image_size(data_dict['image'])
 
-            shear = (random.uniform(*self.ax), random.uniform(*self.ay))
+        shear = (random.uniform(*self.ax), random.uniform(*self.ay))
 
-            M = self.build_matrix(shear, size)
+        M = self.build_matrix(shear, size)
 
-            if self.expand:
-                E, new_size = calc_expand_size_and_matrix(M, size)
-                M = E @ M
-                size = new_size
+        if self.expand:
+            E, new_size = calc_expand_size_and_matrix(M, size)
+            M = E @ M
+            size = new_size
 
-            data_dict['warp_tmp_matrix'] = M
-            data_dict['warp_tmp_size'] = size
-            super(WarpShear, self).__call__(data_dict)
+        data_dict['warp_tmp_matrix'] = M
+        data_dict['warp_tmp_size'] = size
+        super(WarpShear, self).__call__(data_dict)
 
         return data_dict
 
     def __repr__(self):
         return 'WarpShear(ax={}, ay={}, {})'.format(self.ax, self.ay, super(WarpShear, self).__repr__())
 
-    def rper(self):
-        return 'WarpShear(not available)'
 
-
+@INTERNODE.register_module()
 class WarpTranslate(WarpInternode):
     def __init__(self, rw, rh, **kwargs):
         super(WarpTranslate, self).__init__(**kwargs)
 
         assert len(rw) == 2 and len(rh) == 2
-        assert rw[0] < rw[1]
-        assert rh[0] < rh[1]
+        assert rw[0] <= rw[1]
+        assert rh[0] <= rh[1]
         self.rw = tuple(rw)
         self.rh = tuple(rh)
 
@@ -441,29 +428,25 @@ class WarpTranslate(WarpInternode):
         return T
 
     def __call__(self, data_dict):
-        if random.random() < self.p:
-            if 'warp_size' in data_dict.keys():
-                size = data_dict['warp_size']
-            else:
-                _, size = get_image_mode_and_size(data_dict['image'])
+        if 'warp_size' in data_dict.keys():
+            size = data_dict['warp_size']
+        else:
+            size = get_image_size(data_dict['image'])
 
-            min_dx = self.rw[0] * size[0]
-            min_dy = self.rh[0] * size[1]
-            max_dx = self.rw[1] * size[0]
-            max_dy = self.rh[1] * size[1]
-            translations = (np.round(random.uniform(min_dx, max_dx)),
-                            np.round(random.uniform(min_dy, max_dy)))
+        min_dx = self.rw[0] * size[0]
+        min_dy = self.rh[0] * size[1]
+        max_dx = self.rw[1] * size[0]
+        max_dy = self.rh[1] * size[1]
+        translations = (np.round(random.uniform(min_dx, max_dx)),
+                        np.round(random.uniform(min_dy, max_dy)))
 
-            M = self.build_matrix(translations)
+        M = self.build_matrix(translations)
 
-            data_dict['warp_tmp_matrix'] = M
-            data_dict['warp_tmp_size'] = size
-            super(WarpTranslate, self).__call__(data_dict)
+        data_dict['warp_tmp_matrix'] = M
+        data_dict['warp_tmp_size'] = size
+        super(WarpTranslate, self).__call__(data_dict)
 
         return data_dict
 
     def __repr__(self):
         return 'WarpTranslate(rw={}, rh={}, {})'.format(self.rw, self.rh, super(WarpTranslate, self).__repr__())
-
-    def rper(self):
-        return 'WarpTranslate(not available)'
