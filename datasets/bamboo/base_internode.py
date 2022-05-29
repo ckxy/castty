@@ -1,5 +1,9 @@
 from .builder import INTERNODE
 
+
+__all__ = ['BaseInternode']
+
+
 @INTERNODE.register_module()
 class BaseInternode(object):
     def __call__(self, data_dict):

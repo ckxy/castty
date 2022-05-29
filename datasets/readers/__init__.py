@@ -1,3 +1,4 @@
+from .cat import *
 from .ccpd import *
 from .cls import *
 from .cmte import *
@@ -12,5 +13,3 @@ from .mpii import *
 from .s7seg import *
 from .voc import *
 from .wflw import *
-
-from .union import *

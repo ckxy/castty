@@ -160,7 +160,7 @@ class CalcFCOSGrids(BaseInternode):
 
         offset_target = offset_target[range(len(grids)), min_area_id]
 
-        centerness_target = self.calc_centerness(offset_target)
+        centerness_target = calc_centerness(offset_target)
 
         label_target = label[min_area_id]
         label_target[min_area == self.INF] = 0

@@ -3,6 +3,9 @@ from .builder import build_internode
 from .builder import INTERNODE
 
 
+__all__ = ['Bamboo']
+
+
 @INTERNODE.register_module()
 class Bamboo(BaseInternode):
     def __init__(self, internodes, **kwargs):

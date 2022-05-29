@@ -34,18 +34,33 @@ class Meta(object):
         self.values = self.values[..., keep]
 
     def index(self, key):
-        i = self.keys.index(key)
-        return self.values[i]
+        return self.keys.index(key)
+
+    def get(self, key):
+        return self.values[self.index(key)]
+
+    def __add__(self, other):
+        assert self.keys == other.keys
+        values = np.concatenate([self.values, other.values], axis=-1)
+        return Meta(self.keys, values)
 
     def __repr__(self):
         return '{}\n{}'.format(self.keys, self.values)
 
 
 if __name__ == '__main__':
-    m = Meta(['k'], np.array([1, 0, 1, 6, 8]))
-    m.append(['m'], np.array([2, 0, 1, 9, 7]))
+    m = Meta(['name'], np.array([1, 0, 1, 6, 8]))
+    m.append(['key'], np.array([2, 0, 1, 9, 7]))
     print(m.keys)
     print(m.values, m.values.shape)
     m.filter([2, 3, 4])
     print(m.values, m.values.shape)
-    print(m.index('k'))
+    print(m.index('key'))
+
+    n = Meta(['name'], np.array([20, 21, 22, 23]))
+    n.append(['key'], np.array([10, 11, 12, 13]))
+    print(n)
+
+    o = m + n
+    print(o)
+

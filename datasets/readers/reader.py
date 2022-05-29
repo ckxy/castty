@@ -2,7 +2,7 @@ from .utils import read_image_pil, read_image_cv2
 
 
 class Reader(object):
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         if 'use_pil' in kwargs.keys():
             self.use_pil = kwargs['use_pil']
         else:

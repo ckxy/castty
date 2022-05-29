@@ -28,7 +28,7 @@ test_data = dict(
         collator=[
             ('BboxCollateFN', dict(names=('bbox',))),
             # ('ListCollateFN', dict(names=('neg_category_ids', 'not_exhaustive_category_ids'))),
-            # ('ListCollateFN', dict(names=('ga_bbox', 'ga_index'))),
+            ('ListCollateFN', dict(names=('ga_bbox', 'ga_index'))),
             # ('NanoCollateFN', dict()),
             # ('SYoloCollateFN', dict())
         ]
@@ -62,8 +62,8 @@ test_data = dict(
             # ('ToCV2Image', dict()),
             ('Warp', dict(
                 internodes=[
-                    ('WarpScale', dict(r=(0.5, 1.4), p=0.5)),
-                    ('WarpTranslate', dict(rw=(-0.2, 0.2), rh=(-0.2, 0.2), p=0.5)),
+                    # ('WarpScale', dict(r=(0.5, 1.4), p=0.5)),
+                    # ('WarpTranslate', dict(rw=(-0.2, 0.2), rh=(-0.2, 0.2), p=0.5)),
                     ('WarpResize', dict(size=(416, 416), keep_ratio=True)),
                 ]
             )),
@@ -92,7 +92,8 @@ test_data = dict(
             # ('RandomSwapChannels', dict()),
             # ('Normalize', dict(mean=(103.53 / 255, 116.28 / 255, 123.675 / 255), std=(57.375 / 255, 57.12 / 255, 58.395 / 255))),
             # ('CalcNanoGrids', dict(scale=5, top_k=9, strides=(8, 16, 32), num_classes=len(classes), analysis=True)),
-            # ('CalcGrids', dict(strides=(8, 16, 32), gt_per_grid=2, num_classes=len(classes), sml_thresh=(32, 96), analysis=True, centerness=0.5)),
+            # ('CalcGrids', dict(strides=(8, 16, 32), gt_per_grid=2, num_classes=len(classes), sml_thresh=(32, 96), analysis=True, centerness=0)),
+            ('CalcFCOSGrids', dict(strides=(8, 16, 32), multiples=(4, 8), analysis=True)),
         ],
     ),
 )
@@ -340,14 +341,31 @@ test_data = dict(
     dataset=dict(
         max_size=-1,
         # reader=dict(type='COCOAPIReader', set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017'),
-        reader=dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
-        # reader=dict(type='UniReader', internodes=(
+        reader=dict(type='VOCReader', use_pil=False, root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        # reader=dict(type='CatReader', internodes=(
         #         dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
         #         dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
         #     )
         # ),
         internodes=[
-            dict(type='DataSource'),
+            # dict(type='DataSource'),
+            # dict(type='MixUp', internodes=[
+            #     dict(type='DataSource'),
+            # ]),
+            # dict(type='Mosaic', internodes=[
+            #     dict(type='DataSource'),
+            # ]),
+            # dict(type='Mosaic', internodes=[
+            #     dict(type='MixUp', internodes=[
+            #         dict(type='DataSource'),
+            #     ]),
+            # ]),
+            dict(type='ChooseABranchByID', branchs=[
+                dict(type='MixUp', internodes=[
+                    dict(type='DataSource'),
+                ]),
+                dict(type='DataSource'),
+            ]),
             # dict(type='CopyTag', src_tag='image', dst_tag='ori_image'),
             # dict(type='ToCV2Image'),
             # dict(type='Padding', padding=(20, 30, 40, 50), fill=50, padding_mode='reflect'),
@@ -355,23 +373,23 @@ test_data = dict(
             # dict(type='PaddingByStride', stride=32, fill=(50, 50, 50), padding_mode='constant', center=False, one_way='orward'),
             # dict(type='Resize', size=(416, 416), keep_ratio=True, short=False),
             # dict(type='WarpResize', size=(416, 416), expand=True, keep_ratio=True, short=False, one_way='forward'),
-            dict(type='ResizeAndPadding', 
-                resize=dict(
-                    type='WarpResize',
-                    size=(416, 416),
-                    keep_ratio=True,
-                    short=False,
-                ),
-                padding=dict(
-                    type='PaddingBySize',
-                    size=(600, 600),
-                    # type='PaddingByStride',
-                    # stride=32,
-                    fill=(50, 0, 50), 
-                    padding_mode='constant',
-                    center=True
-                ),
-            ),
+            # dict(type='ResizeAndPadding', 
+            #     resize=dict(
+            #         type='WarpResize',
+            #         size=(416, 416),
+            #         keep_ratio=True,
+            #         short=False,
+            #     ),
+            #     padding=dict(
+            #         type='PaddingBySize',
+            #         size=(600, 600),
+            #         # type='PaddingByStride',
+            #         # stride=32,
+            #         fill=(50, 0, 50), 
+            #         padding_mode='constant',
+            #         center=True
+            #     ),
+            # ),
             # dict(type='Warp', p=0.5, ccs=True, internodes=[
             #     # dict(type='WarpPerspective', expand=True, ccs=True),
             #     # dict(type='WarpStretch', rw=(0.5, 1.5), rh=(0.5, 1.5)),
@@ -398,7 +416,14 @@ test_data = dict(
             #     ]),
             #     dict(type='WarpRotate', angle=(-30, 0)),
             # ]),
-            # dict(type='ToPILImage'),
+            # dict(type='ToGrayscale'),
+            # dict(type='BrightnessEnhancement', brightness=(0.5, 0.5)),
+            # dict(type='ContrastEnhancement', contrast=(0.5, 0.5)),
+            # dict(type='SaturationEnhancement', saturation=(0.5, 0.5)),
+            # dict(type='HueEnhancement', hue=(0.5, 0.5)),
+            # dict(type='Flip', horizontal=True),
+            # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
+            dict(type='ToPILImage'),
             dict(type='ToTensor'),
         ],
     ),

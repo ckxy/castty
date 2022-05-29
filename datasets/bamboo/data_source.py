@@ -2,6 +2,9 @@ from .base_internode import BaseInternode
 from .builder import INTERNODE
 
 
+__all__ = ['DataSource']
+
+
 @INTERNODE.register_module()
 class DataSource(BaseInternode):
     def __call__(self, data_dict):

@@ -4,6 +4,9 @@ from .builder import INTERNODE
 import random
 
 
+__all__ = ['ChooseOne', 'ChooseSome', 'RandomWarpper', 'ForwardOnly', 'BackwardOnly']
+
+
 @INTERNODE.register_module()
 class ChooseOne(BaseInternode):
 	def __init__(self, branchs, **kwargs):
@@ -25,7 +28,7 @@ class ChooseOne(BaseInternode):
 			bamboo_str += '\n  ' + split_str[i].replace('\n', '\n  ')
 		bamboo_str = '(\n{}\n  )'.format(bamboo_str[1:])
 
-		return 'ChooseOne(\n  internodes:{} \n)'.format(bamboo_str)
+		return 'ChooseOne(\n  internodes:{}\n )'.format(bamboo_str)
 
 
 @INTERNODE.register_module()
@@ -48,7 +51,26 @@ class ChooseSome(ChooseOne):
 			bamboo_str += '\n  ' + split_str[i].replace('\n', '\n  ')
 		bamboo_str = '(\n{}\n  )'.format(bamboo_str[1:])
 
-		return 'ChooseSome(\n num={}\n internodes:{} \n)'.format(self.num, bamboo_str)
+		return 'ChooseSome(\n num={}\n internodes:{}\n )'.format(self.num, bamboo_str)
+
+
+@INTERNODE.register_module()
+class ChooseABranchByID(ChooseOne):
+	def __init__(self, branchs, **kwargs):
+		super(ChooseABranchByID, self).__init__(branchs, **kwargs)
+
+	def __call__(self, data_dict):
+		data_dict = self.branchs[data_dict['branch_id']](data_dict)
+		return data_dict
+
+	def __repr__(self):
+		split_str = [i.__repr__() for i in self.branchs]
+		bamboo_str = ''
+		for i in range(len(split_str)):
+			bamboo_str += f'\n  {i}:' + split_str[i].replace('\n', '\n  ')
+		bamboo_str = '(\n{}\n  )'.format(bamboo_str[1:])
+
+		return 'ChooseABranchByID(\n internodes:{}\n )'.format(bamboo_str)
 
 
 @INTERNODE.register_module()

@@ -8,7 +8,7 @@ from ..utils.warp_tools import clip_bbox, filter_bbox, is_pil, get_image_size
 from .builder import INTERNODE
 
 
-__all__ = ['Padding', 'PaddingByStride']
+__all__ = ['Padding', 'PaddingBySize', 'PaddingByStride']
 
 
 @INTERNODE.register_module()
@@ -34,10 +34,10 @@ class Padding(BaseInternode):
             data_dict['image'] = pad(data_dict['image'], self.padding, self.fill, self.padding_mode)
         else:
             left, top, right, bottom = self.padding
-            if data_dict['image'].ndim == 2:
-                assert isinstance(fill, numbers.Number)
-            else:
-                assert len(self.fill) == data_dict['image'].shape[-1]
+            # if data_dict['image'].ndim == 2:
+            #     assert isinstance(fill, numbers.Number)
+            # else:
+            #     assert len(self.fill) == data_dict['image'].shape[-1]
             data_dict['image'] = cv2.copyMakeBorder(data_dict['image'], top, bottom, left, right, self.padding_modes[self.padding_mode], value=self.fill)
 
         if 'bbox' in data_dict.keys():
@@ -94,10 +94,10 @@ class PaddingBySize(BaseInternode):
         if is_pil(data_dict['image']):
             data_dict['image'] = pad(data_dict['image'], (left, top, right, bottom), self.fill, self.padding_mode)
         else:
-            if data_dict['image'].ndim == 2:
-                assert isinstance(fill, numbers.Number)
-            else:
-                assert len(self.fill) == data_dict['image'].shape[-1]
+            # if data_dict['image'].ndim == 2:
+            #     assert isinstance(fill, numbers.Number)
+            # else:
+            #     assert len(self.fill) == data_dict['image'].shape[-1]
             data_dict['image'] = cv2.copyMakeBorder(data_dict['image'], top, bottom, left, right, self.padding_modes[self.padding_mode], value=self.fill)
 
         if 'bbox' in data_dict.keys():
@@ -180,10 +180,10 @@ class PaddingByStride(BaseInternode):
         if is_pil(data_dict['image']):
             data_dict['image'] = pad(data_dict['image'], (left, top, right, bottom), self.fill, self.padding_mode)
         else:
-            if data_dict['image'].ndim == 2:
-                assert isinstance(fill, numbers.Number)
-            else:
-                assert len(self.fill) == data_dict['image'].shape[-1]
+            # if data_dict['image'].ndim == 2:
+            #     assert isinstance(fill, numbers.Number)
+            # else:
+            #     assert len(self.fill) == data_dict['image'].shape[-1]
             data_dict['image'] = cv2.copyMakeBorder(data_dict['image'], top, bottom, left, right, self.padding_modes[self.padding_mode], value=self.fill)
 
         if 'bbox' in data_dict.keys():

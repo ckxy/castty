@@ -4,11 +4,11 @@ from addict import Dict
 from .builder import READER, build_reader
 
 
-__all__ = ['UniReader']
+__all__ = ['CatReader']
 
 
 @READER.register_module()
-class UniReader(Reader):
+class CatReader(Reader):
     def __init__(self, internodes):
         assert len(internodes) > 0
 
@@ -52,7 +52,7 @@ class UniReader(Reader):
         return res
 
     def __repr__(self):
-        res = 'UniReader(\n'
+        res = 'CatReader(\n'
         for t in self.internodes:
             res += '  ' + t.__repr__() + '\n'
         res = res[:-1]

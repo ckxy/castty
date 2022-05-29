@@ -48,7 +48,8 @@ def read_image_pil(path):
 def read_image_cv2(path):
     img = cv2.imread(path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return Image.fromarray(img)
+    # return Image.fromarray(img)
+    return img
 
 
 # def read_image(path, use_pil=True):

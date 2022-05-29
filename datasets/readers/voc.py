@@ -12,6 +12,7 @@ except ImportError:
     import xml.etree.ElementTree as ET
 from .builder import READER
 from ..utils.structures import Meta
+from ..utils.warp_tools import get_image_size
 
 
 __all__ = ['VOCReader', 'VOCSegReader', 'SBDReader', 'VOCCLSReader', 'VOCLikeSegReader']
@@ -102,7 +103,8 @@ class VOCReader(Reader):
 
     def __call__(self, index):
         img = self.read_image(self.image_paths[index])
-        w, h = img.size
+        # w, h = img.size
+        w, h = get_image_size(img)
         bbox, cla, difficult = self.read_bbox_voc(self.label_paths[index], self.classes, self.filter_difficult, self.to_remove)
         path = self.image_paths[index]
         bbox_meta = Meta(['class_id', 'score', 'difficult'], [cla, np.ones(len(bbox)), difficult])
