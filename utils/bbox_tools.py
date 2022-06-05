@@ -10,6 +10,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 def xywh2xyxy(bboxes):
+    if isinstance(bboxes, np.ndarray):
+        bboxes = bboxes.copy()
+    else:
+        bboxes = bboxes.clone()
     bboxes[..., 0] -= 0.5 * bboxes[..., 2]
     bboxes[..., 1] -= 0.5 * bboxes[..., 3]
     bboxes[..., 2] += bboxes[..., 0]
@@ -18,6 +22,10 @@ def xywh2xyxy(bboxes):
 
 
 def xyxy2xywh(bboxes):
+    if isinstance(bboxes, np.ndarray):
+        bboxes = bboxes.copy()
+    else:
+        bboxes = bboxes.clone()
     bboxes[..., 0] = 0.5 * (bboxes[..., 2] + bboxes[..., 0])
     bboxes[..., 1] = 0.5 * (bboxes[..., 3] + bboxes[..., 1])
     bboxes[..., 2] = 2 * (bboxes[..., 2] - bboxes[..., 0])
@@ -114,10 +122,10 @@ def draw_bbox(img, bboxes, scores, class_ids, classes):
 #     draw = ImageDraw.Draw(img)
 #     font = ImageFont.truetype("fonts/arial.ttf", int(l * 1e-3 * 25))
 
-#     for i, bbox in enumerate(bboxes):
-#         coor = np.array(bbox, dtype=np.int32)
-#         score = scores[i]
-#         class_ind = int(class_ids[i])
+#     for bbox in bboxes:
+#         coor = np.array(bbox[:4], dtype=np.int32)
+#         score = bbox[4]
+#         class_ind = int(bbox[5])
 #         bbox_color = colors[class_ind]
 #         draw.rectangle(tuple(coor), outline=bbox_color, width=max(1, int(l / 600)))
 
@@ -427,10 +435,12 @@ def get_xy_grid1(h, w, gt_per_grid):
 def get_xy_grid2(h, w, gt_per_grid):
     shiftx = torch.arange(0, w, dtype=torch.float32)
     shifty = torch.arange(0, h, dtype=torch.float32)
-    shifty, shiftx = torch.meshgrid([shifty, shiftx])
+    shiftx, shifty = torch.meshgrid([shifty, shiftx], indexing='xy')
     shiftx = shiftx.unsqueeze(-1).repeat(1, 1, gt_per_grid)
     shifty = shifty.unsqueeze(-1).repeat(1, 1, gt_per_grid)
     xy_grid = torch.stack([shiftx, shifty], dim=-1)
+    # print(xy_grid)
+    # exit()
     return xy_grid
 
 
@@ -467,7 +477,7 @@ def get_grid2(h, w, center=True):
         c = 1
     shiftx = torch.arange(0, w, dtype=torch.float32) + c
     shifty = torch.arange(0, h, dtype=torch.float32) + c
-    shifty, shiftx = torch.meshgrid([shifty, shiftx])
+    shifty, shiftx = torch.meshgrid([shifty, shiftx], indexing='ij')
     return shifty, shiftx
 
 

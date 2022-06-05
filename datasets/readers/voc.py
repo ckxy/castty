@@ -12,7 +12,7 @@ except ImportError:
     import xml.etree.ElementTree as ET
 from .builder import READER
 from ..utils.structures import Meta
-from ..utils.warp_tools import get_image_size
+from ..utils.common import get_image_size
 
 
 __all__ = ['VOCReader', 'VOCSegReader', 'SBDReader', 'VOCCLSReader', 'VOCLikeSegReader']

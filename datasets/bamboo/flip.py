@@ -4,7 +4,7 @@ import random
 from PIL import Image
 from .base_internode import BaseInternode
 from .builder import INTERNODE
-from ..utils.warp_tools import get_image_size, is_pil
+from ..utils.common import get_image_size, is_pil
 
 
 __all__ = ['Flip']

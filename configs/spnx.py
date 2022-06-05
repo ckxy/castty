@@ -19,6 +19,17 @@ visualizer = dict(
     ),
 )
 
+priors = dict(
+    image_size=300,
+    shapes=(38, 19, 10, 5, 3, 1),
+    steps=(8, 16, 32, 64, 100, 300),
+    min_sizes=(30, 60, 111, 162, 213, 264),
+    max_sizes=(60, 111, 162, 213, 264, 315),
+    aspect_ratios=((2, 3), (2, 3), (2, 3), (2, 3), 2, 2),
+    variances=(0.1, 0.2),
+    clip=True,
+)
+
 test_data = dict(
     data_loader=dict(
         batch_size=1,
@@ -38,7 +49,7 @@ test_data = dict(
         # reader=('COCOAPIReader', dict(set_path='../datasets/coco/annotations/instances_train2017.json', img_root='../datasets/coco/train2017')),
         # reader=('VOCLikeSegReader', dict(root='/home/ubuntu/datasets/water_seg/water_v2', cls_and_clr=(('__background__', 0), ('water', 255)), split='val')),
         # reader=('COCOAPIReader', dict(set_path='/home/ubuntu/datasets/coco/annotations/instances_val2017.json', img_root='/home/ubuntu/datasets/coco/images/val2017')),
-        reader=('VOCReader', dict(root='../datasets//VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes)),
+        reader=('VOCReader', dict(root='../datasets/voc//VOCdevkit/VOC2012', split='trainval', filter_difficult=False, classes=classes)),
         # reader=('LVISAPIReader', dict(set_path='/home/ubuntu/datasets/lvis/lvis_v1_train.json', img_root='/home/ubuntu/datasets/lvis/train2017')),
         # reader=('Market1501AttritubesReader', dict(root='/home/ubuntu/datasets/Market-1501', group='train', mode='ab')),
         internodes=[
@@ -64,7 +75,7 @@ test_data = dict(
                 internodes=[
                     # ('WarpScale', dict(r=(0.5, 1.4), p=0.5)),
                     # ('WarpTranslate', dict(rw=(-0.2, 0.2), rh=(-0.2, 0.2), p=0.5)),
-                    ('WarpResize', dict(size=(416, 416), keep_ratio=True)),
+                    ('WarpResize', dict(size=(544, 544), keep_ratio=True)),
                 ]
             )),
             # ('WarpPerspective', dict(expand=True)),
@@ -91,9 +102,10 @@ test_data = dict(
             # ('SwapChannels', dict(swap=(2, 1, 0))),
             # ('RandomSwapChannels', dict()),
             # ('Normalize', dict(mean=(103.53 / 255, 116.28 / 255, 123.675 / 255), std=(57.375 / 255, 57.12 / 255, 58.395 / 255))),
-            # ('CalcNanoGrids', dict(scale=5, top_k=9, strides=(8, 16, 32), num_classes=len(classes), analysis=True)),
+            ('CalcNanoGrids', dict(scale=5, top_k=9, strides=(8, 16, 32), num_classes=len(classes), analysis=True)),
             # ('CalcGrids', dict(strides=(8, 16, 32), gt_per_grid=2, num_classes=len(classes), sml_thresh=(32, 96), analysis=True, centerness=0)),
-            ('CalcFCOSGrids', dict(strides=(8, 16, 32), multiples=(4, 8), analysis=True)),
+            # ('CalcFCOSGrids', dict(strides=(8, 16, 32), multiples=(4, 8), analysis=True)),
+            # ('CalcSSDGrids', dict(num_classes=len(classes), priors=priors)),
         ],
     ),
 )
@@ -341,14 +353,14 @@ test_data = dict(
     dataset=dict(
         max_size=-1,
         # reader=dict(type='COCOAPIReader', set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017'),
-        reader=dict(type='VOCReader', use_pil=False, root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        reader=dict(type='VOCReader', use_pil=True, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
         # reader=dict(type='CatReader', internodes=(
         #         dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
         #         dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
         #     )
         # ),
         internodes=[
-            # dict(type='DataSource'),
+            dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
             #     dict(type='DataSource'),
             # ]),
@@ -360,12 +372,12 @@ test_data = dict(
             #         dict(type='DataSource'),
             #     ]),
             # ]),
-            dict(type='ChooseABranchByID', branchs=[
-                dict(type='MixUp', internodes=[
-                    dict(type='DataSource'),
-                ]),
-                dict(type='DataSource'),
-            ]),
+            # dict(type='ChooseABranchByID', branchs=[
+            #     dict(type='MixUp', internodes=[
+            #         dict(type='DataSource'),
+            #     ]),
+            #     dict(type='DataSource'),
+            # ]),
             # dict(type='CopyTag', src_tag='image', dst_tag='ori_image'),
             # dict(type='ToCV2Image'),
             # dict(type='Padding', padding=(20, 30, 40, 50), fill=50, padding_mode='reflect'),
@@ -422,8 +434,11 @@ test_data = dict(
             # dict(type='SaturationEnhancement', saturation=(0.5, 0.5)),
             # dict(type='HueEnhancement', hue=(0.5, 0.5)),
             # dict(type='Flip', horizontal=True),
+            # dict(type='AdaptiveCrop'),
+            # dict(type='AdaptiveTranslate'),
+            dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
-            dict(type='ToPILImage'),
+            # dict(type='ToPILImage'),
             dict(type='ToTensor'),
         ],
     ),

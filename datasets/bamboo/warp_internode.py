@@ -3,7 +3,8 @@ import numpy as np
 from PIL import Image
 from .base_internode import BaseInternode
 from .builder import build_internode
-from ..utils.warp_tools import get_image_size, fix_cv2_matrix, warp_bbox, clip_bbox, filter_bbox, warp_mask, warp_point, filter_point, warp_image
+from ..utils.warp_tools import fix_cv2_matrix, warp_bbox, warp_mask, warp_point, warp_image
+from ..utils.common import get_image_size, is_pil, clip_bbox, filter_bbox, filter_point
 
 
 __all__ = ['WarpInternode']

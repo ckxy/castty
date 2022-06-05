@@ -2,30 +2,13 @@ import cv2
 import math
 import numpy as np
 from PIL import Image
+from utils.bbox_tools import xyxy2xywh
 
 
 def fix_cv2_matrix(M):
     M[0, 2] += (M[0, 0] + M[0, 1] - 1) / 2
     M[1, 2] += (M[1, 0] + M[1, 1] - 1) / 2
     return M
-
-
-def is_pil(img):
-    if isinstance(img, Image.Image):
-        return True
-    else:
-        return False
-
-
-def get_image_size(img):
-    if isinstance(img, Image.Image):
-        w, h = img.size
-    else:
-        if len(img.shape) == 3:
-            h, w, _ = img.shape
-        else:
-            h, w = img.shape
-    return w, h
 
 
 def calc_expand_size_and_matrix(M, img_size):
@@ -58,23 +41,6 @@ def warp_bbox(bboxes, M):
     return xy.astype(np.float32)
 
 
-def clip_bbox(bboxes, img_size):
-    width, height = img_size
-    bboxes[:, [0, 2]] = bboxes[:, [0, 2]].clip(0, width)
-    bboxes[:, [1, 3]] = bboxes[:, [1, 3]].clip(0, height)
-    return bboxes
-
-
-def filter_bbox(bboxes):
-    n = len(bboxes)
-    keep = []
-    for i in range(n):
-        x1, y1, x2, y2 = bboxes[i]
-        if x2 - x1 > 1 and y2 - y1 > 1:
-            keep.append(i)
-    return keep
-
-
 def warp_mask(mask, M, dst_size):
     matrix = np.array(np.matrix(M).I).flatten().tolist()
     return mask.transform(dst_size, Image.PERSPECTIVE, matrix, Image.NEAREST)
@@ -90,15 +56,6 @@ def warp_point(points, M):
     return xy.astype(np.float32)
 
 
-def filter_point(points, img_size):
-    n = len(points)
-    width, height = img_size
-    x = (points[:, 0] >= 0) & (points[:, 0] < width)
-    y = (points[:, 1] >= 0) & (points[:, 1] < height)
-    discard = np.nonzero(~(x & y))[0]
-    return discard
-
-
 def warp_image(image, M, dst_size, ccs=False):
     if is_pil(image):
         matrix = np.array(np.matrix(M).I).flatten()
@@ -109,7 +66,6 @@ def warp_image(image, M, dst_size, ccs=False):
         if ccs:
             matrix = fix_cv2_matrix(matrix)
         return cv2.warpPerspective(image, matrix, dst_size)
-
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image, ImageOps, ImageDraw
 from .base_internode import BaseInternode
 from .builder import INTERNODE
-from ..utils.warp_tools import get_image_size, is_pil
+from ..utils.common import get_image_size, is_pil
 
 
 __all__ = ['RandomErasing', 'GridMask']

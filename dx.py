@@ -24,6 +24,8 @@ def ga(data_dict, classes, rc, index=0):
     bboxes = data_dict['bbox'][index].cpu().numpy()
     print(data_dict['image'][index].shape)
 
+    print(data_dict['bbox'][0].numpy(), 'b')
+
     res = rc(image=data_dict['image'][index], ori_size=data_dict['ori_size'][index], bbox=bboxes, training=True)
     img1 = res['image']
     img2 = img1.copy()
@@ -41,6 +43,7 @@ def ga(data_dict, classes, rc, index=0):
 
     b_img = draw_bbox(img2, d, classes)
     # b_img.save('1.jpg')
+    # ga_img.save('atssa.jpg')
 
     print(b_img, data_dict['ori_size'][index])
 

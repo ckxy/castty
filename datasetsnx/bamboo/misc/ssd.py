@@ -8,7 +8,7 @@ __all__ = ['CalcSSDGrids']
 
 
 class CalcSSDGrids(BaseInternode):
-    def __init__(self, num_classes, threshold=0.5, deta=0, loc=True):
+    def __init__(self, num_classes, threshold=0.5, deta=0, loc=True, **kwargs):
         self.threshold = threshold
 
         self.deta = deta
@@ -30,6 +30,7 @@ class CalcSSDGrids(BaseInternode):
         best_prior_iou, best_prior_idx = np.max(iou, axis=1), np.argmax(iou, axis=1)
         best_gt_iou, best_gt_idx = np.max(iou, axis=0), np.argmax(iou, axis=0)
 
+        # 仅做了maxiouassigner的前三步
         best_gt_iou[best_prior_idx] = 2
         for j in range(best_prior_idx.shape[0]):
             best_gt_idx[best_prior_idx[j]] = j

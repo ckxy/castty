@@ -3,6 +3,7 @@ from .base_internode import *
 from .color import *
 from .control_flow import *
 from .convert import *
+from .crop import *
 from .data_source import *
 from .erase import *
 from .flip import *

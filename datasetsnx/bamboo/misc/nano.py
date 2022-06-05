@@ -72,7 +72,10 @@ class CalcNanoGrids(BaseInternode):
                 candidate_ids.append(topk_ids_per_level + sid)
             candidate_ids = torch.cat(candidate_ids, dim=0)
 
+            fst_candidate_ids = candidate_ids.clone()
+
             candidate_overlaps = overlaps[candidate_ids, torch.arange(bboxes.shape[0])]
+            # print(candidate_overlaps.reshape(len(self.strides), -1, bboxes.shape[0]).mean(dim=1))
             overlaps_mean_per_gt = candidate_overlaps.mean(0)
             overlaps_std_per_gt = candidate_overlaps.std(0)
             overlaps_thr_per_gt = overlaps_mean_per_gt + overlaps_std_per_gt
@@ -190,6 +193,28 @@ class CalcNanoGrids(BaseInternode):
 
             for i in range(len(self.strides)):
                 data_dict['nano_pnc'][i][1] = featmap_sizes[i][0] * featmap_sizes[i][1] - data_dict['nano_pnc'][i][0]
+
+            # fst_inds = fst_candidate_ids.flatten()
+            # data_dict['ga_index'] = [[] for _ in range(len(self.strides))]
+
+            # for i in range(len(fst_inds)):
+            #     k = 1
+
+            #     for j in range(1, len(start)):
+            #         if fst_inds[i] >= start[j]:
+            #             k += 1
+
+            #     data_dict['nano_pnc'][k - 1][0] += 1
+            #     index = fst_inds[i].item() - start[k - 1]
+            #     ii = index // featmap_sizes[k - 1][1]
+            #     jj = index - ii * featmap_sizes[k - 1][1]
+            #     data_dict['ga_index'][k - 1].append([jj, ii, 0])
+
+            # a = torch.load('../u/SanDisk/yolox_tag/d2.pth')
+            # data_dict['ga_bbox'] = [[], [], []]
+            # data_dict['ga_index'] = a['a_index']
+            # data_dict['ga_bbox'] = a['ga_bbox']
+            # data_dict['ga_index'] = a['ga_index']
             # print(data_dict['ga_bbox'])
             # print(data_dict['ga_index'])
             # print(data_dict['nano_pnc'])

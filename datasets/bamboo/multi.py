@@ -8,7 +8,7 @@ from .base_internode import BaseInternode
 from .builder import build_internode
 from .builder import INTERNODE
 from .bamboo import Bamboo
-from ..utils.warp_tools import get_image_size, is_pil
+from ..utils.common import get_image_size, is_pil
 from torchvision.transforms.functional import pad
 
 

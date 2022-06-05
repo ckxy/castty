@@ -5,7 +5,8 @@ from .bamboo import Bamboo
 from .builder import INTERNODE
 from .builder import build_internode
 from .warp_internode import WarpInternode
-from ..utils.warp_tools import get_image_size, calc_expand_size_and_matrix, warp_bbox, clip_bbox, filter_bbox
+from ..utils.warp_tools import calc_expand_size_and_matrix, warp_bbox
+from ..utils.common import get_image_size, clip_bbox, filter_bbox
 
 
 __all__ = ['Warp', 'WarpPerspective', 'WarpResize', 'WarpScale', 'WarpStretch', 'WarpRotate', 'WarpShear', 'WarpTranslate']
@@ -28,7 +29,7 @@ class Warp(Bamboo):
         data_dict['warp_matrix'] = np.eye(3)
         data_dict['warp_size'] = get_image_size(data_dict['image'])
 
-        super(Warp, self).__call__(data_dict)
+        data_dict = super(Warp, self).__call__(data_dict)
 
         data_dict['warp_tmp_matrix'] = data_dict.pop('warp_matrix')
         data_dict['warp_tmp_size'] = data_dict.pop('warp_size')
@@ -128,7 +129,7 @@ class WarpPerspective(WarpInternode):
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        super(WarpPerspective, self).__call__(data_dict)
+        data_dict = super(WarpPerspective, self).__call__(data_dict)
 
         return data_dict
 
@@ -217,7 +218,7 @@ class WarpResize(WarpInternode):
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        super(WarpResize, self).__call__(data_dict)
+        data_dict = super(WarpResize, self).__call__(data_dict)
 
         return data_dict
 
@@ -286,7 +287,7 @@ class WarpScale(WarpInternode):
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        super(WarpScale, self).__call__(data_dict)
+        data_dict = super(WarpScale, self).__call__(data_dict)
 
         return data_dict
 
@@ -335,7 +336,7 @@ class WarpStretch(WarpInternode):
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        super(WarpStretch, self).__call__(data_dict)
+        data_dict = super(WarpStretch, self).__call__(data_dict)
 
         return data_dict
 
@@ -392,7 +393,7 @@ class WarpRotate(WarpInternode):
 
             data_dict['warp_tmp_matrix'] = M
             data_dict['warp_tmp_size'] = size
-            super(WarpRotate, self).__call__(data_dict)
+            data_dict = super(WarpRotate, self).__call__(data_dict)
 
         return data_dict
 
@@ -447,7 +448,7 @@ class WarpShear(WarpInternode):
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        super(WarpShear, self).__call__(data_dict)
+        data_dict = super(WarpShear, self).__call__(data_dict)
 
         return data_dict
 
@@ -490,7 +491,7 @@ class WarpTranslate(WarpInternode):
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        super(WarpTranslate, self).__call__(data_dict)
+        data_dict = super(WarpTranslate, self).__call__(data_dict)
 
         return data_dict
 
