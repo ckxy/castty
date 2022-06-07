@@ -437,12 +437,7 @@ class RandomAreaCrop(BaseInternode):
 
 @INTERNODE.register_module()
 class EastRandomCrop(BaseInternode):
-    def __init__(self,
-                 target_size=(640, 640),
-                 max_tries=50,
-                 min_crop_side_ratio=0.1,
-                 **kwargs):
-        self.target_size = target_size
+    def __init__(self, max_tries=50, min_crop_side_ratio=0.1, **kwargs):
         self.max_tries = max_tries
         self.min_crop_side_ratio = min_crop_side_ratio
 
@@ -454,7 +449,7 @@ class EastRandomCrop(BaseInternode):
         crop_x, crop_y, crop_w, crop_h = self.crop_area(
             img, data_dict['poly'])
 
-        print(crop_x, crop_y, crop_w, crop_h)
+        # print(crop_x, crop_y, crop_w, crop_h)
 
         if is_pil(data_dict['image']):
             data_dict['image'] = data_dict['image'].crop((crop_x, crop_y, crop_x + crop_w, crop_y + crop_h))
@@ -601,3 +596,6 @@ class EastRandomCrop(BaseInternode):
                 return xmin, ymin, xmax - xmin, ymax - ymin
 
         return 0, 0, w, h
+
+    def __repr__(self):
+        return 'EastRandomCrop(max_tries={}, min_crop_side_ratio={})'.format(self.max_tries, self.min_crop_side_ratio)
