@@ -6,6 +6,8 @@ from copy import deepcopy
 from .reader import Reader
 from .lvis_v1_categories import LVIS_CATEGORIES as LVIS_V1_CATEGORIES
 from .builder import READER
+from ..utils.structures import Meta
+from ..utils.common import get_image_size
 
 
 __all__ = ['LVISAPIReader']
@@ -101,7 +103,7 @@ class LVISAPIReader(Reader):
             # the coco_url field. Example:
             #   'coco_url': 'http://images.cocodataset.org/train2017/000000155379.jpg'
             split_folder, file_name = img_dict["coco_url"].split("/")[-2:]
-            return os.path.join(img_root, file_name)
+            return os.path.join(img_root, split_folder, file_name)
 
         dataset_dicts = []
 
@@ -144,7 +146,8 @@ class LVISAPIReader(Reader):
     def __call__(self, index):
         data_line = deepcopy(self.data_lines[index])
         data_line['image'] = self.read_image(data_line['path'])
-        data_line['bbox'] = np.concatenate([data_line['bbox'], np.full((len(data_line['bbox']), 1), 1).astype(np.float32)], axis=1)
+        data_line['bbox_meta'] = Meta(['class_id', 'score'], [data_line['bbox'][..., 4], np.ones(len(data_line['bbox']))])
+        data_line['bbox'] = data_line['bbox'][..., :4]
         return data_line
 
     def __repr__(self):

@@ -345,18 +345,18 @@ test_data = dict(
         num_threads=0,
         pin_memory=False,
         collator=[
-            ('BboxCollateFN', dict(names=('bbox',))),
-            # ('ListCollateFN', dict(names=('ga_bbox', 'ga_index'))),
-            # ('NanoCollateFN', dict()),
+            dict(type='BboxCollateFN', names=('bbox',)),
+            dict(type='ListCollateFN', names=('bbox_meta',)),
         ]
     ),
     dataset=dict(
         max_size=-1,
+        # reader=dict(type='LVISAPIReader', set_path='../datasets/coco/annotations/lvis_v1_val.json', img_root='../datasets/coco'),
         # reader=dict(type='COCOAPIReader', set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017'),
         reader=dict(type='VOCReader', use_pil=True, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
         # reader=dict(type='CatReader', internodes=(
-        #         dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
-        #         dict(type='VOCReader', root='../datasets/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        #         dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        #         dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2012', split='trainval', filter_difficult=False, classes=classes),
         #     )
         # ),
         internodes=[
@@ -394,13 +394,14 @@ test_data = dict(
             #     ),
             #     padding=dict(
             #         type='PaddingBySize',
-            #         size=(600, 600),
+            #         size=(416, 416),
             #         # type='PaddingByStride',
             #         # stride=32,
-            #         fill=(50, 0, 50), 
+            #         fill=(0, 0, 0), 
             #         padding_mode='constant',
-            #         center=True
+            #         center=False
             #     ),
+            #     one_way='forward'
             # ),
             # dict(type='Warp', p=0.5, ccs=True, internodes=[
             #     # dict(type='WarpPerspective', expand=True, ccs=True),
@@ -436,9 +437,46 @@ test_data = dict(
             # dict(type='Flip', horizontal=True),
             # dict(type='AdaptiveCrop'),
             # dict(type='AdaptiveTranslate'),
-            dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
+            # dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
             # dict(type='ToPILImage'),
+            dict(type='ToTensor'),
+        ],
+    ),
+)
+
+test_data = dict(
+    data_loader=dict(
+        batch_size=1,
+        serial_batches=True,
+        num_threads=0,
+        pin_memory=False,
+        collator=[
+            dict(type='ListCollateFN', names=('poly',)),
+        ]
+    ),
+    dataset=dict(
+        max_size=-1,
+        reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015'),
+        internodes=[
+            dict(type='DataSource'),
+            dict(type='EastRandomCrop'),
+            dict(type='ResizeAndPadding', 
+                resize=dict(
+                    type='Resize',
+                    size=(640, 640),
+                    keep_ratio=True,
+                    short=False,
+                ),
+                padding=dict(
+                    type='PaddingBySize',
+                    size=(640, 640),
+                    fill=(0, 0, 0), 
+                    padding_mode='constant',
+                    center=False
+                ),
+                one_way='forward'
+            ),
             dict(type='ToTensor'),
         ],
     ),

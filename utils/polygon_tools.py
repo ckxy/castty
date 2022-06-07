@@ -10,9 +10,7 @@ def draw_polygon_without_label(img, polygons):
     draw = ImageDraw.Draw(img)
 
     for polygon in polygons:
-        # print(polygon.astype(np.int).flatten().tolist())
-        draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(0, 255, 255))
-        # draw.polygon([(0, 0), (100, 20), (20, 50)], outline=(0, 255, 255))
+        draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 0, 0), width=2)
     return img
 
 

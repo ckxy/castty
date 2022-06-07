@@ -1,5 +1,4 @@
 from .reader import Reader
-from . import *
 from addict import Dict
 from .builder import READER, build_reader
 
@@ -15,6 +14,8 @@ class CatReader(Reader):
         self.internodes = []
         for cfg in internodes:
             self.internodes.append(build_reader(cfg))
+            if len(self.internodes) > 1:
+                assert self.internodes[-2].get_dataset_info()[1] == self.internodes[-1].get_dataset_info()[1]
 
         self.groups = [0]
         for i in self.internodes:

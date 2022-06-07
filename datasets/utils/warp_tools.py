@@ -3,6 +3,7 @@ import math
 import numpy as np
 from PIL import Image
 from utils.bbox_tools import xyxy2xywh
+from .common import is_pil
 
 
 def fix_cv2_matrix(M):

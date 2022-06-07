@@ -4,7 +4,7 @@ import numbers
 import numpy as np
 from .base_internode import BaseInternode
 from torchvision.transforms.functional import pad
-from ..utils.common import clip_bbox, filter_bbox, is_pil, get_image_size
+from ..utils.common import clip_bbox, filter_bbox, is_pil, get_image_size, clip_poly
 from .builder import INTERNODE
 
 
@@ -105,6 +105,12 @@ class PaddingBySize(BaseInternode):
             data_dict['bbox'][:, 1] += top
             data_dict['bbox'][:, 2] += left
             data_dict['bbox'][:, 3] += top
+
+        if 'poly' in data_dict.keys():
+            for i in range(len(data_dict['poly'])):
+                data_dict['poly'][i][..., 0] += left
+                data_dict['poly'][i][..., 1] += top
+
         return data_dict
 
     def reverse(self, **kwargs):
@@ -129,6 +135,13 @@ class PaddingBySize(BaseInternode):
 
             if 'bbox_meta' in kwargs.keys():
                 kwargs['bbox_meta'].filter(keep)
+
+        if 'poly' in kwargs.keys():
+            for i in range(len(kwargs['poly'])):
+                kwargs['poly'][i][..., 0] -= left
+                kwargs['poly'][i][..., 1] -= top
+
+            kwargs['poly'], keep = clip_poly(kwargs['poly'], (w, h))
 
         return kwargs
 
@@ -192,6 +205,11 @@ class PaddingByStride(BaseInternode):
             data_dict['bbox'][:, 2] += left
             data_dict['bbox'][:, 3] += top
 
+        if 'poly' in data_dict.keys():
+            for i in range(len(data_dict['poly'])):
+                data_dict['poly'][i][..., 0] += left
+                data_dict['poly'][i][..., 1] += top
+
         return data_dict
 
     def reverse(self, **kwargs):
@@ -216,6 +234,13 @@ class PaddingByStride(BaseInternode):
 
             if 'bbox_meta' in kwargs.keys():
                 kwargs['bbox_meta'].filter(keep)
+
+        if 'poly' in kwargs.keys():
+            for i in range(len(kwargs['poly'])):
+                kwargs['poly'][i][..., 0] -= left
+                kwargs['poly'][i][..., 1] -= top
+
+            kwargs['poly'], keep = clip_poly(kwargs['poly'], (w, h))
 
         return kwargs
 

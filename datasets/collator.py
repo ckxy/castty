@@ -3,13 +3,21 @@ import random
 import numpy as np
 from copy import deepcopy
 from torch.utils.data._utils.collate import default_collate
+from utils.registry import Registry, build_from_cfg
+
+
+COLLATEFN = Registry('collatefn')
+
+
+def build_collatefn(cfg, **default_args):
+    return build_from_cfg(cfg, COLLATEFN, default_args)
 
 
 class Collator(object):
     def __init__(self, fn_list):
         self.fn_list = []
-        for k, v in fn_list:
-            self.fn_list.append(eval(k)(**v))
+        for cfg in fn_list:
+            self.fn_list.append(build_collatefn(cfg))
 
     def collate_fn(self, batch):
         # print(sorted(batch[0].keys()), len(batch[0].keys()))
@@ -68,14 +76,7 @@ class CollateFN(object):
         return 'CollateFN(names={})'.format(self.names)
 
 
-class TensorCollateFN(CollateFN):
-    def collate(self):
-        raise NotImplementedError
-
-    def __repr__(self):
-        return 'TensorCollateFN(names={})'.format(self.names)
-
-
+@COLLATEFN.register_module()
 class ListCollateFN(CollateFN):
     def collate(self):
         res = dict()
@@ -88,6 +89,7 @@ class ListCollateFN(CollateFN):
         return 'ListCollateFN(names={})'.format(self.names)
 
 
+@COLLATEFN.register_module()
 class BboxCollateFN(CollateFN):
     def collate(self):
         res = dict()
@@ -100,6 +102,24 @@ class BboxCollateFN(CollateFN):
         return 'BboxCollateFN(names={})'.format(self.names)
 
 
+# @COLLATEFN.register_module()
+# class PolyCollateFN(CollateFN):
+#     def collate(self):
+#         res = dict()
+#         for k in self.buffer.keys():
+#             for i in range(len(self.buffer[k])):
+#                 self.buffer[k][i] = [self.buffer[k][i]]
+#             print(self.buffer[k])
+#             exit()
+#             res[k] = [torch.from_numpy(b).type(torch.float32) for b in self.buffer[k]]
+#             self.buffer[k].clear()
+#         return res
+
+#     def __repr__(self):
+#         return 'PolyCollateFN(names={})'.format(self.names)
+
+
+@COLLATEFN.register_module()
 class NanoCollateFN(CollateFN):
     def __init__(self, **kwargs):
         super(NanoCollateFN, self).__init__(names=('nano_fs', 'nano_grid', 'nano_pnc', 'nano_target', 'num_neg', 'num_pos'))
@@ -137,6 +157,7 @@ class NanoCollateFN(CollateFN):
         return 'NanoCollateFN(names={})'.format(self.names)
 
 
+@COLLATEFN.register_module()
 class SYoloCollateFN(CollateFN):
     def __init__(self, **kwargs):
         super(SYoloCollateFN, self).__init__(names=('lbbox', 'mbbox', 'sbbox'))

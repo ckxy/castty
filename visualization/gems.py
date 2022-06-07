@@ -108,7 +108,7 @@ class GuidedBackPropagation(object):
 			handle.remove()
 
 	def backward_hook(self, module, grad_in, grad_out):
-		return torch.clamp(grad_in[0], min=0.0),
+		return torch.clamp(grad_in[0], min=0.0)
 
 	def __call__(self, x):
 		grad = x.grad[0]
