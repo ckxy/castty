@@ -53,8 +53,9 @@ def warp_point(points, M):
 
     xy = np.concatenate((points, np.ones((len(points), 1))), axis=1)
     xy = xy @ M.T  # transform
-    xy = xy[:, :2]
-    return xy.astype(np.float32)
+    xy[:, 0] = xy[:, 0] / xy[:, 2]
+    xy[:, 1] = xy[:, 1] / xy[:, 2]
+    return xy[:, :2].astype(np.float32)
 
 
 def warp_image(image, M, dst_size, ccs=False):

@@ -448,11 +448,11 @@ test_data = dict(
 test_data = dict(
     data_loader=dict(
         batch_size=1,
-        serial_batches=False,
+        serial_batches=True,
         num_threads=0,
         pin_memory=False,
         collator=[
-            dict(type='ListCollateFN', names=('poly',)),
+            dict(type='ListCollateFN', names=('poly', 'poly_meta')),
         ]
     ),
     dataset=dict(
@@ -460,7 +460,7 @@ test_data = dict(
         reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015'),
         internodes=[
             dict(type='DataSource'),
-            dict(type='EastRandomCrop'),
+            # dict(type='EastRandomCrop'),
             dict(type='ResizeAndPadding', 
                 resize=dict(
                     type='Resize',
@@ -477,6 +477,7 @@ test_data = dict(
                 ),
                 one_way='forward'
             ),
+            # dict(type='WarpRotate', angle=(30, 30), expand=True),
             dict(type='ToTensor'),
         ],
     ),

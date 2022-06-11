@@ -462,6 +462,8 @@ class EastRandomCrop(BaseInternode):
             data_dict['poly'][i][..., 1] -= crop_y
 
         data_dict['poly'], keep = clip_poly(data_dict['poly'], (w, h))
+        if 'poly_meta' in data_dict.keys():
+            data_dict['poly_meta'].filter(keep)
 
         # print(data_dict['poly'])
         # scale_w = self.target_size[0] / crop_w

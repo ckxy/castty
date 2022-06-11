@@ -5,7 +5,7 @@ from .bamboo import Bamboo
 from .builder import INTERNODE
 from .builder import build_internode
 from .warp_internode import WarpInternode
-from ..utils.warp_tools import calc_expand_size_and_matrix, warp_bbox
+from ..utils.warp_tools import calc_expand_size_and_matrix, warp_bbox, warp_point
 from ..utils.common import get_image_size, clip_bbox, filter_bbox
 
 
@@ -235,13 +235,21 @@ class WarpResize(WarpInternode):
             M = np.array(np.matrix(M).I)
 
         if 'bbox' in kwargs.keys():
-            boxes = warp_bbox(kwargs['bbox'], M)
-            boxes = clip_bbox(boxes, (w, h))
-            keep = filter_bbox(boxes)
-            kwargs['bbox'] = boxes[keep]
+            wargs['bbox'] = warp_bbox(kwargs['bbox'], M)
+            # boxes = clip_bbox(boxes, (w, h))
+            # keep = filter_bbox(boxes)
+            # kwargs['bbox'] = boxes[keep]
 
-            if 'bbox_meta' in kwargs.keys():
-                kwargs['bbox_meta'].filter(keep)
+            # if 'bbox_meta' in kwargs.keys():
+            #     kwargs['bbox_meta'].filter(keep)
+
+        if 'poly' in kwargs.keys():
+            # print(kwargs['poly'])
+            kwargs['poly'] = [warp_point(p, M) for p in kwargs['poly']]
+            # kwargs['poly'], keep = clip_poly(kwargs['poly'], dst_size)
+            
+            # if 'poly_meta' in kwargs.keys():
+            #     kwargs['poly_meta'].filter(keep)
 
         return kwargs
 

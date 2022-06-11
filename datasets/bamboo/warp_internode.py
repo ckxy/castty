@@ -4,7 +4,7 @@ from PIL import Image
 from .base_internode import BaseInternode
 from .builder import build_internode
 from ..utils.warp_tools import fix_cv2_matrix, warp_bbox, warp_mask, warp_point, warp_image
-from ..utils.common import get_image_size, is_pil, clip_bbox, filter_bbox, filter_point
+from ..utils.common import get_image_size, is_pil, clip_bbox, filter_bbox, filter_point, clip_poly
 
 
 __all__ = ['WarpInternode']
@@ -35,6 +35,13 @@ class WarpInternode(BaseInternode):
 
                 if 'bbox_meta' in data_dict.keys():
                     data_dict['bbox_meta'].filter(keep)
+
+            if 'poly' in data_dict.keys():
+                data_dict['poly'] = [warp_point(p, M) for p in data_dict['poly']]
+                data_dict['poly'], keep = clip_poly(data_dict['poly'], dst_size)
+
+                if 'poly_meta' in data_dict.keys():
+                    data_dict['poly_meta'].filter(keep)
 
         return data_dict
 

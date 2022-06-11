@@ -142,6 +142,8 @@ class PaddingBySize(BaseInternode):
                 kwargs['poly'][i][..., 1] -= top
 
             kwargs['poly'], keep = clip_poly(kwargs['poly'], (w, h))
+            if 'poly_meta' in kwargs.keys():
+                kwargs['poly_meta'].filter(keep)
 
         return kwargs
 
@@ -241,6 +243,8 @@ class PaddingByStride(BaseInternode):
                 kwargs['poly'][i][..., 1] -= top
 
             kwargs['poly'], keep = clip_poly(kwargs['poly'], (w, h))
+            if 'poly_meta' in kwargs.keys():
+                kwargs['poly_meta'].filter(keep)
 
         return kwargs
 

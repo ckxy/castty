@@ -35,20 +35,25 @@ def clip_poly(polys, img_size):
     width, height = img_size
     subj = (((0, 0), (width, 0), (width, height), (0, height)),)
 
-    polys = [p.tolist() for p in polys]
+    # polys = [p.tolist() for p in polys]
 
     tmp = []
     keep = []
     for i, poly in enumerate(polys):
-        # print(poly, '00')
-        pc = pyclipper.Pyclipper()
-        pc.AddPaths(subj, pyclipper.PT_SUBJECT, True)
-        pc.AddPath(poly, pyclipper.PT_CLIP, True)
-        solution = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_EVENODD, pyclipper.PFT_EVENODD)
-        if len(solution) > 0:
-            tmp.append(np.array(solution).astype(np.float32))
+        wf = np.bitwise_and(poly[..., 0] >= 0, poly[..., 0] < width)
+        hf = np.bitwise_and(poly[..., 1] >= 0, poly[..., 1] < height)
+        if np.bitwise_and(wf, hf).all():
+            tmp.append(poly)
             keep.append(i)
-    # solution = [np.array(s) for s in solution]
+        else:
+            poly = poly.tolist()
+            pc = pyclipper.Pyclipper()
+            pc.AddPaths(subj, pyclipper.PT_SUBJECT, True)
+            pc.AddPath(poly, pyclipper.PT_CLIP, True)
+            poly = pc.Execute(pyclipper.CT_INTERSECTION, pyclipper.PFT_EVENODD, pyclipper.PFT_EVENODD)
+            if len(poly) > 0:
+                tmp.append(np.array(poly[0]).astype(np.float32))
+                keep.append(i)
     return tmp, keep
 
 
@@ -87,3 +92,7 @@ def filter_point(points, img_size):
     y = (points[:, 1] >= 0) & (points[:, 1] < height)
     discard = np.nonzero(~(x & y))[0]
     return discard
+
+
+def check_tags(data_dict, tags):
+    pass

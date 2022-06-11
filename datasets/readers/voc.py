@@ -51,7 +51,7 @@ class VOCReader(Reader):
             self.to_remove = 0
 
     def get_dataset_info(self):
-        return range(len(self.image_paths)), Dict({'classes': self.classes})
+        return range(len(self.image_paths)), Dict(dict(type='det', classes=self.classes))
 
     def get_data_info(self, index):
         img = Image.open(self.image_paths[index])
@@ -107,7 +107,7 @@ class VOCReader(Reader):
         w, h = get_image_size(img)
         bbox, cla, difficult = self.read_bbox_voc(self.label_paths[index], self.classes, self.filter_difficult, self.to_remove)
         path = self.image_paths[index]
-        bbox_meta = Meta(['class_id', 'score', 'difficult'], [cla, np.ones(len(bbox)), difficult])
+        bbox_meta = Meta(['class_id', 'score', 'difficult'], [cla, np.ones(len(bbox)).astype(np.float32), difficult])
 
         return dict(
             image=img,
