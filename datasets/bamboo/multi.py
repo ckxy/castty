@@ -251,7 +251,7 @@ class Mosaic(Bamboo):
             res['bbox'] = np.concatenate((b1, b2, b3, b4))
 
             if 'bbox_meta' in k:
-                i = d1['bbox_meta'].index('score')
+                # i = d1['bbox_meta'].index('score')
                 d1['bbox_meta'] += d2['bbox_meta']
                 d1['bbox_meta'] += d3['bbox_meta']
                 d1['bbox_meta'] += d4['bbox_meta']

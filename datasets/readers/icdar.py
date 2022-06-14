@@ -65,4 +65,4 @@ class ICDARDetReader(Reader):
         )
 
     def __repr__(self):
-        return 'ICDARDetReader(root={}, filter_texts={}, {})'.format(self.root, self.filter_texts, super(ICDARDetReader, self).__repr__())
+        return 'ICDARDetReader(root={}, filter_texts={}, {})'.format(self.root, list(self.filter_texts), super(ICDARDetReader, self).__repr__())

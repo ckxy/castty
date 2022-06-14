@@ -49,6 +49,14 @@ class Flip(BaseInternode):
             if self.map_idx is not None:
                 data_dict['point'] = data_dict['point'][self.map_idx]
 
+        if 'poly' in data_dict.keys():
+            if self.horizontal:
+                for i in range(len(data_dict['poly'])):
+                    data_dict['poly'][i][:, 0] = w - data_dict['poly'][i][:, 0]
+            else:
+                for i in range(len(data_dict['poly'])):
+                    data_dict['poly'][i][:, 1] = h - data_dict['poly'][i][:, 1]
+
         return data_dict
 
     def __repr__(self):

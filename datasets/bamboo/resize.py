@@ -1,5 +1,6 @@
 import cv2
 import math
+import random
 import numpy as np
 from PIL import Image
 from .base_internode import BaseInternode
@@ -12,7 +13,37 @@ from .bamboo import Bamboo
 from .builder import build_internode
 
 
-__all__ = ['Resize', 'ResizeAndPadding']
+__all__ = ['Resize', 'Rescale', 'RescaleLimitedByBound', 'ResizeAndPadding']
+
+
+def resize_image(image, scale):
+    w, h = get_image_size(image)
+    nw = math.ceil(scale[0] * w)
+    nh = math.ceil(scale[1] * h)
+
+    if is_pil(image):
+        image = image.resize((nw, nh), Image.BILINEAR)
+    else:
+        image = cv2.resize(image, (nw, nh))
+
+    return image
+
+
+def resize_bbox(bboxes, scale):
+    bboxes[:, 0] *= scale[0]
+    bboxes[:, 1] *= scale[1]
+    bboxes[:, 2] *= scale[0]
+    bboxes[:, 3] *= scale[1]
+
+    return bboxes
+
+
+def resize_poly(polys, scale):
+    for i in range(len(polys)):
+        polys[i][..., 0] *= scale[0]
+        polys[i][..., 1] *= scale[1]
+
+    return polys
 
 
 @INTERNODE.register_module()
@@ -41,32 +72,20 @@ class Resize(BaseInternode):
             scale = (rw, rh)
         return scale
 
+    def resize(self, data_dict, scale):
+        data_dict['image'] = resize_image(data_dict['image'], scale)
+
+        if 'bbox' in data_dict.keys():
+            data_dict['bbox'] = resize_bbox(data_dict['bbox'], scale)
+        if 'poly' in data_dict.keys():
+            data_dict['poly'] = resize_poly(data_dict['poly'], scale)
+
+        return data_dict
+
     def __call__(self, data_dict):
         w, h = get_image_size(data_dict['image'])
         scale = self.calc_scale((w, h))
-
-        nw = math.ceil(scale[0] * w)
-        nh = math.ceil(scale[1] * h)
-
-        if is_pil(data_dict['image']):
-            data_dict['image'] = data_dict['image'].resize((nw, nh), Image.BILINEAR)
-        else:
-            data_dict['image'] = cv2.resize(data_dict['image'], (nw, nh))
-
-        if 'bbox' in data_dict.keys():
-            data_dict['bbox'][:, 0] *= scale[0]
-            data_dict['bbox'][:, 1] *= scale[1]
-            data_dict['bbox'][:, 2] *= scale[0]
-            data_dict['bbox'][:, 3] *= scale[1]
-
-        if 'poly' in data_dict.keys():
-            for i in range(len(data_dict['poly'])):
-                data_dict['poly'][i][..., 0] *= scale[0]
-                data_dict['poly'][i][..., 1] *= scale[1]
-            # print(data_dict['poly'])
-            # exit()
-
-        return data_dict
+        return self.resize(data_dict, scale)
 
     def reverse(self, **kwargs):
         if 'resize_and_padding_reverse_flag' not in kwargs.keys():
@@ -76,22 +95,76 @@ class Resize(BaseInternode):
             h, w = kwargs['ori_size']
             h, w = int(h), int(w)
             scale = self.calc_scale((w, h))
+            scale = (1 / scale[0], 1 / scale[1])
 
         if 'bbox' in kwargs.keys():
-            kwargs['bbox'][:, 0] = kwargs['bbox'][:, 0] / scale[0]
-            kwargs['bbox'][:, 1] = kwargs['bbox'][:, 1] / scale[1]
-            kwargs['bbox'][:, 2] = kwargs['bbox'][:, 2] / scale[0]
-            kwargs['bbox'][:, 3] = kwargs['bbox'][:, 3] / scale[1]
+            kwargs['bbox'] = resize_bbox(kwargs['bbox'], scale)
 
         if 'poly' in kwargs.keys():
-            for i in range(len(kwargs['poly'])):
-                kwargs['poly'][i][..., 0] = kwargs['poly'][i][..., 0] / scale[0]
-                kwargs['poly'][i][..., 1] = kwargs['poly'][i][..., 1] / scale[1]
+            kwargs['poly'] = resize_poly(kwargs['poly'], scale)
 
         return kwargs
 
     def __repr__(self):
         return 'Resize(size={}, keep_ratio={}, short={})'.format(self.size, self.keep_ratio, self.short)
+
+
+@INTERNODE.register_module()
+class Rescale(Resize):
+    def __init__(self, ratio_range, mode='range', **kwargs):
+        if mode == 'range':
+            assert len(ratio_range) == 2 and ratio_range[0] <= ratio_range[1] and ratio_range[0] > 0
+        elif mode == 'value':
+            assert len(ratio_range) > 1 and min(ratio_range) > 0
+        else:
+            raise NotImplementedError
+
+        self.ratio_range = ratio_range
+        self.mode = mode
+
+    def calc_scale(self, size):
+        if self.mode == 'range':
+            scale = np.random.random_sample() * (self.ratio_range[1] - self.ratio_range[0]) + self.ratio_range[0]
+        elif self.mode == 'value':
+            scale = random.choice(self.ratio_range)
+        return scale, scale
+
+    def reverse(self, **kwargs):
+        return kwargs
+
+    def __repr__(self):
+        return 'Rescale(ratio_range={}, mode={})'.format(self.ratio_range, self.mode)
+
+
+@INTERNODE.register_module()
+class RescaleLimitedByBound(Rescale):
+    def __init__(self, ratio_range, long_size_bound, short_size_bound, mode='range', **kwargs):
+        super(RescaleLimitedByBound, self).__init__(ratio_range, mode, **kwargs)
+        assert long_size_bound >= short_size_bound
+
+        self.long_size_bound = long_size_bound
+        self.short_size_bound = short_size_bound
+
+    def calc_scale(self, size):
+        w, h = size
+        scale1 = 1
+
+        if max(h, w) > self.long_size_bound:
+            scale1 = self.long_size_bound * 1.0 / max(h, w)
+
+        scale2, _ = super(RescaleLimitedByBound, self).calc_scale(size)
+        scale = scale1 * scale2
+
+        if min(h, w) * scale <= self.short_size_bound:
+            scale = (self.short_size_bound + 10) * 1.0 / min(h, w)
+
+        return scale, scale
+
+    def reverse(self, **kwargs):
+        return kwargs
+
+    def __repr__(self):
+        return 'Rescale(ratio_range={}, mode={})'.format(self.ratio_range, self.mode)
 
 
 @INTERNODE.register_module()

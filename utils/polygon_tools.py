@@ -4,13 +4,22 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 
-def draw_polygon_without_label(img, polygons):
+def draw_polygon_without_label(img, polygons, polygons_meta=None):
     w, h = img.size
     l = math.sqrt(h * h + w * w)
     draw = ImageDraw.Draw(img)
 
-    for polygon in polygons:
-        draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 0, 0), width=2)
+    ignore_flags = [False] * len(polygons)
+    if polygons_meta:
+	    ind = polygons_meta.index('ignore_flag')
+	    if ind != -1:
+	    	ignore_flags = polygons_meta.values[ind]
+
+    for polygon, ignore_flag in zip(polygons, ignore_flags):
+    	if ignore_flag:
+    		draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 255, 0), width=2)
+    	else:
+        	draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 0, 0), width=2)
     return img
 
 

@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Meta(object):
-    def __init__(self, keys, values):
+    def __init__(self, keys=[], values=[]):
         assert isinstance(keys, list) and isinstance(values, list)
         assert isinstance(values[0], np.ndarray)
         assert len(keys) == len(values)
@@ -23,7 +23,10 @@ class Meta(object):
             self.values[i] = self.values[i][keep]
 
     def index(self, key):
-        return self.keys.index(key)
+        try:
+            return self.keys.index(key)
+        except:
+            return -1
 
     def get(self, key):
         return self.values[self.index(key)]
