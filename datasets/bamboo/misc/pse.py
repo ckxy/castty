@@ -89,6 +89,9 @@ class PSEEncode(BaseInternode):
 
         return data_dict
 
+    def __repr__(self):
+        return 'PSEEncode(shrink_ratio={}, max_shrink={})'.format(tuple(self.shrink_ratio), self.max_shrink)
+
 
 @INTERNODE.register_module()
 class PSECrop(BaseInternode):
@@ -162,6 +165,9 @@ class PSECrop(BaseInternode):
                 data_dict['poly_meta'].filter(keep)
 
         return data_dict
+
+    def __repr__(self):
+        return 'PSECrop(size={}, positive_sample_ratio={})'.format(self.size, self.positive_sample_ratio)
 
 
 

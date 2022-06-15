@@ -12,13 +12,18 @@ __all__ = ['ICDARDetReader']
 
 @READER.register_module()
 class ICDARDetReader(Reader):
-    def __init__(self, root, filter_texts=['###'], **kwargs):
+    def __init__(self, root, train=True, filter_texts=['###'], **kwargs):
         super(ICDARDetReader, self).__init__(**kwargs)
 
         self.root = root
         self.filter_texts = set(filter_texts)
-        self.img_root = os.path.join(self.root, 'ch4_training_images')
-        self.txt_root = os.path.join(self.root, 'ch4_training_localization_transcription_gt')
+        self.train = train
+        if train:
+            self.img_root = os.path.join(self.root, 'ch4_training_images')
+            self.txt_root = os.path.join(self.root, 'ch4_training_localization_transcription_gt')
+        else:
+            self.img_root = os.path.join(self.root, 'ch4_test_images')
+            self.txt_root = os.path.join(self.root, 'Challenge4_Test_Task1_GT')
 
         assert os.path.exists(self.img_root)
         assert os.path.exists(self.txt_root)
@@ -43,7 +48,7 @@ class ICDARDetReader(Reader):
         polys = []
         ignore_flags = []
         for l in lines:
-            l = l.split(',')
+            l = l.split(',')[:9]
             coords = l[:-1]
             if self.filter_texts and l[-1] in self.filter_texts:
                 ignore_flags.append(True)
@@ -65,4 +70,4 @@ class ICDARDetReader(Reader):
         )
 
     def __repr__(self):
-        return 'ICDARDetReader(root={}, filter_texts={}, {})'.format(self.root, list(self.filter_texts), super(ICDARDetReader, self).__repr__())
+        return 'ICDARDetReader(root={}, train={}, filter_texts={}, {})'.format(self.root, self.train, list(self.filter_texts), super(ICDARDetReader, self).__repr__())

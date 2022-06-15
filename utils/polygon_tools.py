@@ -1,3 +1,4 @@
+import cv2
 import math
 import colorsys
 import numpy as np
@@ -5,22 +6,31 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 def draw_polygon_without_label(img, polygons, polygons_meta=None):
-    w, h = img.size
-    l = math.sqrt(h * h + w * w)
-    draw = ImageDraw.Draw(img)
+	ignore_flags = [False] * len(polygons)
+	if polygons_meta:
+		ind = polygons_meta.index('ignore_flag')
+		if ind != -1:
+			ignore_flags = polygons_meta.values[ind]
 
-    ignore_flags = [False] * len(polygons)
-    if polygons_meta:
-	    ind = polygons_meta.index('ignore_flag')
-	    if ind != -1:
-	    	ignore_flags = polygons_meta.values[ind]
+	if isinstance(img, Image.Image):
+		w, h = img.size
+		l = math.sqrt(h * h + w * w)
+		draw = ImageDraw.Draw(img)
 
-    for polygon, ignore_flag in zip(polygons, ignore_flags):
-    	if ignore_flag:
-    		draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 255, 0), width=2)
-    	else:
-        	draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 0, 0), width=2)
-    return img
+		for polygon, ignore_flag in zip(polygons, ignore_flags):
+			if ignore_flag:
+				draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 255, 0), width=2)
+			else:
+				draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 0, 0), width=2)
+	else:
+		# img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+		for polygon, ignore_flag in zip(polygons, ignore_flags):
+			polygon = polygon.reshape((-1, 1, 2)).astype(np.int32)
+			if ignore_flag:
+				cv2.polylines(img, pts=[polygon], isClosed=True, color=(255, 255, 0), thickness=3)
+			else:
+				cv2.polylines(img, pts=[polygon], isClosed=True, color=(255, 0, 0), thickness=3)
+	return img
 
 
 def get_cw_order_form(polygon):

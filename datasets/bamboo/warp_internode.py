@@ -49,6 +49,3 @@ class WarpInternode(BaseInternode):
         # return 'WarpInternode()'
         return 'expand={}, ccs={}'.format(self.expand, self.ccs)
 
-    def rper(self):
-        return 'WarpInternode(ignore the below internodes)'
-

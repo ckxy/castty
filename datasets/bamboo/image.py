@@ -13,7 +13,7 @@ __all__ = ['Normalize', 'SwapChannels', 'RandomSwapChannels', 'GaussianBlur']
 
 @INTERNODE.register_module()
 class Normalize(BaseInternode):
-    def __init__(self, mean, std):
+    def __init__(self, mean, std, **kwargs):
         self.mean = mean
         self.std = std
 
@@ -43,7 +43,7 @@ class Normalize(BaseInternode):
 
 @INTERNODE.register_module()
 class SwapChannels(BaseInternode):
-    def __init__(self, swap):
+    def __init__(self, swap, **kwargs):
         self.swap = swap
 
         self.r_swap = []
@@ -70,23 +70,13 @@ class SwapChannels(BaseInternode):
 
 @INTERNODE.register_module()
 class RandomSwapChannels(BaseInternode):
-    def __init__(self, ch=3, p=1):
-        assert 0 < p <= 1 and ch > 1
-        self.p = p
-        self.ch = ch
-        self.perms = list(permutations(range(self.ch), self.ch))[1:]
+    def __init__(self, **kwargs):
+        self.perms = list(permutations(range(3), 3))[1:]
 
     def __call__(self, data_dict):
-        if random.random() < self.p:
-            swap = random.choice(self.perms)
-            data_dict['image'] = data_dict['image'][swap, ...]
+        swap = random.choice(self.perms)
+        data_dict['image'] = data_dict['image'][swap, ...]
         return data_dict
-
-    def __repr__(self):
-        return 'RandomSwapChannels(p={}, ch={})'.format(self.p, self.ch)
-
-    def rper(self):
-        return 'RandomSwapChannels(not available)'
 
 
 # class MultiScaleTest(BaseInternode):

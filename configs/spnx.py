@@ -457,33 +457,16 @@ test_data = dict(
     ),
     dataset=dict(
         max_size=-1,
-        reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015'),
+        reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015', use_pil=False),
         internodes=[
             dict(type='DataSource'),
             dict(type='Flip', horizontal=True, p=0.5),
             dict(type='WarpRotate', angle=(-10, 10), expand=True),
-            dict(type='Rescale', ratio_range=(0.5, 3), mode='range'),
             dict(type='RescaleLimitedByBound', long_size_bound=1280, short_size_bound=640, ratio_range=(0.5, 3), mode='range'),
-            # dict(type='EastRandomCrop'),
-            # dict(type='ResizeAndPadding', 
-            #     resize=dict(
-            #         type='Resize',
-            #         size=(640, 640),
-            #         keep_ratio=True,
-            #         short=False,
-            #     ),
-            #     padding=dict(
-            #         type='PaddingBySize',
-            #         size=(640, 640),
-            #         fill=(0, 0, 0), 
-            #         padding_mode='constant',
-            #         center=False
-            #     ),
-            #     one_way='forward'
-            # ),
             dict(type='PSEEncode'),
-            dict(type='EraseTags', tags=['poly', 'poly_meta']),
-            dict(type='PSECrop', size=(640, 640), positive_sample_ratio=0),
+            # dict(type='EraseTags', tags=['poly', 'poly_meta']),
+            dict(type='PSECrop', size=(640, 640), positive_sample_ratio=5.0 / 8.0),
+            dict(type='ToPILImage'),
             dict(type='ToTensor'),
         ],
     ),
