@@ -2,7 +2,7 @@ import math
 import random
 import numpy as np
 from PIL import Image
-from utils.bbox_tools import calc_iou1, xyxy2xywh
+from ...utils.bbox_tools import calc_iou1, xyxy2xywh
 from .base_internode import BaseInternode
 from .builder import INTERNODE
 from ..utils.common import get_image_size, is_pil, filter_bbox_by_center, clip_bbox, clip_poly

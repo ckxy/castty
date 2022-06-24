@@ -1,4 +1,4 @@
-from utils.registry import Registry, build_from_cfg
+from ...utils.registry import Registry, build_from_cfg
 
 INTERNODE = Registry('internode')
 

@@ -18,8 +18,8 @@ __all__ = ['Resize', 'Rescale', 'RescaleLimitedByBound', 'ResizeAndPadding']
 
 def resize_image(image, scale):
     w, h = get_image_size(image)
-    nw = math.ceil(scale[0] * w)
-    nh = math.ceil(scale[1] * h)
+    nw = int(scale[0] * w)
+    nh = int(scale[1] * h)
 
     if is_pil(image):
         image = image.resize((nw, nh), Image.BILINEAR)

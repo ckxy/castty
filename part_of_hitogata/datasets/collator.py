@@ -3,7 +3,7 @@ import random
 import numpy as np
 from copy import deepcopy
 from torch.utils.data._utils.collate import default_collate
-from utils.registry import Registry, build_from_cfg
+from ..utils.registry import Registry, build_from_cfg
 
 
 COLLATEFN = Registry('collatefn')
@@ -67,6 +67,8 @@ class CollateFN(object):
             if name in data_dict.keys():
                 tmp = data_dict.pop(name)
                 self.buffer[name].append(tmp)
+            else:
+                raise KeyError
         return data_dict
 
     def collate(self):

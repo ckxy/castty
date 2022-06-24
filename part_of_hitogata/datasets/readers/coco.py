@@ -2,7 +2,7 @@ import os
 import numpy as np
 from addict import Dict
 from PIL import Image
-from utils.bbox_tools import xywh2xyxy
+from ...utils.bbox_tools import xywh2xyxy
 from .reader import Reader
 from .builder import READER
 

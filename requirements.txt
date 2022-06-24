@@ -1,0 +1,6 @@
+torch
+torchvision
+addict
+opencv-python
+Pillow
+numpy

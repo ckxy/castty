@@ -92,7 +92,10 @@ def draw_bbox(img, bboxes, scores, class_ids, classes):
     w, h = img.size
     l = math.sqrt(h * h + w * w)
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("fonts/arial.ttf", int(l * 1e-3 * 25))
+    import os
+
+    font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
+    font = ImageFont.truetype(font_path, int(l * 1e-3 * 25))
 
     for i, bbox in enumerate(bboxes):
         coor = np.array(bbox, dtype=np.int32)

@@ -26,9 +26,6 @@ class EraseTags(BaseInternode):
     def __repr__(self):
         return 'EraseTags(tags={})'.format(tuple(self.tags))
 
-    def rper(self):
-        return 'EraseTags(not available)'
-
 
 @INTERNODE.register_module()
 class RenameTag(BaseInternode):
@@ -64,6 +61,3 @@ class CopyTag(BaseInternode):
 
     def __repr__(self):
         return 'CopyTag(src_tag={}, dst_tag={})'.format(self.src_tag, self.dst_tag)
-
-    def rper(self):
-        return 'CopyTag(not available)'

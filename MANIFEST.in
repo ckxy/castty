@@ -1,0 +1,2 @@
+graft part_of_hitogata/fonts
+recursive-include part_of_hitogata/fonts/ *.ttf
