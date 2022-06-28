@@ -2,23 +2,42 @@ from ..base_internode import BaseInternode
 from ...utils.common import get_image_size, is_pil, clip_poly
 from ..builder import INTERNODE
 import numpy as np
-from shapely.geometry import Polygon as plg
 import cv2
-import pyclipper
 import torch
 
+try:
+    import pyclipper
+    from shapely.geometry import Polygon as plg
+except ImportError:
+    pass
+try:
+    from .pse import pse
+except ImportError:
+    pass
 
-__all__ = ['PSEEncode', 'PSECrop']
+__all__ = ['PSEEncode', 'PSEDecode', 'PSECrop']
 
 
 @INTERNODE.register_module()
 class PSEEncode(BaseInternode):
-    def __init__(self, shrink_ratio=(0.5, 0.6, 0.7, 0.8, 0.9, 1.0), max_shrink=20, **kwargs):
+    def __init__(self, 
+        shrink_ratio=(0.5, 0.6, 0.7, 0.8, 0.9, 1.0), 
+        max_shrink=20,
+        mask_with_largest_kernel=False,
+        min_area=16,
+        threshold_point=0.7311,
+        threshold_area=0.93,
+        **kwargs):
         assert len(shrink_ratio) > 0
         assert max_shrink >= 0
 
         self.shrink_ratio = shrink_ratio
         self.max_shrink = max_shrink
+
+        self.mask_with_largest_kernel = mask_with_largest_kernel
+        self.min_area = min_area
+        self.threshold_point = threshold_point
+        self.threshold_area = threshold_area
 
     def generate_kernel(self, img_size, polys, shrink_ratio, max_shrink, ignore_flags):
         w, h = img_size
@@ -89,8 +108,66 @@ class PSEEncode(BaseInternode):
 
         return data_dict
 
+    def reverse(self, **kwargs):
+        if 'ocrdet_kernel' in kwargs.keys():
+            kernels = kwargs['ocrdet_kernel'].numpy()[::-1]
+
+            masks = kernels >= self.threshold_point
+            if self.mask_with_largest_kernel:
+                masks[1:] *= masks[:1]
+            masks = masks.astype(np.uint8)
+
+            agg_kernel = pse(masks, self.min_area)
+
+            polys = []
+            for n in np.unique(agg_kernel):
+                mask = agg_kernel == n
+                mean_score = np.mean(kernels[0][mask])
+                # print(n, type(n), np.sum(mask), mean_score)
+
+                if mean_score < self.threshold_area:
+                    continue
+
+                points = np.array(np.where(mask)[::-1]).transpose((1, 0))
+
+                if len(points) < self.min_area:
+                    continue
+
+                rect = cv2.minAreaRect(points)
+                bbox = cv2.boxPoints(rect)
+                polys.append(bbox)
+
+            kwargs['poly'] = polys
+        return kwargs
+
     def __repr__(self):
         return 'PSEEncode(shrink_ratio={}, max_shrink={})'.format(tuple(self.shrink_ratio), self.max_shrink)
+
+    def rper(self):
+        return 'PSEDecode(mask_with_largest_kernel={}, min_area={}, threshold_point={}, threshold_area={})'.format(self.mask_with_largest_kernel, self.min_area, self.threshold_point, self.threshold_area)
+
+
+@INTERNODE.register_module()
+class PSEDecode(PSEEncode):
+    def __init__(self, 
+        mask_with_largest_kernel=False,
+        min_area=16,
+        threshold_point=0.7311,
+        threshold_area=0.93,
+        **kwargs):
+        super(PSEDecode, self).__init__(
+            mask_with_largest_kernel=mask_with_largest_kernel,
+            min_area=min_area,
+            threshold_point=threshold_point,
+            threshold_area=threshold_area,
+            **kwargs
+        )
+
+    def __call__(self, data_dict):
+        return self.reverse(data_dict)
+
+    def __repr__(self):
+        return self.rper()
 
 
 @INTERNODE.register_module()

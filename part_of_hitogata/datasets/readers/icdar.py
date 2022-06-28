@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from addict import Dict
 from .reader import Reader
 from .builder import READER
 from ..utils.common import get_image_size
@@ -31,11 +30,11 @@ class ICDARDetReader(Reader):
         self.image_paths = sorted(os.listdir(self.img_root))
         self.txt_paths = sorted(os.listdir(self.txt_root))
 
-    def get_dataset_info(self):
-        return range(len(self.image_paths)), Dict(dict(type='ocrdet'))
-
-    def get_data_info(self, index):
-        pass
+        self._info = dict(
+            forcat=dict(
+                type='ocrdet',
+            )
+        )
 
     def __call__(self, index):
         path = os.path.join(self.img_root, self.image_paths[index])
@@ -68,6 +67,9 @@ class ICDARDetReader(Reader):
             poly=polys,
             poly_meta=meta
         )
+
+    def __len__(self):
+        return len(self.image_paths)
 
     def __repr__(self):
         return 'ICDARDetReader(root={}, train={}, filter_texts={}, {})'.format(self.root, self.train, list(self.filter_texts), super(ICDARDetReader, self).__repr__())

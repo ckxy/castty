@@ -122,6 +122,8 @@ class PaddingBySize(BaseInternode):
             h, w = int(h), int(w)
 
             left, _, top, _ = self.calc_padding(w, h)
+        else:
+            return kwargs
 
         if 'bbox' in kwargs.keys():
             kwargs['bbox'][:, 0] -= left
@@ -223,6 +225,8 @@ class PaddingByStride(BaseInternode):
             h, w = int(h), int(w)
 
             left, _, top, _ = self.calc_padding(w, h)
+        else:
+            return kwargs
 
         if 'bbox' in kwargs.keys():
             kwargs['bbox'][:, 0] -= left

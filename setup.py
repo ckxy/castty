@@ -1,10 +1,9 @@
 import os
 import logging
-
-from setuptools import (
-    setup,
-    find_packages
-)
+from Cython.Build import cythonize
+import numpy
+from setuptools import setup, find_packages
+from distutils.core import Extension
 
 logger = logging.getLogger()
 logging.basicConfig(format='%(levelname)s - %(message)s')
@@ -31,4 +30,15 @@ if __name__ == '__main__':
         install_requires=get_requirements(),
         include_package_data=True,
         # python_requires='~=3.7',
+        ext_modules=cythonize(Extension(
+            'part_of_hitogata.datasets.bamboo.misc.pse.pse',
+            sources=['part_of_hitogata/datasets/bamboo/misc/pse/pse.pyx'],
+            language='c++',
+            include_dirs=[numpy.get_include()],
+            library_dirs=[],
+            libraries=[],
+            extra_compile_args=['-O3'],
+            extra_link_args=[]
+            )
+        )
     )

@@ -79,46 +79,6 @@ class RandomSwapChannels(BaseInternode):
         return data_dict
 
 
-# class MultiScaleTest(BaseInternode):
-#     def __init__(self, **kwargs):
-#         super(MultiScaleTest, self).__init__(**kwargs)
-#         if self.is_reverse:
-#             self.ori_size = kwargs['ori_size']
-#             return
-
-#         self.sizes = kwargs['sizes']
-#         assert len(self.sizes) > 1
-#         self.sizes = tuple(sorted(self.sizes))
-
-#     def __call__(self, data_dict):
-#         data_dict['test_sizes'] = self.sizes
-#         return data_dict
-
-#     def reverse(self, **kwargs):
-#         # print(kwargs.keys())
-#         s = None
-#         if 'test_size' in kwargs.keys():
-#             s = kwargs['test_size']
-#         if 'image' in kwargs.keys():
-#             s = kwargs['image'].shape[-1]
-#         assert s is not None and isinstance(s, int)
-        
-#         if 'image' in kwargs.keys():
-#             kwargs['image'] = interpolate(kwargs['image'].unsqueeze(0), size=(self.ori_size, self.ori_size), mode='bilinear', align_corners=False)[0]
-#         if 'bbox' in kwargs.keys():
-#             kwargs['bbox'][:, :4] = kwargs['bbox'][:, :4] / s * self.ori_size
-#         #     print(kwargs['bbox'][:, :4])
-#         # exit()
-
-#         return kwargs
-
-#     def __repr__(self):
-#         if self.is_reverse:
-#             return 'MultiScaleTest(ori_size={})'.format(self.ori_size)
-#         else:
-#             return 'MultiScaleTest(sizes={})'.format(self.sizes)
-
-
 @INTERNODE.register_module()
 class GaussianBlur(BaseInternode):
     def __init__(self, radius, p=1):
@@ -139,25 +99,3 @@ class GaussianBlur(BaseInternode):
             return 'GaussianBlur(p={}, random radius)'.format(self.p)
         else:
             return 'GaussianBlur(p={}, radius={})'.format(self.p, self.radius)
-
-
-# class BlendingWithMask(BaseInternode):
-#     def __init__(self, **kwargs):
-#         super(BlendingWithMask, self).__init__(**kwargs)
-#         if self.is_reverse:
-#             return
-
-#         self.alpha = kwargs['alpha']
-#         assert 0 < self.alpha < 1
-
-#     def __call__(self, data_dict):
-#         alpha = random.uniform(0, self.alpha)
-#         mask = Image.new(data_dict['image'].mode, data_dict['image'].size, 0)
-#         data_dict['image'] = Image.blend(data_dict['image'], mask, alpha)
-#         return data_dict
-
-#     def __repr__(self):
-#         if self.is_reverse:
-#             return 'BlendingWithMask(not available)'
-#         else:
-#             return 'BlendingWithMask(alpha={})'.format(self.alpha)

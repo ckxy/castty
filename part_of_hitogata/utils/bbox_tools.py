@@ -1,4 +1,5 @@
-# import cv2
+import os
+import cv2
 import math
 import torch
 import random
@@ -88,56 +89,47 @@ def draw_bbox(img, bboxes, scores, class_ids, classes):
     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
     # random.shuffle(colors)
 
-    img = img.convert('RGB')
-    w, h = img.size
-    l = math.sqrt(h * h + w * w)
-    draw = ImageDraw.Draw(img)
-    import os
+    if isinstance(img, Image.Image):
+        w, h = img.size
+        l = math.sqrt(h * h + w * w)
 
-    font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
-    font = ImageFont.truetype(font_path, int(l * 1e-3 * 25))
+        draw = ImageDraw.Draw(img)
 
-    for i, bbox in enumerate(bboxes):
-        coor = np.array(bbox, dtype=np.int32)
-        score = scores[i]
-        class_ind = int(class_ids[i])
-        bbox_color = colors[class_ind]
-        draw.rectangle(tuple(coor), outline=bbox_color, width=max(1, int(l / 600)))
+        font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
+        font = ImageFont.truetype(font_path, int(l * 1e-3 * 25))
 
-        bbox_text = '{}: {:.2f}'.format(classes[class_ind], score)
-        t_size = draw.textsize(bbox_text, font)
-        text_box = (coor[0], coor[1] - t_size[1], coor[0] + t_size[0], coor[1])
-        draw.rectangle(text_box, fill=bbox_color)
-        draw.text(text_box[:2], bbox_text, fill=(0, 0, 0), font=font)
+        for i, bbox in enumerate(bboxes):
+            coor = np.array(bbox, dtype=np.int32)
+            score = scores[i]
+            class_ind = int(class_ids[i])
+            bbox_color = colors[class_ind]
+            draw.rectangle(tuple(coor), outline=bbox_color, width=max(1, int(l / 600)))
+
+            bbox_text = '{}: {:.2f}'.format(classes[class_ind], score)
+            t_size = draw.textsize(bbox_text, font)
+            text_box = (coor[0], coor[1] - t_size[1], coor[0] + t_size[0], coor[1])
+            draw.rectangle(text_box, fill=bbox_color)
+            draw.text(text_box[:2], bbox_text, fill=(0, 0, 0), font=font)
+    else:
+        h = img.shape[0]
+        w = img.shape[1]
+        l = math.sqrt(h * h + w * w)
+
+        for i, bbox in enumerate(bboxes):
+            coor = np.array(bbox, dtype=np.int32)
+            score = scores[i]
+            class_ind = int(class_ids[i])
+            bbox_color = colors[class_ind]
+            cv2.rectangle(img, (coor[0], coor[1]), (coor[2], coor[3]), bbox_color, max(1, int(l / 600)))
+
+            bbox_text = '{}: {:.2f}'.format(classes[class_ind], score)
+            text_loc = (int(coor[0]), int(coor[1]))
+            t_size = cv2.getTextSize(bbox_text, cv2.FONT_HERSHEY_SIMPLEX, 7e-4 * l , max(1, int(l / 600)))[0]
+            text_loc_lt = (text_loc[0], text_loc[1] - t_size[1])
+            text_loc_rd =  (text_loc[0] + t_size[0], text_loc[1])
+            cv2.rectangle(img, text_loc_lt, text_loc_rd, bbox_color, -1)
+            cv2.putText(img, bbox_text, text_loc, cv2.FONT_HERSHEY_SIMPLEX, 7e-4 * l, (0, 0, 0), max(1, int(l / 600)))
     return img
-
-
-# def draw_bbox(img, bboxes, classes):
-#     num_classes = len(classes)
-    
-#     hsv_tuples = [(1.0 * x / num_classes, 1., 1.) for x in range(num_classes)]
-#     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
-#     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
-#     # random.shuffle(colors)
-
-#     w, h = img.size
-#     l = math.sqrt(h * h + w * w)
-#     draw = ImageDraw.Draw(img)
-#     font = ImageFont.truetype("fonts/arial.ttf", int(l * 1e-3 * 25))
-
-#     for bbox in bboxes:
-#         coor = np.array(bbox[:4], dtype=np.int32)
-#         score = bbox[4]
-#         class_ind = int(bbox[5])
-#         bbox_color = colors[class_ind]
-#         draw.rectangle(tuple(coor), outline=bbox_color, width=max(1, int(l / 600)))
-
-#         bbox_text = '{}: {:.2f}'.format(classes[class_ind], score)
-#         t_size = draw.textsize(bbox_text, font)
-#         text_box = (coor[0], coor[1] - t_size[1], coor[0] + t_size[0], coor[1])
-#         draw.rectangle(text_box, fill=bbox_color)
-#         draw.text(text_box[:2], bbox_text, fill=(0, 0, 0), font=font)
-#     return img
 
 
 def calc_diou(boxes1, boxes2):

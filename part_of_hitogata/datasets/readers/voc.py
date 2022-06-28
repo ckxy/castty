@@ -2,7 +2,6 @@ import os
 import ntpath
 import numpy as np
 from PIL import Image
-from addict import Dict
 from scipy.io import loadmat
 from .reader import Reader
 from .utils import read_image_paths
@@ -50,14 +49,12 @@ class VOCReader(Reader):
         else:
             self.to_remove = 0
 
-    def get_dataset_info(self):
-        return range(len(self.image_paths)), Dict(dict(type='det', classes=self.classes))
-
-    def get_data_info(self, index):
-        img = Image.open(self.image_paths[index])
-        w, h = img.size
-        bbox, _ = self.read_bbox_voc(index)
-        return dict(h=h, w=w, bbox=bbox)
+        self._info = dict(
+            forcat=dict(
+                type='det',
+                classes=self.classes
+            )
+        )
 
     @staticmethod
     def read_bbox_voc(xml_path, classes, filter_difficult=False, to_remove=0):
@@ -103,7 +100,6 @@ class VOCReader(Reader):
 
     def __call__(self, index):
         img = self.read_image(self.image_paths[index])
-        # w, h = img.size
         w, h = get_image_size(img)
         bbox, cla, difficult = self.read_bbox_voc(self.label_paths[index], self.classes, self.filter_difficult, self.to_remove)
         path = self.image_paths[index]
@@ -116,6 +112,9 @@ class VOCReader(Reader):
             bbox=bbox,
             bbox_meta=bbox_meta
         )
+
+    def __len__(self):
+        return len(self.image_paths)
 
     def __repr__(self):
         return 'VOCReader(root={}, split={}, classes={}, filter_difficult={}, to_remove={}, {})'.format(self.root, self.split, self.classes, self.filter_difficult, self.to_remove, super(VOCReader, self).__repr__())

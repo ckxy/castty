@@ -1,10 +1,10 @@
 import os
 import numpy as np
-from addict import Dict
 from PIL import Image
 from ...utils.bbox_tools import xywh2xyxy
 from .reader import Reader
 from .builder import READER
+from ..utils.structures import Meta
 
 
 __all__ = ['COCOAPIReader']
@@ -49,15 +49,14 @@ class COCOAPIReader(Reader):
         self.img_ids = sorted(self.coco_api.imgs.keys())
         self.data_info = self.coco_api.loadImgs(self.img_ids)
 
-    def get_dataset_info(self):
-        return range(len(self.img_ids)), Dict({'classes': self.classes, 'api': self.coco_api, 'ids': self.cat_ids})
-
-    def get_data_info(self, index):
-        img_info = self.data_info[index]
-        anno = self.read_annotations(index)
-        bbox = np.concatenate([anno['bboxes'], anno['labels'][..., np.newaxis]], axis=1)
-
-        return dict(h=img_info['height'], w=img_info['width'], bbox=bbox)
+        self._info = dict(
+            forcat=dict(
+                type='det',
+                classes=self.classes
+            ),
+            api=self.coco_api,
+            ids=self.cat_ids
+        )
 
     def read_annotations(self, idx):
         img_id = self.img_ids[idx]
@@ -118,34 +117,30 @@ class COCOAPIReader(Reader):
         return annotation
 
     def __call__(self, index):
-        # index = data_dict
-
         img_info = self.data_info[index]
-        # id_ = img_info['id']
-        # if not isinstance(id_, int):
-        #     raise TypeError('Image id must be int.')
 
         path = os.path.join(self.img_root, img_info['file_name'])
-        # img = Image.open(path).convert('RGB')
         img = self.read_image(path)
         w, h = img_info['width'], img_info['height']
 
         anno = self.read_annotations(index)
-        # print(path)
-        # print(anno)
-        # np.savetxt('a', anno['bboxes'])
-        # exit()
+
         bbox = np.concatenate([anno['bboxes'], anno['labels'][..., np.newaxis]], axis=1)
-        # difficult = np.zeros(bbox.shape[0])
-        # return {'image': img, 'ori_size': np.array([h, w]).astype(np.float32), 'path': path, 'bbox': np.concatenate([bbox, np.full((len(bbox), 1), 1).astype(np.float32)], axis=1), 'bbox_ignore': anno['bboxes_ignore'], 'id': img_info['id']}
+
+        bbox_meta = Meta(['class_id', 'score'], [anno['labels'], np.ones(len(bbox)).astype(np.float32)])
+
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
             path=path,
-            bbox=np.concatenate([bbox, np.full((len(bbox), 1), 1).astype(np.float32)], axis=1),
-            bbox_ignore=anno['bboxes_ignore'], 
-            id=img_info['id']
+            bbox=anno['bboxes'],
+            bbox_meta=bbox_meta,
+            # bbox_ignore=anno['bboxes_ignore'], 
+            coco_id=img_info['id']
         )
+
+    def __len__(self):
+        return len(self.img_ids)
 
     def __repr__(self):
         return 'COCOAPIReader(set_path={}, img_root={}, classes={}, {})'.format(self.set, self.img_root, self.classes, super(COCOAPIReader, self).__repr__())

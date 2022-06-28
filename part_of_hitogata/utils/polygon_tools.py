@@ -5,12 +5,9 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 
-def draw_polygon_without_label(img, polygons, polygons_meta=None):
-	ignore_flags = [False] * len(polygons)
-	if polygons_meta:
-		ind = polygons_meta.index('ignore_flag')
-		if ind != -1:
-			ignore_flags = polygons_meta.values[ind]
+def draw_polygon_without_label(img, polygons, ignore_flags=None):
+	if ignore_flags is None:
+		ignore_flags = [False] * len(polygons)
 
 	if isinstance(img, Image.Image):
 		w, h = img.size
@@ -23,7 +20,6 @@ def draw_polygon_without_label(img, polygons, polygons_meta=None):
 			else:
 				draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 0, 0), width=2)
 	else:
-		# img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 		for polygon, ignore_flag in zip(polygons, ignore_flags):
 			polygon = polygon.reshape((-1, 1, 2)).astype(np.int32)
 			if ignore_flag:

@@ -1,5 +1,4 @@
 from .reader import Reader
-from addict import Dict
 from .builder import READER, build_reader
 
 
@@ -8,22 +7,26 @@ __all__ = ['CatReader']
 
 @READER.register_module()
 class CatReader(Reader):
-    def __init__(self, internodes):
-        assert len(internodes) > 0
+    def __init__(self, internodes, use_pil=True, **kwargs):
+        assert len(internodes) > 1
 
         self.internodes = []
         for cfg in internodes:
+            cfg['use_pil'] = use_pil
             self.internodes.append(build_reader(cfg))
             if len(self.internodes) > 1:
-                assert self.internodes[-2].get_dataset_info()[1] == self.internodes[-1].get_dataset_info()[1]
+                assert self.internodes[-2].info['forcat'] == self.internodes[-1].info['forcat']
 
         self.groups = [0]
         for i in self.internodes:
-            line, _ = i.get_dataset_info()
-            self.groups.append(len(line))
+            self.groups.append(len(i))
 
         for i in range(len(self.groups) - 1):
             self.groups[i + 1] += self.groups[i]
+
+        self._info = dict()
+        for i in self.internodes:
+            self._info.update(i.info)
 
     def get_offset(self, index):
         for i in range(len(self.groups) - 1):
@@ -34,23 +37,13 @@ class CatReader(Reader):
                 raise ValueError
         return index, i
 
-    def get_dataset_info(self):
-        lines = 0
-        infos = dict()
-        for i in self.internodes:
-            line, info = i.get_dataset_info()
-            infos.update(info)
-            lines += len(line)
-        return range(lines), Dict(infos)
-
-    def get_data_info(self, index):
-        offset, gid = self.get_offset(index)
-        return self.internodes[gid].get_data_info(offset)
-
     def __call__(self, index):
         offset, gid = self.get_offset(index)
         res = self.internodes[gid](offset)
         return res
+
+    def __len__(self):
+        return self.groups[-1]
 
     def __repr__(self):
         res = 'CatReader(\n'

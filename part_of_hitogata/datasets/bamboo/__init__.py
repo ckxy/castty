@@ -8,6 +8,7 @@ from .data_source import *
 from .erase import *
 from .flip import *
 from .image import *
+from .label import *
 from .multi import *
 from .pad import *
 from .resize import *

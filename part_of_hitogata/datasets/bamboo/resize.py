@@ -96,6 +96,8 @@ class Resize(BaseInternode):
             h, w = int(h), int(w)
             scale = self.calc_scale((w, h))
             scale = (1 / scale[0], 1 / scale[1])
+        else:
+            return kwargs
 
         if 'bbox' in kwargs.keys():
             kwargs['bbox'] = resize_bbox(kwargs['bbox'], scale)

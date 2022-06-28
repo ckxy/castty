@@ -35,7 +35,7 @@ class DataManager(object):
             self.cf = None
 
         self.info = self.dataset.info
-        self.info['oobmab'] = self.dataset.bamboo.reverse
+        self.oobmab = self.dataset.bamboo.reverse
         # print(self.dataset.bamboo.rper)
         # exit()
 

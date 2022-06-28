@@ -5,6 +5,8 @@ from PIL import Image
 from .reader import Reader
 from .utils import is_image_file
 from .builder import READER
+from ..utils.common import get_image_size
+
 
 __all__ = ['ImageFolderReader']
 
@@ -33,28 +35,28 @@ class ImageFolderReader(Reader):
 
         assert len(self.samples) > 0
 
-    def get_dataset_info(self):
-        return range(len(self.samples)), Dict({'classes': self.classes})
-
-    def get_data_info(self, index):
-        img = Image.open(self.samples[index][0])
-        w, h = img.size
-        return dict(h=h, w=w)
+        self._info = dict(
+            forcat=dict(
+                type='cls',
+                classes=self.classes
+            )
+        )
 
     def __call__(self, index):
-        # index = data_dict
-        # img = Image.open(self.samples[index][0]).convert('RGB')
         img = self.read_image(self.samples[index][0])
         label = self.samples[index][1]
-        w, h = img.size
+        w, h = get_image_size(img)
         path = self.samples[index][0]
-        # return {'image': img, 'ori_size': np.array([h, w]).astype(np.float32), 'path': path, 'label': label}
+
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
             path=path,
             label=label
         )
+
+    def __len__(self):
+        return len(self.samples)
 
     def __repr__(self):
         return 'ImageFolderReader(root={}, classes={}, {})'.format(self.root, tuple(self.classes), super(ImageFolderReader, self).__repr__())

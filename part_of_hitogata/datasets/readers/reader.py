@@ -8,17 +8,15 @@ class Reader(object):
         else:
             self.use_pil = True
 
+    @property
+    def info(self):
+        return self._info
+
     def __call__(self, index):
         raise NotImplementedError
 
     def __repr__(self):
         return 'use_pil={}'.format(self.use_pil)
-
-    def get_dataset_info(self):
-        raise NotImplementedError
-
-    def get_data_info(self, index):
-        raise NotImplementedError
 
     def read_image(self, path):
         if self.use_pil:

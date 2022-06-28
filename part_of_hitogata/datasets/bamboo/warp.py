@@ -233,6 +233,8 @@ class WarpResize(WarpInternode):
             # print(M, 'M2', type(M))
             # print(np.matrix(M).I)
             M = np.array(np.matrix(M).I)
+        else:
+            return kwargs
 
         if 'bbox' in kwargs.keys():
             wargs['bbox'] = warp_bbox(kwargs['bbox'], M)

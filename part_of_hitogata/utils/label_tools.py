@@ -1,7 +1,9 @@
+import os
+import cv2
 import math
 import torch
 import numpy as np
-from utils.utils import get_concat_h
+from .utils import get_concat_h
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -28,11 +30,6 @@ def draw_label(img, labels, classes, scores=None):
     else:
         scs = None
 
-    w, h = img.size
-    l = math.sqrt(h * h + w * w)
-    draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("fonts/arial.ttf", int(l * 5e-2))
-
     text = ''
     for i, label in enumerate(labs):
         text += '{}'.format(classes[label])
@@ -40,10 +37,33 @@ def draw_label(img, labels, classes, scores=None):
             text += ': {:.3f}'.format(scs[i])
         text += '\n'
     text = text[:-1]
+    # text += '\nDog'
 
-    t_size = draw.multiline_textsize(text, font)
-    draw.rectangle((0, 0, t_size[0], t_size[1]), fill=(0, 255, 255))
-    draw.multiline_text((0, 0), text, fill=(0, 0, 0), font=font)
+    if isinstance(img, Image.Image):
+        w, h = img.size
+        l = math.sqrt(h * h + w * w)
+        draw = ImageDraw.Draw(img)
+        font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
+        font = ImageFont.truetype(font_path, int(l * 5e-2))
+
+        t_size = draw.multiline_textsize(text, font)
+        draw.rectangle((0, 0, t_size[0], t_size[1]), fill=(0, 255, 255))
+        draw.multiline_text((0, 0), text, fill=(0, 0, 0), font=font)
+    else:
+        h = img.shape[0]
+        w = img.shape[1]
+        l = math.sqrt(h * h + w * w)
+
+        texts = text.split('\n')
+
+        lt = (0, 0)
+        for t in texts:
+            t_size = cv2.getTextSize(t, cv2.FONT_HERSHEY_SIMPLEX, 14e-4 * l , max(1, int(l / 600)))[0]
+            print(t_size)
+            rb = (lt[0] + t_size[0], lt[1] + t_size[1])
+            cv2.rectangle(img, lt, rb, (0, 255, 255), -1)
+            cv2.putText(img, t, (lt[0], lt[1] + t_size[1]), cv2.FONT_HERSHEY_SIMPLEX, 14e-4 * l, (0, 0, 0), max(1, int(l / 600)))
+            lt = (lt[0], lt[1] + t_size[1] + 1)
 
     return img
 
@@ -95,7 +115,7 @@ def calc_accuracy(output, target, topk=(1,)):
         for k in topk:
             correct_k = correct[:k].view(-1).float().sum(0)
             res.append(correct_k.mul_(100.0 / batch_size).item())
-        return res
+    return res
 
 
 def calc_mean_accuracy(pred, target):
@@ -103,16 +123,11 @@ def calc_mean_accuracy(pred, target):
     with torch.no_grad():
         batch_size, num_groups = target.shape
 
-        # print(pred)
-        # print(target)
         correct = pred.eq(target)
-        # print(correct)
         correct = correct.view(-1).float().sum(0)
-        # print(correct)
         macc = correct.mul_(100.0 / (batch_size * num_groups)).item()
-        # print(macc)
 
-        return macc
+    return macc
 
 
 def logits_decode(output, topk=(1,), score=False):

@@ -32,16 +32,16 @@ class LVISAPIReader(Reader):
         # Ensure that the category list is sorted by id
         lvis_categories = sorted(LVIS_V1_CATEGORIES, key=lambda x: x["id"])
         self.thing_classes = [k["synonyms"][0] for k in lvis_categories]
-        self.meta = {"thing_classes": self.thing_classes}
+        self.meta = dict(thing_classes=self.thing_classes)
 
         self.data_lines = self.load_lvis_json()
 
-    def get_dataset_info(self):
-        return range(len(self.data_lines)), Dict({'classes': self.thing_classes})
-
-    def get_data_info(self, index):
-        data_line = self.data_lines[index]
-        return dict(h=data_line['ori_size'][0], w=data_line['ori_size'][1], bbox=data_line['bbox'])
+        self._info = dict(
+            forcat=dict(
+                type='det',
+                classes=self.thing_classes
+            ),
+        )
 
     def load_lvis_json(self):
         """
@@ -149,6 +149,9 @@ class LVISAPIReader(Reader):
         data_line['bbox_meta'] = Meta(['class_id', 'score'], [data_line['bbox'][..., 4], np.ones(len(data_line['bbox']))])
         data_line['bbox'] = data_line['bbox'][..., :4]
         return data_line
+
+    def __len__(self):
+        return len(self.data_lines)
 
     def __repr__(self):
         return 'LVISAPIReader(set_path={}, img_root={}, {})'.format(self.set, self.img_root, super(LVISAPIReader, self).__repr__())
