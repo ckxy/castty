@@ -7,16 +7,17 @@ import ntpath
 import random
 from PIL import Image
 import numpy as np
-from configs import load_config, load_config_far_away
 from tqdm import tqdm
-from visualization.visualizer import Visualizer
+
+from part_of_hitogata.configs import load_config, load_config_far_away
+from part_of_hitogata.visualization.toto import Toto
 
 
 if __name__ == '__main__':
     np.set_printoptions(precision=4, suppress=True)
 
-    cfg = load_config('spnx')
-    vis = Visualizer(cfg)
+    cfg = load_config_far_away('configs/poly.py')
+    vis = Toto(cfg)
 
     # Progress
     # pbar_epoch = tqdm(range(5))
@@ -35,6 +36,7 @@ if __name__ == '__main__':
     # exit()
 
     # Line
+    print('Line')
     for i in range(5):
         for j in range(10):
             if (10 * i + j) % 2 == 0:
@@ -73,7 +75,7 @@ if __name__ == '__main__':
         ),
     )
     vis.visualize(vis_dict, 0, 0)
-    exit()
+    # exit()
 
     # Image
     # imgs = [Image.open('imgs/{}.JPEG'.format(i)).convert('RGB') for i in range(6)]
@@ -91,6 +93,8 @@ if __name__ == '__main__':
     # vis.visualize(vis_dict, 0, 0)
 
     # Text
+    print('Text')
+
     text = 'a\nbb\nccc'
 
     vis_dict = dict(
@@ -105,11 +109,13 @@ if __name__ == '__main__':
     vis.visualize(vis_dict, 0, 0)
 
     # Heatmap
+    print('Heatmap')
+
     vis_dict = dict(
         heatmap=dict(
             heat=dict(
                 x=np.random.rand(256, 256),
-                # save=True,
+                save=True,
                 opts=dict(title='heat'),
             ),
         ),
@@ -117,11 +123,13 @@ if __name__ == '__main__':
     vis.visualize(vis_dict, 0, 0)
 
     # Histogram
+    print('Histogram')
+
     vis_dict = dict(
         histogram=dict(
             hist=dict(
                 x=np.random.rand(1000),
-                # save=True,
+                save=True,
                 opts=dict(title='hist', numbins=20),
             ),
         ),
@@ -129,11 +137,13 @@ if __name__ == '__main__':
     vis.visualize(vis_dict, 0, 0)
 
     # Bar
+    print('Bar')
+
     vis_dict = dict(
         bar=dict(
             counts=dict(
                 x=np.random.rand(20),
-                # save=True,
+                save=True,
                 opts=dict(title='counts'),
             ),
         ),
@@ -141,6 +151,8 @@ if __name__ == '__main__':
     vis.visualize(vis_dict, 0, 0)
 
     # Scatter
+    print('Scatter')
+
     vis_dict = dict(
         scatter=dict(
             s=dict(
@@ -154,6 +166,8 @@ if __name__ == '__main__':
     vis.visualize(vis_dict, 0, 0)
 
     # Boxplot
+    print('Boxplot')
+
     for i in range(5):
         for j in range(10):
             if (10 * i + j) % 2 == 0:
@@ -182,6 +196,7 @@ if __name__ == '__main__':
     vis.visualize(vis_dict, 0, 0)
 
     # Wafer
+    print('Wafer')
     vis_dict = dict(
         wafer=dict(
             w=dict(
@@ -194,6 +209,8 @@ if __name__ == '__main__':
     vis.visualize(vis_dict, 0, 0)
 
     # StackedLines
+    print('Stackedlines')
+
     for i in range(5):
         for j in range(10):
             if (10 * i + j) % 2 == 0:
@@ -221,5 +238,6 @@ if __name__ == '__main__':
     )
     vis.visualize(vis_dict, 0, 0)
 
+    print('saving')
     s = vis.get_vis_state_dict()
     torch.save(s, 's.pth')

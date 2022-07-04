@@ -3,7 +3,7 @@ import math
 import logging
 import numpy as np
 from PIL import Image
-from visualization.progress import decode_format_dict
+from .progress import decode_format_dict
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -204,12 +204,9 @@ class VISHeatmap(VIS):
                 vis.heatmap(X=v['x'], win=k, opts=v['opts'])
 
     def matplotlib_visualize(self, k, epoch, total_steps):
-        pass
-        # fig, ax = plt.subplots(1, 1)
-        # c = ax.pcolor(v['x'])
-        # fig.colorbar(c, ax=ax)
-        # plt.savefig(os.path.join(self.save_path, 'heatmap', '{}_{:0>6d}_{:0>9d}.png'.format(k, epoch, total_steps)))
-        # plt.close()
+        plt.imshow(self.data[k]['x'], cmap='viridis', interpolation='nearest')
+        plt.savefig(os.path.join(self.save_path, '{}_{:0>6d}_{:0>9d}.png'.format(k, epoch, total_steps)))
+        plt.close()
 
 
 class VISHistogram(VIS):
@@ -230,7 +227,9 @@ class VISHistogram(VIS):
                 vis.histogram(X=v['x'], win=k, opts=v['opts'])
 
     def matplotlib_visualize(self, k, epoch, total_steps):
-        pass
+        plt.hist(self.data[k]['x'], self.data[k]['opts'].get('numbins', 30), density=False)
+        plt.savefig(os.path.join(self.save_path, '{}_{:0>6d}_{:0>9d}.png'.format(k, epoch, total_steps)))
+        plt.close()
 
 
 class VISBar(VIS):
@@ -429,7 +428,7 @@ class VISStackedLines(VIS):
         plt.close()
 
 
-class Visualizer(object):
+class Toto(object):
     def __init__(self, cfg):
         assert not cfg.test
 
@@ -451,8 +450,7 @@ class Visualizer(object):
 
         if self.use_visdom:
             import visdom
-            if '_' in cfg.general.experiment_name:
-                print('实验名\"{}\"中有下划线，导致visdom中的本实验的enviornment被分为两级'.format(cfg.general.experiment_name))
+
             username = cfg.visualizer.visdom.username if cfg.visualizer.visdom.username else None
             password = cfg.visualizer.visdom.password if cfg.visualizer.visdom.password else None
             self.vis = visdom.Visdom(server=cfg.visualizer.visdom.server,
