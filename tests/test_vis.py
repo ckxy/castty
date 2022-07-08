@@ -20,20 +20,18 @@ if __name__ == '__main__':
     vis = Toto(cfg)
 
     # Progress
-    # pbar_epoch = tqdm(range(5))
-    # for i in pbar_epoch:
-    #     pbar_step = tqdm(range(10), leave=False)
-    #     for j in pbar_step:
-    #         time.sleep(0.1)
-    #         progress_data = dict(
-    #             progress=dict(
-    #                 epoch=(pbar_epoch.format_dict, ''),
-    #                 step=(pbar_step.format_dict, 'train'),
-    #             ),
-    #         )
-    #         vis.visualize(progress_data, i, 10 * i + j)
-
-    # exit()
+    pbar_epoch = tqdm(range(5))
+    for i in pbar_epoch:
+        pbar_step = tqdm(range(10), leave=False)
+        for j in pbar_step:
+            time.sleep(0.1)
+            progress_data = dict(
+                progress=dict(
+                    epoch=(pbar_epoch.format_dict, ''),
+                    step=(pbar_step.format_dict, 'train'),
+                ),
+            )
+            vis.visualize(progress_data, i, 10 * i + j)
 
     # Line
     print('Line')
@@ -75,22 +73,21 @@ if __name__ == '__main__':
         ),
     )
     vis.visualize(vis_dict, 0, 0)
-    # exit()
 
     # Image
-    # imgs = [Image.open('imgs/{}.JPEG'.format(i)).convert('RGB') for i in range(6)]
+    imgs = [Image.new('RGB', (256, 256), color=(255 - i * 20, 0, i * 20)) for i in range(6)]
 
-    # vis_dict = dict(
-    #     image=dict(
-    #         img=dict(
-    #             images=imgs,
-    #             nrow=3,
-    #             save=True,
-    #             opts=dict(title='img'),
-    #         ),
-    #     ),
-    # )
-    # vis.visualize(vis_dict, 0, 0)
+    vis_dict = dict(
+        image=dict(
+            img=dict(
+                images=imgs,
+                nrow=3,
+                save=True,
+                opts=dict(title='img'),
+            ),
+        ),
+    )
+    vis.visualize(vis_dict, 0, 0)
 
     # Text
     print('Text')
@@ -142,9 +139,12 @@ if __name__ == '__main__':
     vis_dict = dict(
         bar=dict(
             counts=dict(
-                x=np.random.rand(20),
+                x=np.random.rand(3),
                 save=True,
-                opts=dict(title='counts'),
+                opts=dict(
+                    title='counts',
+                    legend=['The Netherlands', 'France', 'United States'],
+                ),
             ),
         ),
     )
@@ -158,7 +158,7 @@ if __name__ == '__main__':
             s=dict(
                 x=np.random.rand(10, 2),
                 y=np.ones(10),
-                # save=True,
+                save=True,
                 opts=dict(title='s'),
             ),
         ),
@@ -176,7 +176,7 @@ if __name__ == '__main__':
                         b1=dict(
                             x=random.random(),
                             update=True,
-                            # save=True,
+                            save=True,
                             opts=dict(title='b1'),
                         ),
                     ),
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         boxplot=dict(
             b2=dict(
                 x=np.random.rand(100),
-                # save=True,
+                save=True,
                 opts=dict(title='b2'),
             ),
         ),
@@ -201,7 +201,7 @@ if __name__ == '__main__':
         wafer=dict(
             w=dict(
                 x=np.asarray([19, 26, 55]),
-                # save=True,
+                save=True,
                 opts=dict(title='w', legend=['Residential', 'Non-Residential', 'Utility']),
             ),
         ),

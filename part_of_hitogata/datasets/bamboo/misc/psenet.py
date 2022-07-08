@@ -1,21 +1,72 @@
+# Copyright (c) OpenMMLab. All rights reserved.
+# copy from mmocr
 from ..base_internode import BaseInternode
 from ...utils.common import get_image_size, is_pil, clip_poly
 from ..builder import INTERNODE
 import numpy as np
 import cv2
 import torch
+import sys
 
 try:
     import pyclipper
     from shapely.geometry import Polygon as plg
 except ImportError:
     pass
+
 try:
     from .pse import pse
 except ImportError:
     pass
 
+
 __all__ = ['PSEEncode', 'PSEDecode', 'PSECrop']
+
+
+def generate_kernel(img_size, polys, shrink_ratio, max_shrink=sys.maxsize, ignore_flags=None):
+    w, h = img_size
+    text_kernel = np.zeros((h, w), dtype=np.float32)
+
+    if ignore_flags is None:
+        ignore_flags = np.array([False] * len(polys))
+
+    for text_ind, poly in enumerate(polys):
+        instance = poly.reshape(-1, 2).astype(np.int32)
+        area = plg(instance).area
+        peri = cv2.arcLength(instance, True)
+        distance = min(
+            int(area * (1 - shrink_ratio * shrink_ratio) / (peri + 0.001) +
+                0.5), max_shrink)
+        pco = pyclipper.PyclipperOffset()
+        pco.AddPath(instance, pyclipper.JT_ROUND,
+                    pyclipper.ET_CLOSEDPOLYGON)
+        shrunk = np.array(pco.Execute(-distance))
+
+        # check shrunk == [] or empty ndarray
+        if len(shrunk) == 0 or shrunk.size == 0:
+            ignore_flags[text_ind] = True
+            continue
+        try:
+            shrunk = np.array(shrunk[0]).reshape(-1, 2)
+
+        except Exception as e:
+            ignore_flags[text_ind] = True
+            continue
+
+        if not ignore_flags[text_ind]:
+            cv2.fillPoly(text_kernel, [shrunk.astype(np.int32)], 1)
+    return text_kernel, ignore_flags
+
+
+def generate_effective_mask(img_size, polys, ignore_flags):
+    w, h = img_size
+    mask = np.ones((h, w))
+
+    for poly, tag in zip(polys, ignore_flags):
+        if tag:
+            instance = poly.reshape(-1, 2).astype(np.int32).reshape(1, -1, 2)
+            cv2.fillPoly(mask, instance, 0)
+    return mask
 
 
 @INTERNODE.register_module()
@@ -39,48 +90,6 @@ class PSEEncode(BaseInternode):
         self.threshold_point = threshold_point
         self.threshold_area = threshold_area
 
-    def generate_kernel(self, img_size, polys, shrink_ratio, max_shrink, ignore_flags):
-        w, h = img_size
-        text_kernel = np.zeros((h, w), dtype=np.float32)
-        # ignore_flags = np.array([False] * len(polys))
-
-        for text_ind, poly in enumerate(polys):
-            instance = poly.reshape(-1, 2).astype(np.int32)
-            area = plg(instance).area
-            peri = cv2.arcLength(instance, True)
-            distance = min(
-                int(area * (1 - shrink_ratio * shrink_ratio) / (peri + 0.001) +
-                    0.5), max_shrink)
-            pco = pyclipper.PyclipperOffset()
-            pco.AddPath(instance, pyclipper.JT_ROUND,
-                        pyclipper.ET_CLOSEDPOLYGON)
-            shrunk = np.array(pco.Execute(-distance))
-
-            # check shrunk == [] or empty ndarray
-            if len(shrunk) == 0 or shrunk.size == 0:
-                ignore_flags[text_ind] = True
-                continue
-            try:
-                shrunk = np.array(shrunk[0]).reshape(-1, 2)
-
-            except Exception as e:
-                ignore_flags[text_ind] = True
-                continue
-
-            if not ignore_flags[text_ind]:
-                cv2.fillPoly(text_kernel, [shrunk.astype(np.int32)], 1)
-        return text_kernel, ignore_flags
-
-    def generate_train_mask(self, img_size, polys, ignore_flags):
-        w, h = img_size
-        mask = np.ones((h, w))
-
-        for poly, tag in zip(polys, ignore_flags):
-            if tag:
-                instance = poly.reshape(-1, 2).astype(np.int32).reshape(1, -1, 2)
-                cv2.fillPoly(mask, instance, 0)
-        return mask
-
     def __call__(self, data_dict):
         w, h = get_image_size(data_dict['image'])
 
@@ -92,7 +101,7 @@ class PSEEncode(BaseInternode):
 
         kernels = []
         for s in self.shrink_ratio:
-            kernel, ignore_flags = self.generate_kernel((w, h), data_dict['poly'], s, self.max_shrink, ignore_flags)
+            kernel, ignore_flags = generate_kernel((w, h), data_dict['poly'], s, self.max_shrink, ignore_flags)
             kernels.append(kernel[np.newaxis, ...])
             # ignore_flags = np.bitwise_or(ignore_flags, ignore_flags_tmp)
             # print(ignore_flags_tmp, ignore_flags)
@@ -100,7 +109,7 @@ class PSEEncode(BaseInternode):
         kernels = np.concatenate(kernels)
         data_dict['ocrdet_kernel'] = torch.from_numpy(kernels)
 
-        train_mask = self.generate_train_mask((w, h), data_dict['poly'], ignore_flags)
+        train_mask = generate_effective_mask((w, h), data_dict['poly'], ignore_flags)
         data_dict['ocrdet_train_mask'] = torch.from_numpy(train_mask)
 
         if 'poly_meta' in data_dict.keys():
@@ -245,6 +254,3 @@ class PSECrop(BaseInternode):
 
     def __repr__(self):
         return 'PSECrop(size={}, positive_sample_ratio={})'.format(self.size, self.positive_sample_ratio)
-
-
-

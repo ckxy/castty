@@ -190,7 +190,6 @@ class VISHeatmap(VIS):
         super(VISHeatmap, self).__init__(save_path, use_visdom)
 
     def parse_data(self, k, v, epoch, total_steps):
-        # assert v['x'].max() <= 1
         if k not in self.data:
             self.data[k] = dict()
         self.data[k]['x'] = v['x']
@@ -250,7 +249,12 @@ class VISBar(VIS):
                 vis.bar(X=v['x'], win=k, opts=v['opts'])
 
     def matplotlib_visualize(self, k, epoch, total_steps):
-        pass
+        if 'legend' in self.data[k]['opts'].keys():
+            plt.bar(x=self.data[k]['opts']['legend'], height=self.data[k]['x'])
+        else:
+            plt.bar(x=range(len(self.data[k]['x'])), height=self.data[k]['x'])
+        plt.savefig(os.path.join(self.save_path, '{}_{:0>6d}_{:0>9d}.png'.format(k, epoch, total_steps)))
+        plt.close()
 
 
 class VISScatter(VIS):
@@ -272,7 +276,12 @@ class VISScatter(VIS):
                 vis.scatter(Y=v['y'], X=v['x'], win=k, opts=v['opts'])
 
     def matplotlib_visualize(self, k, epoch, total_steps):
-        pass
+        # plt.plot(self.data[k]['x'], self.data[k]['y'])
+        # print(self.data[k]['x'], self.data[k]['x'].shape)
+        plt.scatter(self.data[k]['x'][..., 0], self.data[k]['x'][..., 1])
+        plt.savefig(os.path.join(self.save_path, '{}_{:0>6d}_{:0>9d}.png'.format(k, epoch, total_steps)))
+        plt.close()
+        # exit()
 
 
 class VISBoxplot(VIS):
@@ -320,13 +329,12 @@ class VISBoxplot(VIS):
                 vis.boxplot(X=temp, win=k, opts=v['opts'])
 
     def matplotlib_visualize(self, k, epoch, total_steps):
-        pass
-        # plt.plot(self.data[k]['x'], self.data[k]['y'])
-        # if self.data[k]['update']:
-        #     plt.savefig(os.path.join(self.save_path, '{}.png'.format(k)))
-        # else:
-        #     plt.savefig(os.path.join(self.save_path, '{}_{:0>6d}_{:0>9d}.png'.format(k, epoch, total_steps)))
-        # plt.close()
+        plt.boxplot(self.data[k]['x'])
+        if self.data[k]['update']:
+            plt.savefig(os.path.join(self.save_path, '{}.png'.format(k)))
+        else:
+            plt.savefig(os.path.join(self.save_path, '{}_{:0>6d}_{:0>9d}.png'.format(k, epoch, total_steps)))
+        plt.close()
 
 
 class VISWafer(VIS):
@@ -347,7 +355,12 @@ class VISWafer(VIS):
                 vis.pie(X=v['x'], win=k, opts=v['opts'])
 
     def matplotlib_visualize(self, k, epoch, total_steps):
-        pass
+        if 'legend' in self.data[k]['opts'].keys():
+            plt.pie(x=self.data[k]['x'], labels=self.data[k]['opts']['legend'])
+        else:
+            plt.pie(x=self.data[k]['x'], labels=range(len(self.data[k]['x'])))
+        plt.savefig(os.path.join(self.save_path, '{}_{:0>6d}_{:0>9d}.png'.format(k, epoch, total_steps)))
+        plt.close()
 
 
 class VISStackedLines(VIS):
