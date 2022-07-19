@@ -15,7 +15,7 @@ except ImportError:
     pass
 
 
-__all__ = ['DBEncode']
+__all__ = ['DBEncode', 'DBMCEncode']
 
 
 def polygon_area(polygon):
@@ -194,3 +194,60 @@ class DBEncode(BaseInternode):
 
     def __repr__(self):
         return 'DBEncode(shrink_ratio={}, thr_min={}, thr_max={}, min_short_size={})'.format(self.shrink_ratio, self.thr_min, self.thr_max, self.min_short_size)
+
+
+@INTERNODE.register_module()
+class DBMCEncode(DBEncode):
+    def __init__(self, 
+        num_classes=1,
+        shrink_ratio=0.4,
+        thr_min=0.3,
+        thr_max=0.7,
+        min_short_size=8,
+        **kwargs):
+        self.num_classes = num_classes
+        self.shrink_ratio = shrink_ratio
+        self.thr_min = thr_min
+        self.thr_max = thr_max
+        self.min_short_size = min_short_size
+
+    def __call__(self, data_dict):
+        assert data_dict['poly_meta'].have('class_id')
+
+        labels = data_dict['poly_meta'].get('class_id')
+
+        w, h = get_image_size(data_dict['image'])
+
+        if 'poly_meta' in data_dict.keys():
+            ind = data_dict['poly_meta'].index('ignore_flag')
+            ignore_flags = data_dict['poly_meta'].values[ind]
+        else:
+            ignore_flags = np.array([False] * len(data_dict['poly']))
+
+        ignore_flags = self.find_invalid(data_dict['poly'], ignore_flags)
+
+        data_dict['ocrdet_shrink_map'] = []
+        for i in range(self.num_classes):
+            keep = np.nonzero(labels == i)[0].tolist()
+            tmp_polys = [data_dict['poly'][k] for k in keep]
+            tmp_flags = [ignore_flags[k] for k in keep]
+
+            shrink_map, tmp_flags = generate_kernel((w, h), tmp_polys, self.shrink_ratio, ignore_flags=tmp_flags)
+            data_dict['ocrdet_shrink_map'].append(shrink_map)
+
+            for j, k in enumerate(keep):
+                ignore_flags[k] = tmp_flags[j]
+        data_dict['ocrdet_shrink_map'] = np.array(data_dict['ocrdet_shrink_map'])
+
+        data_dict['ocrdet_shrink_mask'] = generate_effective_mask((w, h), data_dict['poly'], ignore_flags)
+
+        data_dict['ocrdet_thr_map'], data_dict['ocrdet_thr_mask'] = self.generate_thr_map((h, w), data_dict['poly'], ignore_flags)
+        data_dict['ocrdet_thr_map'] = data_dict['ocrdet_thr_map'][np.newaxis, ...]
+
+        if 'poly_meta' in data_dict.keys():
+            data_dict['poly_meta'].values[ind] = ignore_flags
+
+        return data_dict
+
+    def __repr__(self):
+        return 'DBMCEncode(num_classes, shrink_ratio={}, thr_min={}, thr_max={}, min_short_size={})'.format(self.num_classes, self.shrink_ratio, self.thr_min, self.thr_max, self.min_short_size)

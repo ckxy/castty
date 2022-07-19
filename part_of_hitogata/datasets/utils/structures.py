@@ -7,6 +7,9 @@ class Meta(object):
         assert isinstance(values[0], np.ndarray)
         assert len(keys) == len(values)
 
+        for i in range(len(values)):
+            assert len(values[i]) == len(values[-1])
+
         self.keys = keys
         self.values = values
         
@@ -14,6 +17,10 @@ class Meta(object):
         assert isinstance(keys, list) and isinstance(values, list)
         assert isinstance(values[0], np.ndarray)
         assert len(keys) == len(values)
+
+        for i in range(len(values)):
+            assert len(values[i]) == len(values[-1])
+            assert len(values[i]) == len(self.values[0])
 
         self.keys.extend(keys)
         self.values.extend(values)
@@ -29,7 +36,13 @@ class Meta(object):
             return -1
 
     def get(self, key):
-        return self.values[self.index(key)]
+        if self.have(key):
+            return self.values[self.index(key)]
+        else:
+            return None
+
+    def have(self, key):
+        return key in self.keys
 
     def __add__(self, other):
         assert self.keys == other.keys

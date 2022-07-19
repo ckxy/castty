@@ -37,33 +37,25 @@ def draw_label(img, labels, classes, scores=None):
             text += ': {:.3f}'.format(scs[i])
         text += '\n'
     text = text[:-1]
-    # text += '\nDog'
 
-    if isinstance(img, Image.Image):
-        w, h = img.size
-        l = math.sqrt(h * h + w * w)
-        draw = ImageDraw.Draw(img)
-        font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
-        font = ImageFont.truetype(font_path, int(l * 5e-2))
-
-        t_size = draw.multiline_textsize(text, font)
-        draw.rectangle((0, 0, t_size[0], t_size[1]), fill=(0, 255, 255))
-        draw.multiline_text((0, 0), text, fill=(0, 0, 0), font=font)
+    if not isinstance(img, Image.Image):
+        is_np = True
+        img = Image.fromarray(img)
     else:
-        h = img.shape[0]
-        w = img.shape[1]
-        l = math.sqrt(h * h + w * w)
+        is_np = False
 
-        texts = text.split('\n')
+    w, h = img.size
+    l = math.sqrt(h * h + w * w)
+    draw = ImageDraw.Draw(img)
+    font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
+    font = ImageFont.truetype(font_path, int(l * 5e-2))
 
-        lt = (0, 0)
-        for t in texts:
-            t_size = cv2.getTextSize(t, cv2.FONT_HERSHEY_SIMPLEX, 14e-4 * l , max(1, int(l / 600)))[0]
-            print(t_size)
-            rb = (lt[0] + t_size[0], lt[1] + t_size[1])
-            cv2.rectangle(img, lt, rb, (0, 255, 255), -1)
-            cv2.putText(img, t, (lt[0], lt[1] + t_size[1]), cv2.FONT_HERSHEY_SIMPLEX, 14e-4 * l, (0, 0, 0), max(1, int(l / 600)))
-            lt = (lt[0], lt[1] + t_size[1] + 1)
+    t_size = draw.multiline_textsize(text, font)
+    draw.rectangle((0, 0, t_size[0], t_size[1]), fill=(0, 255, 255))
+    draw.multiline_text((0, 0), text, fill=(0, 0, 0), font=font)
+
+    if is_np:
+        img = np.asarray(img)
 
     return img
 
@@ -75,7 +67,8 @@ def draw_grouped_label(img, labels, classes, scores=None):
 
     w, h = img.size
     l = math.sqrt(h * h + w * w)
-    font = ImageFont.truetype("fonts/arial.ttf", int(l * 3e-2))
+    font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
+    font = ImageFont.truetype(font_path, int(l * 3e-2))
 
     bar = Image.new('RGB', (w, h), (255, 255, 255))
     draw = ImageDraw.Draw(bar)

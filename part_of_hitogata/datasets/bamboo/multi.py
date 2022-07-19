@@ -29,10 +29,6 @@ class MixUp(Bamboo):
         if is_pil(image):
             return pad(image, (0, 0, right, bottom), 0, 'constant')
         else:
-            # if image.ndim == 2:
-            #     value = 0
-            # else:
-            #     value = tuple([0] * image.shape[2])
             return cv2.copyMakeBorder(image, 0, bottom, 0, right, cv2.BORDER_CONSTANT, value=(0, 0, 0))
 
     def __call__(self, data_dict):
@@ -68,8 +64,6 @@ class MixUp(Bamboo):
                 a['image'] = cv2.addWeighted(a['image'], lam, b['image'], 1 - lam, 0)
 
             if 'bbox' in k:
-                # a['bbox'][:, 5] *= lam
-                # b['bbox'][:, 5] *= 1 - lam
                 a['bbox'] = np.concatenate([a['bbox'], b['bbox']])
 
                 if 'bbox_meta' in k:
@@ -77,6 +71,10 @@ class MixUp(Bamboo):
                     a['bbox_meta'].values[i] *= lam
                     b['bbox_meta'].values[i] *= 1 - lam
                     a['bbox_meta'] += b['bbox_meta']
+
+            if 'label' in k:
+                print(a['label'], b['label'])
+                exit()
 
             if 'path' in k:
                 a['path'] = '[mixup]({}, {}, {})'.format(a['path'], b['path'], lam)

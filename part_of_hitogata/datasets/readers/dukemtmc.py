@@ -111,23 +111,27 @@ class DukeMTMCAttritubesReader(Reader):
         self.pids = sorted(list(set(self.pids)))
 
         from scipy.io import loadmat
-        self.f = loadmat(os.path.join(root, 'attribute', 'duke_attribute.mat'))
+        self.f = loadmat(os.path.join(root, 'DukeMTMC-attribute', 'duke_attribute.mat'))
         self.f = self.f['duke_attribute'][0][0][1 if group == 'test' else 0][0][0]
 
         assert len(self.img_paths) > 0
 
-    def get_dataset_info(self):
-        return range(len(self.img_paths)), Dict({'classes': self.grouped_labels})
+        self._info = dict(
+            forcat=dict(
+                type='cls',
+                classes=self.grouped_labels
+            )
+        )
 
-    def get_data_info(self, index):
-        img = Image.open(self.img_paths[index][0])
-        w, h = img.size
-        return dict(h=h, w=w)
+    # def get_dataset_info(self):
+    #     return range(len(self.img_paths)), Dict({'classes': self.grouped_labels})
+
+    # def get_data_info(self, index):
+    #     img = Image.open(self.img_paths[index][0])
+    #     w, h = img.size
+    #     return dict(h=h, w=w)
 
     def __call__(self, index):
-        # index = data_dict
-        # index = 5605
-        # img = Image.open(self.img_paths[index]).convert('RGB')
         img = self.read_image(self.img_paths[index])
         w, h = img.size
         path = self.img_paths[index]
@@ -163,16 +167,16 @@ class DukeMTMCAttritubesReader(Reader):
                 labels[7] = 1
 
         labels = np.array(labels).astype(np.long)
-        # print(labels, len(labels), len(self.labels), len(self.grouped_labels))
-        # exit()
 
-        # return {'image': img, 'ori_size': np.array([h, w]).astype(np.float32), 'path': path, 'label': labels}
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
             path=path,
             label=labels
         )
+
+    def __len__(self):
+        return len(self.img_paths)
 
     def __repr__(self):
         return 'DukeMTMCAttritubesReader(root={}, group={}, mode={}, {})'.format(self.root, self.group, self.mode, super(DukeMTMCAttritubesReader, self).__repr__())

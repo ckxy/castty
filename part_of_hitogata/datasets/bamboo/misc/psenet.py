@@ -20,7 +20,7 @@ except ImportError:
     pass
 
 
-__all__ = ['PSEEncode', 'PSEDecode', 'PSECrop']
+__all__ = ['PSEEncode', 'PSEMCEncode', 'PSEDecode', 'PSECrop']
 
 
 def generate_kernel(img_size, polys, shrink_ratio, max_shrink=sys.maxsize, ignore_flags=None):
@@ -71,24 +71,12 @@ def generate_effective_mask(img_size, polys, ignore_flags):
 
 @INTERNODE.register_module()
 class PSEEncode(BaseInternode):
-    def __init__(self, 
-        shrink_ratio=(0.5, 0.6, 0.7, 0.8, 0.9, 1.0), 
-        max_shrink=20,
-        mask_with_largest_kernel=False,
-        min_area=16,
-        threshold_point=0.7311,
-        threshold_area=0.93,
-        **kwargs):
+    def __init__(self, shrink_ratio=(0.5, 0.6, 0.7, 0.8, 0.9, 1.0), max_shrink=20, **kwargs):
         assert len(shrink_ratio) > 0
         assert max_shrink >= 0
 
         self.shrink_ratio = shrink_ratio
         self.max_shrink = max_shrink
-
-        self.mask_with_largest_kernel = mask_with_largest_kernel
-        self.min_area = min_area
-        self.threshold_point = threshold_point
-        self.threshold_area = threshold_area
 
     def __call__(self, data_dict):
         w, h = get_image_size(data_dict['image'])
@@ -116,6 +104,75 @@ class PSEEncode(BaseInternode):
             data_dict['poly_meta'].values[ind] = ignore_flags
 
         return data_dict
+
+    def __repr__(self):
+        return 'PSEEncode(shrink_ratio={}, max_shrink={})'.format(tuple(self.shrink_ratio), self.max_shrink)
+
+
+@INTERNODE.register_module()
+class PSEMCEncode(BaseInternode):
+    def __init__(self, num_classes=1, shrink_ratio=(0.5, 0.6, 0.7, 0.8, 0.9, 1.0), max_shrink=20, **kwargs):
+        assert len(shrink_ratio) > 0
+        assert max_shrink >= 0
+
+        self.num_classes = num_classes
+        self.shrink_ratio = shrink_ratio
+        self.max_shrink = max_shrink
+
+    def __call__(self, data_dict):
+        assert data_dict['poly_meta'].have('class_id')
+
+        labels = data_dict['poly_meta'].get('class_id')
+
+        w, h = get_image_size(data_dict['image'])
+
+        if 'poly_meta' in data_dict.keys():
+            ind = data_dict['poly_meta'].index('ignore_flag')
+            ignore_flags = data_dict['poly_meta'].values[ind]
+        else:
+            ignore_flags = np.array([False] * len(data_dict['poly']))
+
+        kernels = []
+        for i in range(self.num_classes):
+            keep = np.nonzero(labels == i)[0].tolist()
+            tmp_polys = [data_dict['poly'][k] for k in keep]
+            tmp_flags = [ignore_flags[k] for k in keep]
+
+            for s in self.shrink_ratio:
+                kernel, tmp_flags = generate_kernel((w, h), tmp_polys, s, self.max_shrink, tmp_flags)
+                kernels.append(kernel[np.newaxis, ...])
+
+            for j, k in enumerate(keep):
+                ignore_flags[k] = tmp_flags[j]
+
+        kernels = np.concatenate(kernels)
+        data_dict['ocrdet_kernel'] = torch.from_numpy(kernels)
+
+        train_mask = generate_effective_mask((w, h), data_dict['poly'], ignore_flags)
+        data_dict['ocrdet_train_mask'] = torch.from_numpy(train_mask)
+
+        if 'poly_meta' in data_dict.keys():
+            data_dict['poly_meta'].values[ind] = ignore_flags
+
+        return data_dict
+
+    def __repr__(self):
+        return 'PSEMCEncode(num_classes={}, shrink_ratio={}, max_shrink={})'.format(self.num_classes, tuple(self.shrink_ratio), self.max_shrink)
+
+
+@INTERNODE.register_module()
+class PSEDecode(BaseInternode):
+    def __init__(self, 
+        mask_with_largest_kernel=False,
+        min_area=16,
+        threshold_point=0.7311,
+        threshold_area=0.93,
+        **kwargs):
+        
+        self.mask_with_largest_kernel = mask_with_largest_kernel
+        self.min_area = min_area
+        self.threshold_point = threshold_point
+        self.threshold_area = threshold_area
 
     def reverse(self, **kwargs):
         if 'ocrdet_kernel' in kwargs.keys():
@@ -150,33 +207,10 @@ class PSEEncode(BaseInternode):
         return kwargs
 
     def __repr__(self):
-        return 'PSEEncode(shrink_ratio={}, max_shrink={})'.format(tuple(self.shrink_ratio), self.max_shrink)
+        return type(self).__name__ + '(not available)'
 
     def rper(self):
         return 'PSEDecode(mask_with_largest_kernel={}, min_area={}, threshold_point={}, threshold_area={})'.format(self.mask_with_largest_kernel, self.min_area, self.threshold_point, self.threshold_area)
-
-
-@INTERNODE.register_module()
-class PSEDecode(PSEEncode):
-    def __init__(self, 
-        mask_with_largest_kernel=False,
-        min_area=16,
-        threshold_point=0.7311,
-        threshold_area=0.93,
-        **kwargs):
-        super(PSEDecode, self).__init__(
-            mask_with_largest_kernel=mask_with_largest_kernel,
-            min_area=min_area,
-            threshold_point=threshold_point,
-            threshold_area=threshold_area,
-            **kwargs
-        )
-
-    def __call__(self, data_dict):
-        return self.reverse(data_dict)
-
-    def __repr__(self):
-        return self.rper()
 
 
 @INTERNODE.register_module()

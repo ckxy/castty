@@ -15,7 +15,7 @@ visualizer = dict(
 test_data = dict(
     data_loader=dict(
         batch_size=1,
-        serial_batches=True,
+        serial_batches=False,
         num_threads=0,
         pin_memory=False,
         # collator=[
@@ -23,9 +23,14 @@ test_data = dict(
         # ]
     ),
     dataset=dict(
-        reader=dict(type='ImageFolderReader', root='../datasets/kagglecatsanddogs_3367a/PetImages'),
+        # reader=dict(type='ImageFolderReader', root='../datasets/tiny-imagenet-200/train', use_pil=False),
+        reader=dict(type='DukeMTMCAttritubesReader', root='../datasets/DukeMTMC-reID', group='train', mode='c'),
         internodes=[
             dict(type='DataSource'),
+            # dict(type='MixUp', internodes=[
+            #     dict(type='DataSource'),
+            #     dict(type='Resize', size=(640, 640), keep_ratio=True, short=False),
+            # ]),
             # dict(type='ResizeAndPadding', 
             #     resize=dict(
             #         type='Resize',
@@ -45,7 +50,7 @@ test_data = dict(
             # dict(type='WarpRotate', angle=(-10, 10), expand=True),
             # dict(type='RescaleLimitedByBound', long_size_bound=1280, short_size_bound=640, ratio_range=(0.5, 3), mode='range'),
             # dict(type='ToPILImage'),
-            dict(type='OneHotEncode', num_classes=2),
+            # dict(type='OneHotEncode', num_classes=2),
             dict(type='ToTensor'),
         ],
     ),

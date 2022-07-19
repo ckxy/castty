@@ -3,6 +3,7 @@ from PIL import Image
 from .base_internode import BaseInternode
 from torchvision.transforms.functional import to_tensor, to_pil_image
 from .builder import INTERNODE
+from ..utils.common import is_pil
 
 
 __all__ = ['ToTensor', 'ToPILImage', 'ToCV2Image']
@@ -11,7 +12,10 @@ __all__ = ['ToTensor', 'ToPILImage', 'ToCV2Image']
 @INTERNODE.register_module()
 class ToTensor(BaseInternode):
     def __call__(self, data_dict):
+        assert is_pil(data_dict['image'])
+
         data_dict['image'] = to_tensor(data_dict['image'])
+        
         if 'mask' in data_dict.keys():
             data_dict['mask'] = (to_tensor(data_dict['mask']) * 255).long().squeeze()
         return data_dict

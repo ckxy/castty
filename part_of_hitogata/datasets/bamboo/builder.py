@@ -4,8 +4,6 @@ INTERNODE = Registry('internode')
 
 
 def build_internode(cfg, **default_args):
-    # print(INTERNODE.module_dict.keys())
-    # exit()
     if 'one_way' in cfg.keys():
         if cfg['one_way'] == 'forward':
             tmp_cfg = dict(

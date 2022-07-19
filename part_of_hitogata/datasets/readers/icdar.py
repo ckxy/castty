@@ -60,6 +60,8 @@ class ICDARDetReader(Reader):
 
         meta = Meta(['ignore_flag'], [np.array(ignore_flags)])
 
+        # meta.append(['class_id'], [np.array([1, 1, 0, 0, 0, 0, 0], dtype=np.int32)])
+
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),

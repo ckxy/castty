@@ -5,27 +5,39 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 
-def draw_polygon_without_label(img, polygons, ignore_flags=None):
+def draw_polygon_without_label(img, polygons, ignore_flags=None, class_ids=None, classes=None):
 	if ignore_flags is None:
 		ignore_flags = [False] * len(polygons)
 
-	if isinstance(img, Image.Image):
-		w, h = img.size
-		l = math.sqrt(h * h + w * w)
-		draw = ImageDraw.Draw(img)
+	if class_ids is None:
+		class_ids = [0] * len(polygons)
 
-		for polygon, ignore_flag in zip(polygons, ignore_flags):
-			if ignore_flag:
-				draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 255, 0), width=2)
-			else:
-				draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(255, 0, 0), width=2)
+	num_classes = len(classes) if classes else 1
+    
+	hsv_tuples = [(1.0 * x / num_classes, 1., 1.) for x in range(num_classes)]
+	colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+	colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+	# print(colors, 'ccc')
+
+	if not isinstance(img, Image.Image):
+		is_np = True
+		img = Image.fromarray(img)
 	else:
-		for polygon, ignore_flag in zip(polygons, ignore_flags):
-			polygon = polygon.reshape((-1, 1, 2)).astype(np.int32)
-			if ignore_flag:
-				cv2.polylines(img, pts=[polygon], isClosed=True, color=(255, 255, 0), thickness=3)
-			else:
-				cv2.polylines(img, pts=[polygon], isClosed=True, color=(255, 0, 0), thickness=3)
+		is_np = False
+
+	w, h = img.size
+	l = math.sqrt(h * h + w * w)
+	draw = ImageDraw.Draw(img)
+
+	for polygon, ignore_flag, cid in zip(polygons, ignore_flags, class_ids):
+		if ignore_flag:
+			draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(40, 40, 40), width=2)
+		else:
+			draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=colors[cid], width=2)
+
+	if is_np:
+		img = np.asarray(img)
+
 	return img
 
 

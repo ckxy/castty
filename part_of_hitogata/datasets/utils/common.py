@@ -2,7 +2,10 @@ import cv2
 import numpy as np
 from PIL import Image
 from ...utils.bbox_tools import xyxy2xywh
-import pyclipper
+try:
+    import pyclipper
+except:
+    pass
 
 
 def is_pil(img):
@@ -31,11 +34,8 @@ def clip_bbox(bboxes, img_size):
 
 
 def clip_poly(polys, img_size):
-    # print(polys)
     width, height = img_size
     subj = (((0, 0), (width, 0), (width, height), (0, height)),)
-
-    # polys = [p.tolist() for p in polys]
 
     tmp = []
     keep = []
@@ -58,19 +58,10 @@ def clip_poly(polys, img_size):
 
 
 def filter_bbox(bboxes):
-    # n = len(bboxes)
-    # keep = []
-    # for i in range(n):
-    #     x1, y1, x2, y2 = bboxes[i]
-    #     if x2 - x1 > 1 and y2 - y1 > 1:
-    #         keep.append(i)
-    # print(keep)
     w = (bboxes[..., 2] - bboxes[..., 0]) > 1
     h = (bboxes[..., 3] - bboxes[..., 1]) > 1
     t = np.logical_and(w, h)
     keep = np.nonzero(t)[0].tolist()
-    # print(w, h, t, keep)
-    # exit()
     return keep
 
 
@@ -86,13 +77,8 @@ def filter_bbox_by_center(bboxes, img_size):
 
 
 def filter_point(points, img_size):
-    # n = len(points)
     width, height = img_size
     x = (points[:, 0] >= 0) & (points[:, 0] < width)
     y = (points[:, 1] >= 0) & (points[:, 1] < height)
     discard = np.nonzero(~(x & y))[0]
     return discard
-
-
-def check_tags(data_dict, tags):
-    pass

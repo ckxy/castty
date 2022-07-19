@@ -86,6 +86,7 @@ class WarpPerspective(WarpInternode):
         startpoints = [(0, 0), (width - 1, 0), (width - 1, height - 1), (0, height - 1)]
         endpoints = [topleft, topright, botright, botleft]
         # endpoints = [(83, 18), (605, 25), (605, 397), (139, 341)]
+        # endpoints = [[ 39.440895,  23.079351], [505.36182,   87.89065 ], [505.36182,   89.89065 ],[ 18.866693,  85.40677 ]]
         return startpoints, endpoints
 
     @staticmethod
@@ -113,10 +114,8 @@ class WarpPerspective(WarpInternode):
         M = self.build_matrix(startpoints, endpoints)
 
         if self.expand:
-            # print(startpoints, endpoints)
-            
-            xx = [e[0] for e in endpoints]
-            yy = [e[1] for e in endpoints]
+            xx = [int(e[0]) for e in endpoints]
+            yy = [int(e[1]) for e in endpoints]
             nw = max(xx) - min(xx)
             nh = max(yy) - min(yy)
             E = np.eye(3)
@@ -125,7 +124,6 @@ class WarpPerspective(WarpInternode):
 
             M = E @ M
             size = (nw, nh)
-            # print(size, 'new')
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size

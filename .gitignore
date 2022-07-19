@@ -126,3 +126,5 @@ dmypy.json
 *.DS_Store
 
 vis_test/
+
+*.pth

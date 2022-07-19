@@ -39,13 +39,15 @@ def mcl(data_dict, classes, rc, index=0):
 
     print(img.shape)
     print(data_dict['path'][index])
+    print(label)
+    print(classes)
     # for i in range(len(classes)):
     #     print(i, classes[i][label[i]])
     # exit()
 
     # print(img.shape)
 
-    res = rc(image=img, ori_size=data_dict['ori_size'][index], training=True)
+    res = rc(image=img, ori_size=data_dict['ori_size'][index])
     img = res['image']
     # print(img.size)
 
@@ -74,7 +76,7 @@ if __name__ == '__main__':
     # exit()
 
     for data in tqdm(dataloader):
-        cl(data, info['classes'], rc, 0)
+        mcl(data, info['classes'], rc, 0)
         plt.show()
         break
 

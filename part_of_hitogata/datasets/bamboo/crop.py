@@ -42,9 +42,8 @@ class Crop(BaseInternode):
 @INTERNODE.register_module()
 class AdaptiveCrop(BaseInternode):
     def __call__(self, data_dict):
-        assert 'point' in data_dict.keys() or 'bbox' in data_dict.keys() or 'quad' in data_dict.keys()
+        assert 'point' in data_dict.keys() or 'bbox' in data_dict.keys() or 'poly' in data_dict.keys()
 
-        # w, h = data_dict['image'].size
         w, h = get_image_size(data_dict['image'])
 
         box = []
@@ -443,13 +442,10 @@ class EastRandomCrop(BaseInternode):
 
     def __call__(self, data_dict):
         assert 'poly' in data_dict.keys()
-        # sampling crop
-        # crop image, boxes, masks
+
         img = data_dict['image']
         crop_x, crop_y, crop_w, crop_h = self.crop_area(
             img, data_dict['poly'])
-
-        # print(crop_x, crop_y, crop_w, crop_h)
 
         if is_pil(data_dict['image']):
             data_dict['image'] = data_dict['image'].crop((crop_x, crop_y, crop_x + crop_w, crop_y + crop_h))
@@ -465,43 +461,11 @@ class EastRandomCrop(BaseInternode):
         if 'poly_meta' in data_dict.keys():
             data_dict['poly_meta'].filter(keep)
 
-        # print(data_dict['poly'])
-        # scale_w = self.target_size[0] / crop_w
-        # scale_h = self.target_size[1] / crop_h
-        # scale = min(scale_w, scale_h)
-        # h = int(crop_h * scale)
-        # w = int(crop_w * scale)
-        # padded_img = np.zeros(
-        #     (self.target_size[1], self.target_size[0], img.shape[2]),
-        #     img.dtype)
-        # padded_img[:h, :w] = mmcv.imresize(
-        #     img[crop_y:crop_y + crop_h, crop_x:crop_x + crop_w], (w, h))
+        # import torch
+        # import cv2
 
-        # # for bboxes
-        # for key in data_dict['bbox_fields']:
-        #     lines = []
-        #     for box in data_dict[key]:
-        #         box = box.reshape(2, 2)
-        #         poly = ((box - (crop_x, crop_y)) * scale)
-        #         if not self.is_poly_outside_rect(poly, 0, 0, w, h):
-        #             lines.append(poly.flatten())
-        #     data_dict[key] = np.array(lines)
-        # # for masks
-        # for key in data_dict['mask_fields']:
-        #     polys = []
-        #     polys_label = []
-        #     for poly in data_dict[key]:
-        #         poly = np.array(poly).reshape(-1, 2)
-        #         poly = ((poly - (crop_x, crop_y)) * scale)
-        #         if not self.is_poly_outside_rect(poly, 0, 0, w, h):
-        #             polys.append([poly])
-        #             polys_label.append(0)
-        #     data_dict[key] = PolygonMasks(polys, *self.target_size)
-        #     if key == 'gt_masks':
-        #         data_dict['gt_labels'] = polys_label
-
-        # data_dict['img'] = padded_img
-        # data_dict['img_shape'] = padded_img.shape
+        # torch.save([data_dict['poly'], data_dict['poly_meta']], 'p.pth')
+        # cv2.imwrite('a.jpg', data_dict['image'][..., ::-1])
 
         return data_dict
 
