@@ -8,7 +8,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 def draw_label(img, labels, classes, scores=None):
-    # print(type(labels), labels)
+    if len(classes) > 1:
+        return draw_grouped_label(img, labels, classes, scores)
+
     if isinstance(labels, int) or isinstance(labels, float):
         labs = [labels]
     else:
@@ -32,7 +34,7 @@ def draw_label(img, labels, classes, scores=None):
 
     text = ''
     for i, label in enumerate(labs):
-        text += '{}'.format(classes[label])
+        text += '{}'.format(classes[0][label])
         if scs is not None:
             text += ': {:.3f}'.format(scs[i])
         text += '\n'
@@ -62,7 +64,6 @@ def draw_label(img, labels, classes, scores=None):
 
 def draw_grouped_label(img, labels, classes, scores=None):
     if scores is not None:
-        # print(len(labels), len(scores))
         assert len(labels) == len(scores)
 
     w, h = img.size

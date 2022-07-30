@@ -1,3 +1,4 @@
+import os
 import cv2
 import math
 import torch
@@ -23,19 +24,35 @@ from PIL import Image, ImageDraw, ImageFont
 #     return Image.fromarray(img.astype(np.uint8))
 
 
-def draw_point(img, landmarks):
+def draw_point(img, landmarks, visible=None):
+    if not isinstance(img, Image.Image):
+        is_np = True
+        img = Image.fromarray(img)
+    else:
+        is_np = False
+
+    if visible is None:
+        visible = np.ones(landmarks.shape[:2]).astype(np.bool)
+
     w, h = img.size
     l = math.sqrt(h * h + w * w)
-    for idx, point in enumerate(landmarks):
-        x, y = np.around(point).astype(np.int)
-        # print(x, y)
-        draw = ImageDraw.Draw(img)
-        r = max(2, int(l / 200))
-        draw.ellipse((x - r, y - r, x + r, y + r), fill=(255, 0, 0))
-        font = ImageFont.truetype('fonts/arial.ttf', int(l * 1e-3 * 25))
-        draw.text((x, y), str(idx), fill=(0, 0, 255), font=font)
-        # print(draw.textsize(str(idx), font))
-    # exit()
+
+    font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
+    font = ImageFont.truetype(font_path, int(l * 1e-3 * 25))
+    
+    for k, landmark in enumerate(landmarks):
+        for idx, point in enumerate(landmark):
+            if not visible[k, idx]:
+                continue
+            x, y = np.around(point).astype(np.int)
+            draw = ImageDraw.Draw(img)
+            r = max(2, int(l / 200))
+            draw.ellipse((x - r, y - r, x + r, y + r), fill=(255, 0, 0))
+            draw.text((x, y), str(idx), fill=(0, 0, 255), font=font)
+
+    if is_np:
+        img = np.asarray(img)
+
     return img
 
 

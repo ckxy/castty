@@ -1,9 +1,56 @@
 import numpy as np
-from utils.bbox_tools import xyxy2xywh
+from ...utils.bbox_tools import xyxy2xywh
 from .base_internode import BaseInternode
+from .builder import INTERNODE
+
+try:
+    from shapely.geometry import Polygon
+except ImportError:
+    pass
 
 
-__all__ = ['FilterBboxByLength', 'FilterBboxByArea', 'FilterBboxByLengthRatio', 'FilterBboxByAreaRatio', 'FilterBboxByAspectRatio']
+__all__ = ['FilterBboxByLength', 'FilterBboxByArea', 'FilterBboxByLengthRatio', 'FilterBboxByAreaRatio', 'FilterBboxByAspectRatio', 'FilterSelfOverlapping']
+
+
+@INTERNODE.register_module()
+class FilterSelfOverlapping(BaseInternode):
+    def __init__(self, iou=None):
+        self.iou = iou
+
+    def __call__(self, data_dict):
+        if 'poly' in data_dict.keys() and len(data_dict['poly']) > 0:
+            polygon_shapes = [Polygon(p) for p in data_dict['poly']]
+
+            reject = set()
+            for i in range(len(data_dict['poly']) - 1):
+                for j in range(i + 1, len(data_dict['poly'])):
+                    if self.iou is None:
+                        if polygon_shapes[i].intersects(polygon_shapes[j]):
+                            reject.add(i)
+                            reject.add(j)
+                    else:
+                        intersect = polygon1.intersection(polygon2).area
+                        union = polygon1.union(polygon2).area + 1e-6
+                        iou = intersect / union
+
+                        if iou >= self.iou:
+                            reject.add(i)
+                            reject.add(j)
+            
+            if 'poly_meta' in data_dict.keys():
+                ind = data_dict['poly_meta'].index('ignore_flag')
+                ignore_flags = data_dict['poly_meta'].values[ind]
+                for r in reject:
+                    ignore_flags[r] = True
+                data_dict['poly_meta'].values[ind] = ignore_flags
+            else:
+                keep = set(range(len(data_dict['poly']))) - reject
+                keep = sorted(list(keep))
+                data_dict['poly'] = [data_dict['poly'][k] for k in keep]
+        return data_dict
+
+    def __repr__(self):
+        return 'FilterSelfOverlapping(iou={})'.format(self.iou)
 
 
 class FilterBboxByLength(BaseInternode):

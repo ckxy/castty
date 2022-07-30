@@ -1,11 +1,11 @@
 import os
 import json
 import numpy as np
-from addict import Dict
 from copy import deepcopy
-from PIL import Image
 from .reader import Reader
 from .builder import READER
+from ..utils.common import get_image_size
+from ..utils.structures import Meta
 
 
 __all__ = ['LSPReader']
@@ -33,28 +33,31 @@ class LSPReader(Reader):
 
         assert len(self.data_lines) > 0
 
-    def get_dataset_info(self):
-        return range(len(self.data_lines)), Dict({})
-
-    def get_data_info(self, index):
-        return
+        self._info = dict(
+            forcat=dict(
+                type='kpt',
+            )
+        )
 
     def __call__(self, index):
-        # index = data_dict
-
         a = self.data_lines[index]
-        img_path = os.path.join(self.root, a['img_paths'])
-        # img = Image.open(img_path).convert('RGB')
-        img = self.read_image(img_path)
 
-        res = dict()
-        res['image'] = img
-        res['point'] = np.array(a['joint_self'])[..., :2].astype(np.float32)
-        res['visible'] = np.array(a['joint_self'])[..., 2].astype(np.int)
-        res['path'] = img_path
-        w, h = img.size
-        res['ori_size'] = np.array([h, w]).astype(np.float32)
-        return res
+        img_path = os.path.join(self.root, a['img_paths'])
+        img = self.read_image(img_path)
+        w, h = get_image_size(img)
+
+        meta = Meta(['visible'], [np.array(a['joint_self'])[..., 2].astype(np.bool)])
+
+        return dict(
+            image=img,
+            ori_size=np.array([h, w]).astype(np.float32),
+            path=img_path,
+            point=np.array(a['joint_self'])[..., :2].astype(np.float32),
+            point_meta=meta
+        )
+
+    def __len__(self):
+        return len(self.data_lines)
 
     def __repr__(self):
         return 'LSPReader(root={}, set_path={}, is_test={}, {})'.format(self.root, self.set_path, self.is_test, super(LSPReader, self).__repr__())

@@ -46,6 +46,13 @@ def resize_poly(polys, scale):
     return polys
 
 
+def resize_point(points, scale):
+    points[..., 0] *= scale[0]
+    points[..., 1] *= scale[1]
+
+    return points
+
+
 @INTERNODE.register_module()
 class Resize(BaseInternode):
     def __init__(self, size, keep_ratio=True, short=False, **kwargs):
@@ -77,8 +84,12 @@ class Resize(BaseInternode):
 
         if 'bbox' in data_dict.keys():
             data_dict['bbox'] = resize_bbox(data_dict['bbox'], scale)
+
         if 'poly' in data_dict.keys():
             data_dict['poly'] = resize_poly(data_dict['poly'], scale)
+
+        if 'point' in data_dict.keys():
+            data_dict['point'] = resize_point(data_dict['point'], scale)
 
         return data_dict
 
@@ -99,11 +110,17 @@ class Resize(BaseInternode):
         else:
             return kwargs
 
+        if 'image' in kwargs.keys():
+            kwargs['image'] = resize_image(kwargs['image'], scale)
+
         if 'bbox' in kwargs.keys():
             kwargs['bbox'] = resize_bbox(kwargs['bbox'], scale)
 
         if 'poly' in kwargs.keys():
             kwargs['poly'] = resize_poly(kwargs['poly'], scale)
+
+        if 'point' in kwargs.keys():
+            kwargs['point'] = resize_point(kwargs['point'], scale)
 
         return kwargs
 

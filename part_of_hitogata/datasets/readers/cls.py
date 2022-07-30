@@ -6,6 +6,7 @@ from .reader import Reader
 from .utils import is_image_file
 from .builder import READER
 from ..utils.common import get_image_size
+from ..utils.structures import Meta
 
 
 __all__ = ['ImageFolderReader']
@@ -38,21 +39,26 @@ class ImageFolderReader(Reader):
         self._info = dict(
             forcat=dict(
                 type='cls',
-                classes=self.classes
+                classes=(tuple(self.classes),)
             )
         )
 
     def __call__(self, index):
         img = self.read_image(self.samples[index][0])
-        label = self.samples[index][1]
+        # label = self.samples[index][1]
+        label = np.zeros(len(self.classes)).astype(np.float32)
+        label[self.samples[index][1]] = 1
         w, h = get_image_size(img)
         path = self.samples[index][0]
+
+        # meta = Meta(['score'], [np.ones(1)])
 
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
             path=path,
-            label=label
+            label=[label],
+            # label_meta=meta
         )
 
     def __len__(self):

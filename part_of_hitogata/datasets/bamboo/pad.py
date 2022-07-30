@@ -4,11 +4,101 @@ import numbers
 import numpy as np
 from .base_internode import BaseInternode
 from torchvision.transforms.functional import pad
-from ..utils.common import clip_bbox, filter_bbox, is_pil, get_image_size, clip_poly
+from ..utils.common import clip_bbox, filter_bbox, is_pil, get_image_size, clip_poly, filter_point
 from .builder import INTERNODE
 
 
 __all__ = ['Padding', 'PaddingBySize', 'PaddingByStride']
+
+
+CV2_PADDING_MODES = dict(
+    constant=cv2.BORDER_CONSTANT, 
+    edge=cv2.BORDER_REPLICATE, 
+    reflect=cv2.BORDER_REFLECT_101, 
+    symmetric=cv2.BORDER_REFLECT
+)
+
+
+def pad_image(image, padding, fill, padding_mode):
+    left, right, top, bottom = padding
+
+    if is_pil(image):
+        image = pad(image, (left, top, right, bottom), fill, padding_mode)
+    else:
+        image = cv2.copyMakeBorder(image, top, bottom, left, right, CV2_PADDING_MODES[padding_mode], value=fill)
+    return image
+
+
+def unpad_image(image, padding):
+    left, right, top, bottom = padding
+    w, h = get_image_size(image)
+
+    if is_pil(image):
+        image = image.crop((left, top, w - right, h - bottom))
+    else:
+        image = image[top:h - bottom, left:w - right]
+    # print(get_image_size(image), 'unpad')
+    return image
+
+
+def pad_bbox(bboxes, padding):
+    left, right, top, bottom = padding
+
+    bboxes[:, 0] += left
+    bboxes[:, 1] += top
+    bboxes[:, 2] += left
+    bboxes[:, 3] += top
+
+    return bboxes
+
+
+def unpad_bbox(bboxes, padding):
+    left, right, top, bottom = padding
+
+    bboxes[:, 0] -= left
+    bboxes[:, 1] -= top
+    bboxes[:, 2] -= left
+    bboxes[:, 3] -= top
+
+    return bboxes
+
+
+def pad_poly(polys, padding):
+    left, right, top, bottom = padding
+
+    for i in range(len(polys)):
+        polys[i][..., 0] += left
+        polys[i][..., 1] += top
+
+    return polys
+
+
+def unpad_poly(polys, padding):
+    left, right, top, bottom = padding
+
+    for i in range(len(polys)):
+        polys[i][..., 0] -= left
+        polys[i][..., 1] -= top
+
+    return polys
+
+
+def pad_point(points, padding):
+    left, right, top, bottom = padding
+
+    points[..., 0] += left
+    points[..., 1] += top
+
+    return points
+
+
+def unpad_point(points, padding):
+    left, right, top, bottom = padding
+
+    points[..., 0] -= left
+    points[..., 1] -= top
+
+    return points
 
 
 @INTERNODE.register_module()
@@ -16,29 +106,14 @@ class Padding(BaseInternode):
     def __init__(self, padding, fill=0, padding_mode='constant', **kwargs):
         assert isinstance(padding, tuple) and len(padding) == 4
         assert isinstance(fill, (numbers.Number, tuple))
-
-        self.padding_modes = dict(
-            constant=cv2.BORDER_CONSTANT, 
-            edge=cv2.BORDER_REPLICATE, 
-            reflect=cv2.BORDER_REFLECT_101, 
-            symmetric=cv2.BORDER_REFLECT
-        )
-        assert padding_mode in self.padding_modes.keys()
+        assert padding_mode in CV2_PADDING_MODES.keys()
 
         self.padding = padding
         self.fill = fill
         self.padding_mode = padding_mode
 
     def __call__(self, data_dict):
-        if is_pil(data_dict['image']):
-            data_dict['image'] = pad(data_dict['image'], self.padding, self.fill, self.padding_mode)
-        else:
-            left, top, right, bottom = self.padding
-            # if data_dict['image'].ndim == 2:
-            #     assert isinstance(fill, numbers.Number)
-            # else:
-            #     assert len(self.fill) == data_dict['image'].shape[-1]
-            data_dict['image'] = cv2.copyMakeBorder(data_dict['image'], top, bottom, left, right, self.padding_modes[self.padding_mode], value=self.fill)
+        data_dict['image'] = pad_image(data_dict['image'], self.padding, self.fill, self.padding_mode)
 
         if 'bbox' in data_dict.keys():
             data_dict['bbox'][:, 0] += self.padding[0]
@@ -56,14 +131,7 @@ class PaddingBySize(BaseInternode):
     def __init__(self, size, fill=0, padding_mode='constant', center=False, **kwargs):
         assert isinstance(size, tuple) and len(size) == 2
         assert isinstance(fill, (numbers.Number, tuple))
-
-        self.padding_modes = dict(
-            constant=cv2.BORDER_CONSTANT, 
-            edge=cv2.BORDER_REPLICATE, 
-            reflect=cv2.BORDER_REFLECT_101, 
-            symmetric=cv2.BORDER_REFLECT
-        )
-        assert padding_mode in self.padding_modes.keys()
+        assert padding_mode in CV2_PADDING_MODES.keys()
 
         self.size = size
         self.fill = fill
@@ -85,31 +153,19 @@ class PaddingBySize(BaseInternode):
 
     def __call__(self, data_dict):
         w, h = get_image_size(data_dict['image'])
-        # print(w, h, self.size)
 
-        left, right, top, bottom = self.calc_padding(w, h)
-        # print(left, right, top, bottom)
-        # exit()
+        padding = self.calc_padding(w, h)
 
-        if is_pil(data_dict['image']):
-            data_dict['image'] = pad(data_dict['image'], (left, top, right, bottom), self.fill, self.padding_mode)
-        else:
-            # if data_dict['image'].ndim == 2:
-            #     assert isinstance(fill, numbers.Number)
-            # else:
-            #     assert len(self.fill) == data_dict['image'].shape[-1]
-            data_dict['image'] = cv2.copyMakeBorder(data_dict['image'], top, bottom, left, right, self.padding_modes[self.padding_mode], value=self.fill)
+        data_dict['image'] = pad_image(data_dict['image'], padding, self.fill, self.padding_mode)
 
         if 'bbox' in data_dict.keys():
-            data_dict['bbox'][:, 0] += left
-            data_dict['bbox'][:, 1] += top
-            data_dict['bbox'][:, 2] += left
-            data_dict['bbox'][:, 3] += top
+            data_dict['bbox'] = pad_bbox(data_dict['bbox'], padding)
 
         if 'poly' in data_dict.keys():
-            for i in range(len(data_dict['poly'])):
-                data_dict['poly'][i][..., 0] += left
-                data_dict['poly'][i][..., 1] += top
+            data_dict['poly'] = pad_poly(data_dict['poly'], padding)
+
+        if 'point' in data_dict.keys():
+            data_dict['point'] = pad_point(data_dict['point'], padding)
 
         return data_dict
 
@@ -121,15 +177,15 @@ class PaddingBySize(BaseInternode):
             h, w = kwargs['ori_size']
             h, w = int(h), int(w)
 
-            left, _, top, _ = self.calc_padding(w, h)
+            padding = self.calc_padding(w, h)
         else:
             return kwargs
 
+        if 'image' in kwargs.keys():
+            kwargs['image'] = unpad_image(kwargs['image'], padding)
+
         if 'bbox' in kwargs.keys():
-            kwargs['bbox'][:, 0] -= left
-            kwargs['bbox'][:, 1] -= top
-            kwargs['bbox'][:, 2] -= left
-            kwargs['bbox'][:, 3] -= top
+            kwargs['bbox'] = unpad_bbox(kwargs['bbox'], padding)
 
             boxes = clip_bbox(kwargs['bbox'], (w, h))
             keep = filter_bbox(boxes)
@@ -139,13 +195,28 @@ class PaddingBySize(BaseInternode):
                 kwargs['bbox_meta'].filter(keep)
 
         if 'poly' in kwargs.keys():
-            for i in range(len(kwargs['poly'])):
-                kwargs['poly'][i][..., 0] -= left
-                kwargs['poly'][i][..., 1] -= top
+            kwargs['poly'] = unpad_poly(kwargs['poly'], padding)
 
             kwargs['poly'], keep = clip_poly(kwargs['poly'], (w, h))
             if 'poly_meta' in kwargs.keys():
                 kwargs['poly_meta'].filter(keep)
+
+        if 'point' in kwargs.keys():
+            n = len(kwargs['point'])
+            points = kwargs['point'].reshape(-1, 2)
+            points = unpad_point(points, padding)
+
+            discard = filter_point(points, (w, h))
+
+            if 'point_meta' in kwargs.keys():
+                ind = kwargs['point_meta'].index('visible')
+                visible = kwargs['point_meta'].values[ind].reshape(-1)
+                visible[discard] = False
+                kwargs['point_meta'].values[ind] = visible.reshape(n, -1)
+            else:
+                points[discard] = -1
+
+            kwargs['point'] = points.reshape(n, -1, 2)
 
         return kwargs
 
@@ -158,14 +229,7 @@ class PaddingByStride(BaseInternode):
     def __init__(self, stride, fill=0, padding_mode='constant', center=False, **kwargs):
         assert isinstance(stride, int) and stride > 0
         assert isinstance(fill, (numbers.Number, tuple))
-
-        self.padding_modes = dict(
-            constant=cv2.BORDER_CONSTANT, 
-            edge=cv2.BORDER_REPLICATE, 
-            reflect=cv2.BORDER_REFLECT_101, 
-            symmetric=cv2.BORDER_REFLECT
-        )
-        assert padding_mode in self.padding_modes.keys()
+        assert padding_mode in CV2_PADDING_MODES.keys()
 
         self.stride = stride
         self.fill = fill
@@ -191,28 +255,18 @@ class PaddingByStride(BaseInternode):
     def __call__(self, data_dict):
         w, h = get_image_size(data_dict['image'])
 
-        left, right, top, bottom = self.calc_padding(w, h)
-        # print(left, right, top, bottom)
+        padding = self.calc_padding(w, h)
 
-        if is_pil(data_dict['image']):
-            data_dict['image'] = pad(data_dict['image'], (left, top, right, bottom), self.fill, self.padding_mode)
-        else:
-            # if data_dict['image'].ndim == 2:
-            #     assert isinstance(fill, numbers.Number)
-            # else:
-            #     assert len(self.fill) == data_dict['image'].shape[-1]
-            data_dict['image'] = cv2.copyMakeBorder(data_dict['image'], top, bottom, left, right, self.padding_modes[self.padding_mode], value=self.fill)
+        data_dict['image'] = pad_image(data_dict['image'], padding, self.fill, self.padding_mode)
 
         if 'bbox' in data_dict.keys():
-            data_dict['bbox'][:, 0] += left
-            data_dict['bbox'][:, 1] += top
-            data_dict['bbox'][:, 2] += left
-            data_dict['bbox'][:, 3] += top
+            data_dict['bbox'] = pad_bbox(data_dict['bbox'], padding)
 
         if 'poly' in data_dict.keys():
-            for i in range(len(data_dict['poly'])):
-                data_dict['poly'][i][..., 0] += left
-                data_dict['poly'][i][..., 1] += top
+            data_dict['poly'] = pad_poly(data_dict['poly'], padding)
+
+        if 'point' in data_dict.keys():
+            data_dict['point'] = pad_point(data_dict['point'], padding)
 
         return data_dict
 
@@ -224,15 +278,15 @@ class PaddingByStride(BaseInternode):
             h, w = kwargs['ori_size']
             h, w = int(h), int(w)
 
-            left, _, top, _ = self.calc_padding(w, h)
+            padding = self.calc_padding(w, h)
         else:
             return kwargs
 
+        if 'image' in kwargs.keys():
+            kwargs['image'] = unpad_image(kwargs['image'], padding)
+
         if 'bbox' in kwargs.keys():
-            kwargs['bbox'][:, 0] -= left
-            kwargs['bbox'][:, 1] -= top
-            kwargs['bbox'][:, 2] -= left
-            kwargs['bbox'][:, 3] -= top
+            kwargs['bbox'] = unpad_bbox(kwargs['bbox'], padding)
 
             boxes = clip_bbox(kwargs['bbox'], (w, h))
             keep = filter_bbox(boxes)
@@ -242,13 +296,28 @@ class PaddingByStride(BaseInternode):
                 kwargs['bbox_meta'].filter(keep)
 
         if 'poly' in kwargs.keys():
-            for i in range(len(kwargs['poly'])):
-                kwargs['poly'][i][..., 0] -= left
-                kwargs['poly'][i][..., 1] -= top
+            kwargs['poly'] = unpad_poly(kwargs['poly'], padding)
 
             kwargs['poly'], keep = clip_poly(kwargs['poly'], (w, h))
             if 'poly_meta' in kwargs.keys():
                 kwargs['poly_meta'].filter(keep)
+
+        if 'point' in kwargs.keys():
+            n = len(kwargs['point'])
+            points = kwargs['point'].reshape(-1, 2)
+            points = unpad_point(points, padding)
+
+            discard = filter_point(points, (w, h))
+
+            if 'point_meta' in kwargs.keys():
+                ind = kwargs['point_meta'].index('visible')
+                visible = kwargs['point_meta'].values[ind].reshape(-1)
+                visible[discard] = False
+                kwargs['point_meta'].values[ind] = visible.reshape(n, -1)
+            else:
+                points[discard] = -1
+
+            kwargs['point'] = points.reshape(n, -1, 2)
 
         return kwargs
 

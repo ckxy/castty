@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from part_of_hitogata.datasets import DataManager
 from part_of_hitogata.configs import load_config, load_config_far_away
-from part_of_hitogata.utils.label_tools import draw_label, draw_grouped_label
+from part_of_hitogata.utils.label_tools import draw_label
 
 
 def cl(data_dict, classes, rc, index=0):
@@ -41,9 +41,7 @@ def mcl(data_dict, classes, rc, index=0):
     print(data_dict['path'][index])
     print(label)
     print(classes)
-    # for i in range(len(classes)):
-    #     print(i, classes[i][label[i]])
-    # exit()
+    exit()
 
     # print(img.shape)
 
@@ -52,7 +50,7 @@ def mcl(data_dict, classes, rc, index=0):
     # print(img.size)
 
     # img = img.resize((img.size[0] * 8, img.size[1] * 8), Image.BILINEAR)
-    img = draw_grouped_label(img, label, classes)
+    img = draw_label(img, label, classes)
 
     # plt.title(classes[label])
     plt.imshow(img)

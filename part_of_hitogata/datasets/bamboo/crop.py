@@ -51,8 +51,9 @@ class AdaptiveCrop(BaseInternode):
             bboxes = data_dict['bbox'][:, :4]
             box.append(np.array([np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]).astype(np.int))
 
-        # if 'point' in data_dict.keys():
-        #     box.append(np.concatenate((np.min(data_dict['point'], axis=0), np.max(data_dict['point'], axis=0))).astype(np.int))
+        if 'point' in data_dict.keys():
+            points = data_dict['point'].reshape(-1, 2)
+            box.append(np.concatenate((np.min(points, axis=0), np.max(points, axis=0))).astype(np.int))
 
         box = np.array(box)
 
@@ -70,9 +71,9 @@ class AdaptiveCrop(BaseInternode):
             data_dict['bbox'][:, 2] -= xmin
             data_dict['bbox'][:, 3] -= ymin
 
-        # if 'point' in data_dict.keys():
-        #     data_dict['point'][:, 0] -= xmin
-        #     data_dict['point'][:, 1] -= ymin
+        if 'point' in data_dict.keys():
+            data_dict['point'][..., 0] -= xmin
+            data_dict['point'][..., 1] -= ymin
 
         if is_pil(data_dict['image']):
             data_dict['image'] = data_dict['image'].crop((xmin, ymin, xmax, ymax))
@@ -97,8 +98,9 @@ class AdaptiveTranslate(WarpInternode):
             bboxes = data_dict['bbox'][:, :4]
             box.append(np.array([np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]).astype(np.int))
 
-        # if 'point' in data_dict.keys():
-        #     box.append(np.concatenate((np.min(data_dict['point'], axis=0), np.max(data_dict['point'], axis=0))).astype(np.int))
+        if 'point' in data_dict.keys():
+            points = data_dict['point'].reshape(-1, 2)
+            box.append(np.concatenate((np.min(points, axis=0), np.max(points, axis=0))).astype(np.int))
 
         box = np.array(box)
 

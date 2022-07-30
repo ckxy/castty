@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 
-def draw_polygon_without_label(img, polygons, ignore_flags=None, class_ids=None, classes=None):
+def draw_polygon(img, polygons, ignore_flags=None, class_ids=None, classes=None):
 	if ignore_flags is None:
 		ignore_flags = [False] * len(polygons)
 

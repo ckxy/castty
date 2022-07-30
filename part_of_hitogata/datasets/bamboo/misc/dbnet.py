@@ -250,4 +250,4 @@ class DBMCEncode(DBEncode):
         return data_dict
 
     def __repr__(self):
-        return 'DBMCEncode(num_classes, shrink_ratio={}, thr_min={}, thr_max={}, min_short_size={})'.format(self.num_classes, self.shrink_ratio, self.thr_min, self.thr_max, self.min_short_size)
+        return 'DBMCEncode(num_classes={}, shrink_ratio={}, thr_min={}, thr_max={}, min_short_size={})'.format(self.num_classes, self.shrink_ratio, self.thr_min, self.thr_max, self.min_short_size)

@@ -43,11 +43,12 @@ class Flip(BaseInternode):
 
         if 'point' in data_dict.keys():
             if self.horizontal:
-                data_dict['point'][:, 0] = w - data_dict['point'][:, 0]
+                data_dict['point'][..., 0] = w - data_dict['point'][..., 0]
             else:
-                data_dict['point'][:, 1] = h - data_dict['point'][:, 1]
+                data_dict['point'][..., 1] = h - data_dict['point'][..., 1]
             if self.map_idx is not None:
-                data_dict['point'] = data_dict['point'][self.map_idx]
+                for i in range(len(data_dict['point'])):
+                    data_dict['point'][i] = data_dict['point'][i, self.map_idx]
 
         if 'poly' in data_dict.keys():
             if self.horizontal:

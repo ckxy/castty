@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from part_of_hitogata.datasets import DataManager
 from part_of_hitogata.configs import load_config, load_config_far_away
-from part_of_hitogata.utils.polygon_tools import draw_polygon_without_label
+from part_of_hitogata.utils.polygon_tools import draw_polygon
 
 
 
@@ -33,15 +33,15 @@ def po(data_dict, rc, index=0):
     print(data_dict['ori_size'][index])
     # print(poly, 'a')
 
-    # img = draw_polygon_without_label(img, poly, data_dict['poly_meta'][index].get('ignore_flag'))
-    img = draw_polygon_without_label(img, poly, data_dict['poly_meta'][index].get('ignore_flag'), data_dict['poly_meta'][index].get('class_id'), [0,1])
+    # img = draw_polygon(img, poly, data_dict['poly_meta'][index].get('ignore_flag'))
+    img = draw_polygon(img, poly, data_dict['poly_meta'][index].get('ignore_flag'), data_dict['poly_meta'][index].get('class_id'), [0,1])
 
     # print(data_dict['ocrdet_kernel'].shape, data_dict['ocrdet_train_mask'].shape)
 
-    plt.figure()
+    # plt.figure()
     # plt.subplot(121)
-    plt.imshow(img)
-    plt.axis('off')
+    # plt.imshow(img)
+    # plt.axis('off')
 
     # plt.subplot(122)
     # plt.imshow(data_dict['ocrdet_train_mask'][index].numpy(), cmap='gray')
@@ -56,37 +56,37 @@ def po(data_dict, rc, index=0):
     # print(data_dict['ocrdet_shrink_map'].shape, data_dict['ocrdet_shrink_mask'].shape)
     # print(data_dict['ocrdet_thr_map'].shape, data_dict['ocrdet_thr_mask'].shape)
 
-    # plt.subplot(2, 3, 1)
-    # plt.title('img')
-    # plt.imshow(img)
-    # plt.axis('off')
+    plt.subplot(2, 3, 1)
+    plt.title('img')
+    plt.imshow(img)
+    plt.axis('off')
 
-    # plt.subplot(2, 3, 2)
-    # plt.title('shrink_mask')
-    # plt.imshow(data_dict['ocrdet_shrink_mask'][index].numpy(), cmap='gray')
-    # plt.axis('off')
+    plt.subplot(2, 3, 2)
+    plt.title('shrink_mask')
+    plt.imshow(data_dict['ocrdet_shrink_mask'][index].numpy(), cmap='gray')
+    plt.axis('off')
 
-    # plt.subplot(2, 3, 3)
-    # plt.title('thr_mask')
-    # plt.imshow(data_dict['ocrdet_thr_mask'][index].numpy(), cmap='gray')
-    # plt.axis('off')
+    plt.subplot(2, 3, 3)
+    plt.title('thr_mask')
+    plt.imshow(data_dict['ocrdet_thr_mask'][index].numpy(), cmap='gray')
+    plt.axis('off')
 
-    # # plt.subplot(2, 3, 4)
-    # # plt.title('shrink_map')
-    # # plt.imshow(data_dict['ocrdet_shrink_map'][index][1].numpy(), cmap='gray')
-    # # plt.axis('off')
-
-    # plt.subplot(2, 3, 5)
+    # plt.subplot(2, 3, 4)
     # plt.title('shrink_map')
-    # plt.imshow(data_dict['ocrdet_shrink_map'][index][0].numpy(), cmap='gray')
+    # plt.imshow(data_dict['ocrdet_shrink_map'][index][1].numpy(), cmap='gray')
     # plt.axis('off')
 
-    # plt.subplot(2, 3, 6)
-    # plt.title('thr_map')
-    # plt.imshow(data_dict['ocrdet_thr_map'][index][0].numpy(), cmap='gray')
-    # plt.axis('off')
+    plt.subplot(2, 3, 5)
+    plt.title('shrink_map')
+    plt.imshow(data_dict['ocrdet_shrink_map'][index][0].numpy(), cmap='gray')
+    plt.axis('off')
 
-    # plt.show()
+    plt.subplot(2, 3, 6)
+    plt.title('thr_map')
+    plt.imshow(data_dict['ocrdet_thr_map'][index][0].numpy(), cmap='gray')
+    plt.axis('off')
+
+    plt.show()
 
 
 def po2(data_dict, rc, index=0):
@@ -107,7 +107,7 @@ def po2(data_dict, rc, index=0):
     print(data_dict['ori_size'][index])
     print(poly, 'a')
 
-    img = draw_polygon_without_label(img, poly)
+    img = draw_polygon(img, poly)
 
     plt.figure()
     # plt.subplot(121)

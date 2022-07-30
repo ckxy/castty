@@ -249,11 +249,37 @@ class Mosaic(Bamboo):
             res['bbox'] = np.concatenate((b1, b2, b3, b4))
 
             if 'bbox_meta' in k:
-                # i = d1['bbox_meta'].index('score')
+                if d1['bbox_meta'].have('box2point'):
+                    ind = d2['bbox_meta'].index('box2point')
+                    d2['bbox_meta'].values[ind] += len(d1['point'])
+
+                    ind = d3['bbox_meta'].index('box2point')
+                    d3['bbox_meta'].values[ind] += len(d1['point']) + len(d2['point'])
+
+                    ind = d4['bbox_meta'].index('box2point')
+                    d4['bbox_meta'].values[ind] += len(d1['point']) + len(d2['point']) + len(d3['point'])
+
                 d1['bbox_meta'] += d2['bbox_meta']
                 d1['bbox_meta'] += d3['bbox_meta']
                 d1['bbox_meta'] += d4['bbox_meta']
                 res['bbox_meta'] = deepcopy(d1['bbox_meta'])
+
+                # print(res['bbox_meta'])
+                # exit()
+
+        if 'point' in k:
+            p1 = self.adjust_point(d1['point'], xc - w1, yc - h1)
+            p2 = self.adjust_point(d2['point'], xc, yc - h2)
+            p3 = self.adjust_point(d3['point'], xc - w3, yc)
+            p4 = self.adjust_point(d4['point'], xc, yc)
+            res['point'] = np.concatenate((p1, p2, p3, p4))
+
+            if 'bbox_meta' in k:
+                # i = d1['bbox_meta'].index('score')
+                d1['point_meta'] += d2['point_meta']
+                d1['point_meta'] += d3['point_meta']
+                d1['point_meta'] += d4['point_meta']
+                res['point_meta'] = deepcopy(d1['point_meta'])
 
         if 'path' in k:
             res['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['path'], d2['path'], d3['path'], d4['path'])
@@ -270,8 +296,8 @@ class Mosaic(Bamboo):
 
     @staticmethod
     def adjust_point(point, ox, oy):
-        point[:, 0] += ox
-        point[:, 1] += oy
+        point[..., 0] += ox
+        point[..., 1] += oy
         return point
 
     def rper(self):
