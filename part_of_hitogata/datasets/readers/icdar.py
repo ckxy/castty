@@ -61,7 +61,7 @@ class ICDARDetReader(Reader):
         # polys.append(np.array([[460, 155], [510, 160], [515, 175], [470, 170]]).astype(np.float32))
         # ignore_flags.append(False)
 
-        meta = Meta(['ignore_flag'], [np.array(ignore_flags)])
+        meta = Meta(ignore_flag=np.array(ignore_flags))
 
         # meta.append(['class_id'], [np.array([1, 1, 0, 0, 0, 0, 0], dtype=np.int32)])
 

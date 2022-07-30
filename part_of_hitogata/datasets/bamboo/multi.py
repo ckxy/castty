@@ -249,15 +249,10 @@ class Mosaic(Bamboo):
             res['bbox'] = np.concatenate((b1, b2, b3, b4))
 
             if 'bbox_meta' in k:
-                if d1['bbox_meta'].have('box2point'):
-                    ind = d2['bbox_meta'].index('box2point')
-                    d2['bbox_meta'].values[ind] += len(d1['point'])
-
-                    ind = d3['bbox_meta'].index('box2point')
-                    d3['bbox_meta'].values[ind] += len(d1['point']) + len(d2['point'])
-
-                    ind = d4['bbox_meta'].index('box2point')
-                    d4['bbox_meta'].values[ind] += len(d1['point']) + len(d2['point']) + len(d3['point'])
+                if 'box2point' in d1['bbox_meta'].keys():
+                    d2['bbox_meta']['box2point'] += len(d1['point'])
+                    d3['bbox_meta']['box2point'] += len(d1['point']) + len(d2['point'])
+                    d4['bbox_meta']['box2point'] += len(d1['point']) + len(d2['point']) + len(d3['point'])
 
                 d1['bbox_meta'] += d2['bbox_meta']
                 d1['bbox_meta'] += d3['bbox_meta']

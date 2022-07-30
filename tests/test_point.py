@@ -15,22 +15,39 @@ from part_of_hitogata.utils.point_tools import draw_point
 from part_of_hitogata.utils.bbox_tools import draw_bbox
 
 
+# def kp(data_dict, rc, index=0):
+#     print(data_dict['image'][index].shape)
+#     bboxes = data_dict['bbox'][index].cpu().numpy()
+#     points = data_dict['point'][index].numpy()
+
+#     res = rc(image=data_dict['image'][index], ori_size=data_dict['ori_size'][index], point=points, bbox=bboxes)
+#     img = res['image']
+#     points = res['point']
+#     bboxes = res['bbox']
+
+#     print(os.path.splitext(ntpath.basename(data_dict['path'][index]))[0])
+#     print(data_dict['path'][index])
+#     # print(data_dict['euler_angle'][index])
+
+#     img = draw_point(img, points, data_dict['point_meta'][index]['visible'])
+#     img = draw_bbox(img, bboxes)
+#     plt.imshow(img)
+#     plt.axis('off')
+
+
 def kp(data_dict, rc, index=0):
     print(data_dict['image'][index].shape)
-    bboxes = data_dict['bbox'][index].cpu().numpy()
     points = data_dict['point'][index].numpy()
 
-    res = rc(image=data_dict['image'][index], ori_size=data_dict['ori_size'][index], point=points, bbox=bboxes)
+    res = rc(image=data_dict['image'][index], ori_size=data_dict['ori_size'][index], point=points)
     img = res['image']
     points = res['point']
-    bboxes = res['bbox']
 
     print(os.path.splitext(ntpath.basename(data_dict['path'][index]))[0])
     print(data_dict['path'][index])
     # print(data_dict['euler_angle'][index])
 
-    img = draw_point(img, points, data_dict['point_meta'][index].get('visible'))
-    img = draw_bbox(img, bboxes)
+    img = draw_point(img, points, data_dict['point_meta'][index]['visible'])
     plt.imshow(img)
     plt.axis('off')
 

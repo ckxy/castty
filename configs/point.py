@@ -35,13 +35,13 @@ test_data = dict(
         # reader=dict(type='LSPReader', root='../datasets/lsp', set_path='../datasets/lsp/LEEDS_annotations.json', is_test=False),
         reader=dict(type='WFLWSIReader', root='../datasets/WFLW/WFLW', txt_path='WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_train.txt', use_pil=True),
         internodes=[
-            # dict(type='DataSource'),
+            dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
             #     dict(type='DataSource'),
             # ]),
-            dict(type='Mosaic', internodes=[
-                dict(type='DataSource'),
-            ]),
+            # dict(type='Mosaic', internodes=[
+            #     dict(type='DataSource'),
+            # ]),
             # dict(type='Mosaic', internodes=[
             #     dict(type='MixUp', internodes=[
             #         dict(type='DataSource'),
@@ -55,24 +55,24 @@ test_data = dict(
             # dict(type='PaddingByStride', stride=32, fill=(50, 50, 50), padding_mode='constant', center=False, one_way='orward'),
             # dict(type='Resize', size=(416, 416), keep_ratio=True, short=False),
             # dict(type='WarpResize', size=(416, 416), expand=True, keep_ratio=True, short=False, one_way='forward'),
-            # dict(type='ResizeAndPadding', 
-            #     resize=dict(
-            #         type='Resize',
-            #         size=(416, 416),
-            #         keep_ratio=True,
-            #         short=False,
-            #     ),
-            #     padding=dict(
-            #         type='PaddingBySize',
-            #         size=(1600, 1800),
-            #         # type='PaddingByStride',
-            #         # stride=32,
-            #         fill=(0, 0, 0), 
-            #         padding_mode='constant',
-            #         center=False
-            #     ),
-            #     # one_way='forward'
-            # ),
+            dict(type='ResizeAndPadding', 
+                resize=dict(
+                    type='Resize',
+                    size=(416, 416),
+                    keep_ratio=True,
+                    short=False,
+                ),
+                padding=dict(
+                    type='PaddingBySize',
+                    size=(1600, 1800),
+                    # type='PaddingByStride',
+                    # stride=32,
+                    fill=(0, 0, 0), 
+                    padding_mode='constant',
+                    center=False
+                ),
+                # one_way='forward'
+            ),
             # dict(type='Warp', p=0.5, ccs=True, internodes=[
             #     # dict(type='WarpPerspective', expand=True, ccs=True),
             #     # dict(type='WarpStretch', rw=(0.5, 1.5), rh=(0.5, 1.5)),

@@ -118,13 +118,15 @@ class LVISAPIReader(Reader):
             image_id = record["id"] = img_dict["id"]
 
             boxes = []
+            classes = []
             for anno in anno_dict_list:
                 # Check that the image_id in this annotation is the same as
                 # the image_id we're looking at.
                 # This fails only when the data parsing logic or the annotation file is buggy.
                 assert anno["image_id"] == image_id
                 x1, y1, w, h = anno["bbox"]
-                boxes.append([x1, y1, x1 + w, y1 + h, anno["category_id"] - 1])  # Convert 1-indexed to 0-indexed
+                boxes.append([x1, y1, x1 + w, y1 + h])  # Convert 1-indexed to 0-indexed
+                classes.append(anno["category_id"] - 1)
 
                 # segm = anno["segmentation"]  # list[list[float]]
                 # # filter out invalid polygons (< 3 points)
@@ -136,9 +138,10 @@ class LVISAPIReader(Reader):
                 # obj["segmentation"] = segm
 
             if len(boxes) == 0:
-                record["bbox"] = np.zeros((0, 5)).astype(np.float32)
+                record["bbox"] = np.zeros((0, 4)).astype(np.float32)
             else:
                 record["bbox"] = np.array(boxes)
+            record["class_id"] = np.array(classes).astype(np.int32)
             dataset_dicts.append(record)
 
         return dataset_dicts
@@ -146,8 +149,11 @@ class LVISAPIReader(Reader):
     def __call__(self, index):
         data_line = deepcopy(self.data_lines[index])
         data_line['image'] = self.read_image(data_line['path'])
-        data_line['bbox_meta'] = Meta(['class_id', 'score'], [data_line['bbox'][..., 4], np.ones(len(data_line['bbox']))])
-        data_line['bbox'] = data_line['bbox'][..., :4]
+        data_line['bbox_meta'] = Meta(
+            class_id=data_line.pop('class_id'),
+            score=np.ones(len(data_line['bbox']))
+        )
+        # data_line['bbox'] = data_line['bbox'][..., :4]
         return data_line
 
     def __len__(self):

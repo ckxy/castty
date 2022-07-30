@@ -46,13 +46,15 @@ class LSPReader(Reader):
         img = self.read_image(img_path)
         w, h = get_image_size(img)
 
-        meta = Meta(['visible'], [np.array(a['joint_self'])[..., 2].astype(np.bool)])
+        meta = Meta(visible=np.array(a['joint_self'])[..., 2][np.newaxis, ...].astype(np.bool))
+        # print(np.array(a['joint_self']))
+        # exit()
 
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
             path=img_path,
-            point=np.array(a['joint_self'])[..., :2].astype(np.float32),
+            point=np.array(a['joint_self'])[..., :2][np.newaxis, ...].astype(np.float32),
             point_meta=meta
         )
 

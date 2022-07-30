@@ -38,11 +38,10 @@ class FilterSelfOverlapping(BaseInternode):
                             reject.add(j)
             
             if 'poly_meta' in data_dict.keys():
-                ind = data_dict['poly_meta'].index('ignore_flag')
-                ignore_flags = data_dict['poly_meta'].values[ind]
+                ignore_flags = data_dict['poly_meta']['ignore_flag']
                 for r in reject:
                     ignore_flags[r] = True
-                data_dict['poly_meta'].values[ind] = ignore_flags
+                data_dict['poly_meta']['ignore_flag'] = ignore_flags
             else:
                 keep = set(range(len(data_dict['poly']))) - reject
                 keep = sorted(list(keep))

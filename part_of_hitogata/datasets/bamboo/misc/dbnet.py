@@ -172,8 +172,7 @@ class DBEncode(BaseInternode):
         w, h = get_image_size(data_dict['image'])
 
         if 'poly_meta' in data_dict.keys():
-            ind = data_dict['poly_meta'].index('ignore_flag')
-            ignore_flags = data_dict['poly_meta'].values[ind]
+            ignore_flags = data_dict['poly_meta']['ignore_flag']
         else:
             ignore_flags = np.array([False] * len(data_dict['poly']))
 
@@ -188,7 +187,7 @@ class DBEncode(BaseInternode):
         data_dict['ocrdet_thr_map'] = data_dict['ocrdet_thr_map'][np.newaxis, ...]
 
         if 'poly_meta' in data_dict.keys():
-            data_dict['poly_meta'].values[ind] = ignore_flags
+            data_dict['poly_meta']['ignore_flag'] = ignore_flags
 
         return data_dict
 
@@ -212,15 +211,13 @@ class DBMCEncode(DBEncode):
         self.min_short_size = min_short_size
 
     def __call__(self, data_dict):
-        assert data_dict['poly_meta'].have('class_id')
-
-        labels = data_dict['poly_meta'].get('class_id')
+        assert 'class_id' in data_dict['poly_meta'].keys()
+        labels = data_dict['poly_meta']['class_id']
 
         w, h = get_image_size(data_dict['image'])
 
         if 'poly_meta' in data_dict.keys():
-            ind = data_dict['poly_meta'].index('ignore_flag')
-            ignore_flags = data_dict['poly_meta'].values[ind]
+            ignore_flags = data_dict['poly_meta']['ignore_flag']
         else:
             ignore_flags = np.array([False] * len(data_dict['poly']))
 
@@ -245,7 +242,7 @@ class DBMCEncode(DBEncode):
         data_dict['ocrdet_thr_map'] = data_dict['ocrdet_thr_map'][np.newaxis, ...]
 
         if 'poly_meta' in data_dict.keys():
-            data_dict['poly_meta'].values[ind] = ignore_flags
+            data_dict['poly_meta']['ignore_flag'] = ignore_flags
 
         return data_dict
 

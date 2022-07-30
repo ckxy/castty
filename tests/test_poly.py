@@ -33,8 +33,8 @@ def po(data_dict, rc, index=0):
     print(data_dict['ori_size'][index])
     # print(poly, 'a')
 
-    # img = draw_polygon(img, poly, data_dict['poly_meta'][index].get('ignore_flag'))
-    img = draw_polygon(img, poly, data_dict['poly_meta'][index].get('ignore_flag'), data_dict['poly_meta'][index].get('class_id'), [0,1])
+    # img = draw_polygon(img, poly, data_dict['poly_meta'][index]['ignore_flag'])
+    img = draw_polygon(img, poly, data_dict['poly_meta'][index]['ignore_flag'], data_dict['poly_meta'][index]['class_id'], [0,1])
 
     # print(data_dict['ocrdet_kernel'].shape, data_dict['ocrdet_train_mask'].shape)
 

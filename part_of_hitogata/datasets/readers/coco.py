@@ -127,7 +127,11 @@ class COCOAPIReader(Reader):
 
         bbox = np.concatenate([anno['bboxes'], anno['labels'][..., np.newaxis]], axis=1)
 
-        bbox_meta = Meta(['class_id', 'score'], [anno['labels'], np.ones(len(bbox)).astype(np.float32)])
+        # bbox_meta = Meta(['class_id', 'score'], [anno['labels'], np.ones(len(bbox)).astype(np.float32)])
+        bbox_meta = Meta(
+            class_id=anno['labels'],
+            score=np.ones(len(bbox)).astype(np.float32)
+        )
 
         return dict(
             image=img,

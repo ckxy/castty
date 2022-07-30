@@ -42,7 +42,8 @@ class WFLWReader(Reader):
         img = self.read_image(os.path.join(self.img_root, name))
         w, h = get_image_size(img)
 
-        meta = Meta(['visible'], [np.ones(landmark.shape[:2]).astype(np.bool)])
+        point_meta = Meta(visible=np.ones(landmarks.shape[:2]).astype(np.bool))
+        # meta = Meta(['visible'], [np.ones(landmark.shape[:2]).astype(np.bool)])
         # print(meta.get('visible').shape, landmark.shape)
         # exit()
         
@@ -53,7 +54,7 @@ class WFLWReader(Reader):
             bbox=box[np.newaxis, ...].astype(np.float32),
             point=landmark,
             point_meta=meta,
-            attribute=attribute
+            # attribute=attribute
         )
 
     def __len__(self):
@@ -98,7 +99,7 @@ class WFLWSIReader(Reader):
         )
 
     def __call__(self, index):
-        index = 4993
+        # index = 4993
         name = self.names[index]
         lines = self.data[name]
 
@@ -119,8 +120,8 @@ class WFLWSIReader(Reader):
         img = self.read_image(os.path.join(self.img_root, name))
         w, h = get_image_size(img)
 
-        point_meta = Meta(['visible'], [np.ones(landmarks.shape[:2]).astype(np.bool)])
-        bbox_meta = Meta(['box2point'], [np.arange(len(landmarks))])
+        point_meta = Meta(visible=np.ones(landmarks.shape[:2]).astype(np.bool))
+        bbox_meta = Meta(box2point=np.arange(len(landmarks)))
         
         return dict(
             image=img,

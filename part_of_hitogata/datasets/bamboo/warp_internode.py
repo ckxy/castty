@@ -54,10 +54,9 @@ class WarpInternode(BaseInternode):
                 # print(discard)
 
                 if 'point_meta' in data_dict.keys():
-                    ind = data_dict['point_meta'].index('visible')
-                    visible = data_dict['point_meta'].values[ind].reshape(-1)
+                    visible = data_dict['point_meta']['visible'].reshape(-1)
                     visible[discard] = False
-                    data_dict['point_meta'].values[ind] = visible.reshape(n, -1)
+                    data_dict['point_meta']['visible'] = visible.reshape(n, -1)
                     # print(data_dict['point_meta'])
                 else:
                     points[discard] = -1

@@ -209,10 +209,9 @@ class PaddingBySize(BaseInternode):
             discard = filter_point(points, (w, h))
 
             if 'point_meta' in kwargs.keys():
-                ind = kwargs['point_meta'].index('visible')
-                visible = kwargs['point_meta'].values[ind].reshape(-1)
+                visible = kwargs['point_meta']['visible'].reshape(-1)
                 visible[discard] = False
-                kwargs['point_meta'].values[ind] = visible.reshape(n, -1)
+                kwargs['point_meta']['visible'] = visible.reshape(n, -1)
             else:
                 points[discard] = -1
 
@@ -310,10 +309,9 @@ class PaddingByStride(BaseInternode):
             discard = filter_point(points, (w, h))
 
             if 'point_meta' in kwargs.keys():
-                ind = kwargs['point_meta'].index('visible')
-                visible = kwargs['point_meta'].values[ind].reshape(-1)
+                visible = kwargs['point_meta']['visible'].reshape(-1)
                 visible[discard] = False
-                kwargs['point_meta'].values[ind] = visible.reshape(n, -1)
+                kwargs['point_meta']['visible'] = visible.reshape(n, -1)
             else:
                 points[discard] = -1
 

@@ -82,8 +82,7 @@ class PSEEncode(BaseInternode):
         w, h = get_image_size(data_dict['image'])
 
         if 'poly_meta' in data_dict.keys():
-            ind = data_dict['poly_meta'].index('ignore_flag')
-            ignore_flags = data_dict['poly_meta'].values[ind]
+            ignore_flags = data_dict['poly_meta']['ignore_flag']
         else:
             ignore_flags = np.array([False] * len(data_dict['poly']))
 
@@ -101,7 +100,7 @@ class PSEEncode(BaseInternode):
         data_dict['ocrdet_train_mask'] = torch.from_numpy(train_mask)
 
         if 'poly_meta' in data_dict.keys():
-            data_dict['poly_meta'].values[ind] = ignore_flags
+            data_dict['poly_meta']['ignore_flag'] = ignore_flags
 
         return data_dict
 
@@ -120,15 +119,13 @@ class PSEMCEncode(BaseInternode):
         self.max_shrink = max_shrink
 
     def __call__(self, data_dict):
-        assert data_dict['poly_meta'].have('class_id')
-
-        labels = data_dict['poly_meta'].get('class_id')
+        assert 'class_id' in data_dict['poly_meta'].keys()
+        labels = data_dict['poly_meta']['class_id']
 
         w, h = get_image_size(data_dict['image'])
 
         if 'poly_meta' in data_dict.keys():
-            ind = data_dict['poly_meta'].index('ignore_flag')
-            ignore_flags = data_dict['poly_meta'].values[ind]
+            ignore_flags = data_dict['poly_meta']['ignore_flag']
         else:
             ignore_flags = np.array([False] * len(data_dict['poly']))
 
@@ -152,7 +149,7 @@ class PSEMCEncode(BaseInternode):
         data_dict['ocrdet_train_mask'] = torch.from_numpy(train_mask)
 
         if 'poly_meta' in data_dict.keys():
-            data_dict['poly_meta'].values[ind] = ignore_flags
+            data_dict['poly_meta']['ignore_flag'] = ignore_flags
 
         return data_dict
 

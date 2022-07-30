@@ -103,7 +103,12 @@ class VOCReader(Reader):
         w, h = get_image_size(img)
         bbox, cla, difficult = self.read_bbox_voc(self.label_paths[index], self.classes, self.filter_difficult, self.to_remove)
         path = self.image_paths[index]
-        bbox_meta = Meta(['class_id', 'score', 'difficult'], [cla, np.ones(len(bbox)).astype(np.float32), difficult])
+        # bbox_meta = Meta(['class_id', 'score', 'difficult'], [cla, np.ones(len(bbox)).astype(np.float32), difficult])
+        bbox_meta = Meta(
+            class_id=cla,
+            score=np.ones(len(bbox)).astype(np.float32),
+            difficult=difficult,
+        )
 
         return dict(
             image=img,

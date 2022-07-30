@@ -16,14 +16,8 @@ class Meta(dict):
         super(Meta, self).__init__(*args, **kwargs)
         self.filter_flag = False
 
-    # def get(self, key):
-    #     return super(Meta, self).__getitem__(key)
-
-    def __getitem__(self, key):
-        if key in self.keys():
-            return super(Meta, self).__getitem__(key)
-        else:
-            return None
+    def get(self, key):
+        return super(Meta, self).__getitem__(key)
     
     def __setitem__(self, key, value):
         if not self.filter_flag:
@@ -58,6 +52,7 @@ if __name__ == '__main__':
     # m = Meta(b=2)
     m = Meta(name=np.array([1, 0, 1, 6, 8]), class_id=np.array([1, 0, 1, 0, 0]))
     print(m['name'])
+    exit()
     # print(m['c'])
     # m['name'] = 0
     m['name'] = np.array([9, 8, 0, 5, 4])
