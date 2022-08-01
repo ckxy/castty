@@ -81,7 +81,7 @@ def grid_analysis(img, grid_sizes, bboxes_groups, indices_groups, bboxes_num, as
         return [img for img in img_tmps]
 
 
-def draw_bbox(img, bboxes, scores=None, class_ids=None, classes=None):
+def draw_bbox(img, bboxes, class_ids=None, classes=None, scores=None):
     if classes is not None:
         num_classes = len(classes)
         

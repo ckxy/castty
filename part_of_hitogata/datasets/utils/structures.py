@@ -19,11 +19,11 @@ class Meta(dict):
     # def get(self, key):
     #     return super(Meta, self).__getitem__(key)
 
-    def __getitem__(self, key):
-        if key in self.keys():
-            return super(Meta, self).__getitem__(key)
-        else:
-            return None
+    # def __getitem__(self, key):
+    #     if key in self.keys():
+    #         return super(Meta, self).__getitem__(key)
+    #     else:
+    #         return None
     
     def __setitem__(self, key, value):
         if not self.filter_flag:

@@ -28,7 +28,7 @@ def ga(data_dict, classes, rc, index=0):
     if 'ga_bbox' in data_dict:
         ga_img = grid_analysis(img1, (8, 16, 32), data_dict['ga_bbox'][index], data_dict['ga_index'][index], len(bboxes))
 
-    b_img = draw_bbox(img2, res['bbox'], data_dict['bbox_meta'][index].get('score'), data_dict['bbox_meta'][index].get('class_id'), classes)
+    b_img = draw_bbox(img2, res['bbox'], data_dict['bbox_meta'][index].get('class_id', None), classes, data_dict['bbox_meta'][index].get('score', None))
     # b_img.save('1.jpg')
     # ga_img.save('atssa.jpg')
 
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     # exit()
 
     for data in tqdm(dataloader):
-        ga(data, info['classes'], rc, 0)
+        ga(data, info['bbox_classes'], rc, 0)
         plt.show()
         break
 

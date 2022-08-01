@@ -240,6 +240,7 @@ class Mosaic(Bamboo):
 
         res['image'] = img4
         res['ori_size'] = np.array([new_h, new_w]).astype(np.float32)
+        res['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['path'], d2['path'], d3['path'], d4['path'])
 
         if 'bbox' in k:
             b1 = self.adjust_bbox(d1['bbox'], xc - w1, yc - h1)
@@ -276,8 +277,15 @@ class Mosaic(Bamboo):
                 d1['point_meta'] += d4['point_meta']
                 res['point_meta'] = deepcopy(d1['point_meta'])
 
-        if 'path' in k:
-            res['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['path'], d2['path'], d3['path'], d4['path'])
+        if 'mask' in k:
+            mask4 = np.zeros((new_h, new_w)).astype(np.int32)
+
+            mask4[yc - h1:yc, xc - w1:xc] = d1['mask']
+            mask4[yc - h2:yc, xc:xc + w2] = d2['mask']
+            mask4[yc:yc + h3, xc - w3:xc] = d3['mask']
+            mask4[yc:yc + h4, xc:xc + w4] = d4['mask']
+
+            res['mask'] = mask4
 
         return res
 

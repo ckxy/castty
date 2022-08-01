@@ -52,7 +52,7 @@ class COCOAPIReader(Reader):
         self._info = dict(
             forcat=dict(
                 type='det',
-                classes=self.classes
+                bbox_classes=self.classes
             ),
             api=self.coco_api,
             ids=self.cat_ids

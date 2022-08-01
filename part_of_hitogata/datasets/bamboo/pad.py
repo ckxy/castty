@@ -101,6 +101,21 @@ def unpad_point(points, padding):
     return points
 
 
+def pad_mask(mask, padding, padding_mode):
+    left, right, top, bottom = padding
+
+    mask = cv2.copyMakeBorder(mask, top, bottom, left, right, CV2_PADDING_MODES[padding_mode], value=0)
+    return mask
+
+
+def unpad_mask(mask, padding):
+    left, right, top, bottom = padding
+    w, h = get_image_size(mask)
+
+    mask = mask[top:h - bottom, left:w - right]
+    return mask
+
+
 @INTERNODE.register_module()
 class Padding(BaseInternode):
     def __init__(self, padding, fill=0, padding_mode='constant', **kwargs):
@@ -167,6 +182,9 @@ class PaddingBySize(BaseInternode):
         if 'point' in data_dict.keys():
             data_dict['point'] = pad_point(data_dict['point'], padding)
 
+        if 'mask' in data_dict.keys():
+            data_dict['mask'] = pad_mask(data_dict['mask'], padding, self.padding_mode)
+
         return data_dict
 
     def reverse(self, **kwargs):
@@ -183,6 +201,9 @@ class PaddingBySize(BaseInternode):
 
         if 'image' in kwargs.keys():
             kwargs['image'] = unpad_image(kwargs['image'], padding)
+
+        if 'mask' in kwargs.keys():
+            kwargs['mask'] = unpad_image(kwargs['mask'], padding)
 
         if 'bbox' in kwargs.keys():
             kwargs['bbox'] = unpad_bbox(kwargs['bbox'], padding)
@@ -267,6 +288,9 @@ class PaddingByStride(BaseInternode):
         if 'point' in data_dict.keys():
             data_dict['point'] = pad_point(data_dict['point'], padding)
 
+        if 'mask' in data_dict.keys():
+            data_dict['mask'] = pad_mask(data_dict['mask'], padding, self.padding_mode)
+
         return data_dict
 
     def reverse(self, **kwargs):
@@ -283,6 +307,9 @@ class PaddingByStride(BaseInternode):
 
         if 'image' in kwargs.keys():
             kwargs['image'] = unpad_image(kwargs['image'], padding)
+
+        if 'mask' in kwargs.keys():
+            kwargs['mask'] = unpad_image(kwargs['mask'], padding)
 
         if 'bbox' in kwargs.keys():
             kwargs['bbox'] = unpad_bbox(kwargs['bbox'], padding)

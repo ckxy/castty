@@ -53,6 +53,15 @@ def resize_point(points, scale):
     return points
 
 
+def resize_mask(mask, scale):
+    w, h = get_image_size(mask)
+    nw = int(scale[0] * w)
+    nh = int(scale[1] * h)
+
+    mask = cv2.resize(mask, (nw, nh), interpolation=cv2.INTER_NEAREST)
+    return mask
+
+
 @INTERNODE.register_module()
 class Resize(BaseInternode):
     def __init__(self, size, keep_ratio=True, short=False, **kwargs):
@@ -91,6 +100,9 @@ class Resize(BaseInternode):
         if 'point' in data_dict.keys():
             data_dict['point'] = resize_point(data_dict['point'], scale)
 
+        if 'mask' in data_dict.keys():
+            data_dict['mask'] = resize_mask(data_dict['mask'], scale)
+
         return data_dict
 
     def __call__(self, data_dict):
@@ -121,6 +133,9 @@ class Resize(BaseInternode):
 
         if 'point' in kwargs.keys():
             kwargs['point'] = resize_point(kwargs['point'], scale)
+
+        if 'mask' in kwargs.keys():
+            kwargs['mask'] = resize_mask(kwargs['mask'], scale)
 
         return kwargs
 

@@ -58,6 +58,10 @@ class Flip(BaseInternode):
                 for i in range(len(data_dict['poly'])):
                     data_dict['poly'][i][:, 1] = h - data_dict['poly'][i][:, 1]
 
+        if 'mask' in data_dict.keys():
+            mode = 1 if self.horizontal else 0
+            data_dict['mask'] = cv2.flip(data_dict['mask'], mode)
+
         return data_dict
 
     def __repr__(self):

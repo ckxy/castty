@@ -19,19 +19,22 @@ class Crop(BaseInternode):
         self.size = size
 
     def __call__(self, data_dict):
-        assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys() and 'quad' not in data_dict.keys()
-        if random.random() < self.p:
-            w, h = data_dict['image'].size
+        assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys() and 'poly' not in data_dict.keys()
 
-            xmin = random.randint(0, w - self.size[0])
-            ymin = random.randint(0, h - self.size[1])
-            xmax = xmin + self.size[0]
-            ymax = ymin + self.size[1]
+        w, h = get_image_size(data_dict['image'])
 
+        xmin = random.randint(0, w - self.size[0])
+        ymin = random.randint(0, h - self.size[1])
+        xmax = xmin + self.size[0]
+        ymax = ymin + self.size[1]
+
+        if is_pil(data_dict['image']):
             data_dict['image'] = data_dict['image'].crop((xmin, ymin, xmax, ymax))
+        else:
+            data_dict['image'] = data_dict['image'][ymin:ymax, xmin:xmax]
 
-            if 'mask' in data_dict.keys():
-                data_dict['mask'] = data_dict['mask'].crop((xmin, ymin, xmax, ymax))
+        if 'mask' in data_dict.keys():
+            data_dict['mask'] = data_dict['mask'][ymin:ymax, xmin:xmax]
 
         return data_dict
 
@@ -48,12 +51,16 @@ class AdaptiveCrop(BaseInternode):
 
         box = []
         if 'bbox' in data_dict.keys():
-            bboxes = data_dict['bbox'][:, :4]
+            bboxes = data_dict['bbox']
             box.append(np.array([np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]).astype(np.int))
 
         if 'point' in data_dict.keys():
             points = data_dict['point'].reshape(-1, 2)
             box.append(np.concatenate((np.min(points, axis=0), np.max(points, axis=0))).astype(np.int))
+
+        if 'poly' in data_dict.keys():
+            polys = np.array(data_dict['poly']).reshape(-1, 2)
+            box.append(np.concatenate((np.min(polys, axis=0), np.max(polys, axis=0))).astype(np.int))
 
         box = np.array(box)
 
@@ -75,13 +82,18 @@ class AdaptiveCrop(BaseInternode):
             data_dict['point'][..., 0] -= xmin
             data_dict['point'][..., 1] -= ymin
 
+        if 'poly' in data_dict.keys():
+            for i in range(len(data_dict['poly'])):
+                data_dict['poly'][i][..., 0] -= xmin
+                data_dict['poly'][i][..., 1] -= ymin
+
         if is_pil(data_dict['image']):
             data_dict['image'] = data_dict['image'].crop((xmin, ymin, xmax, ymax))
         else:
             data_dict['image'] = data_dict['image'][ymin:ymax, xmin:xmax]
 
-        # if 'mask' in data_dict.keys():
-        #     data_dict['mask'] = data_dict['mask'].crop((xmin, ymin, xmax, ymax))
+        if 'mask' in data_dict.keys():
+            data_dict['mask'] = data_dict['mask'][ymin:ymax, xmin:xmax]
 
         return data_dict
 
@@ -89,7 +101,7 @@ class AdaptiveCrop(BaseInternode):
 @INTERNODE.register_module()
 class AdaptiveTranslate(WarpInternode):
     def __call__(self, data_dict):
-        assert 'point' in data_dict.keys() or 'bbox' in data_dict.keys() or 'quad' in data_dict.keys()
+        assert 'point' in data_dict.keys() or 'bbox' in data_dict.keys() or 'poly' in data_dict.keys()
 
         w, h = get_image_size(data_dict['image'])
 
@@ -101,6 +113,10 @@ class AdaptiveTranslate(WarpInternode):
         if 'point' in data_dict.keys():
             points = data_dict['point'].reshape(-1, 2)
             box.append(np.concatenate((np.min(points, axis=0), np.max(points, axis=0))).astype(np.int))
+
+        if 'poly' in data_dict.keys():
+            polys = np.array(data_dict['poly']).reshape(-1, 2)
+            box.append(np.concatenate((np.min(polys, axis=0), np.max(polys, axis=0))).astype(np.int))
 
         box = np.array(box)
 

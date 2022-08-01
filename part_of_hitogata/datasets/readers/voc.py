@@ -1,4 +1,5 @@
 import os
+import cv2
 import ntpath
 import numpy as np
 from PIL import Image
@@ -52,7 +53,7 @@ class VOCReader(Reader):
         self._info = dict(
             forcat=dict(
                 type='det',
-                classes=self.classes
+                bbox_classes=self.classes
             )
         )
 
@@ -127,18 +128,25 @@ class VOCReader(Reader):
 
 @READER.register_module()
 class VOCSegReader(Reader):
-    def __init__(self, root, classes, split=None, **kwargs):
+    def __init__(self, root, classes, split=None, ignore_contour=True, **kwargs):
         super(VOCSegReader, self).__init__(**kwargs)
 
+        assert classes[0] == '__background__'
+
         self.root = root
-        self.classes = classes
+        self.ignore_contour = ignore_contour
+
+        if not ignore_contour:
+            self.classes = list(classes) + ['contour']
+            self.classes = tuple(self.classes)
+        else:
+            self.classes = tuple(classes)
 
         img_root = os.path.join(self.root, 'JPEGImages')
         mask_root = os.path.join(self.root, 'SegmentationClass')
 
         assert os.path.exists(img_root)
         assert os.path.exists(mask_root)
-        assert classes[0] == '__background__'
 
         if split is None:
             self.split = None
@@ -152,28 +160,34 @@ class VOCSegReader(Reader):
         assert len(self.image_paths) > 0
         self.mask_paths = [os.path.join(mask_root, ntpath.basename(id_).split('.')[0] + '.png') for id_ in self.image_paths]
 
-    def get_dataset_info(self):
-        return range(len(self.image_paths)), Dict({'classes': self.classes})
-
-    def get_data_info(self, index):
-        img = Image.open(self.image_paths[index])
-        w, h = img.size
-        return dict(h=h, w=w)
+        self._info = dict(
+            forcat=dict(
+                type='seg',
+                mask_classes=self.classes
+            )
+        )
 
     def __call__(self, index):
-        # index = data_dict
-        # img = Image.open(self.image_paths[index]).convert('RGB')
         img = self.read_image(self.image_paths[index])
+        w, h = get_image_size(img)
+
         mask = Image.open(self.mask_paths[index])
-        w, h = img.size
-        path = self.image_paths[index]
-        # return {'image': img, 'ori_size': np.array([h, w]).astype(np.float32), 'path': path, 'mask': mask}
+        mask = np.array(mask).astype(np.int32)
+
+        if self.ignore_contour:
+            mask[mask == 255] = 0
+        else:
+            mask[mask == 255] = len(self.classes) - 1
+
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            path=self.image_paths[index],
             mask=mask
         )
+
+    def __len__(self):
+        return len(self.image_paths)
 
     def __repr__(self):
         return 'VOCSegReader(root={}, split={}, classes={}, {})'.format(self.root, self.split, self.classes, super(VOCSegReader, self).__repr__())
@@ -202,30 +216,31 @@ class SBDReader(Reader):
 
         assert len(self.image_paths) > 0
 
-    def get_dataset_info(self):
-        return range(len(self.image_paths)), Dict({'classes': self.classes})
-
-    def get_data_info(self, index):
-        img = Image.open(self.image_paths[index])
-        w, h = img.size
-        return dict(h=h, w=w)
+        self._info = dict(
+            forcat=dict(
+                type='seg',
+                mask_classes=self.classes
+            )
+        )
 
     def __call__(self, index):
-        # index = data_dict
-        # img = Image.open(self.image_paths[index]).convert('RGB')
         img = self.read_image(self.image_paths[index])
+        w, h = get_image_size(img)
+
         mat = loadmat(self.mask_paths[index])
         mask = mat['GTcls'][0]['Segmentation'][0].astype(np.uint8)
         mask = Image.fromarray(mask, mode='P')
-        w, h = img.size
-        path = self.image_paths[index]
-        # return {'image': img, 'ori_size': np.array([h, w]).astype(np.float32), 'path': path, 'mask': mask}
+        mask = np.array(mask).astype(np.int32)
+
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            path=self.image_paths[index],
             mask=mask
         )
+
+    def __len__(self):
+        return len(self.image_paths)
 
     def __repr__(self):
         return 'SBDReader(root={}, split={}, classes={}, {})'.format(self.root, self.split, self.classes, super(SBDReader, self).__repr__())

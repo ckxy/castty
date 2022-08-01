@@ -47,7 +47,7 @@ def kp(data_dict, rc, index=0):
     print(data_dict['path'][index])
     # print(data_dict['euler_angle'][index])
 
-    img = draw_point(img, points, data_dict['point_meta'][index]['visible'])
+    img = draw_point(img, points, data_dict['point_meta'][index].get('visible', None))
     plt.imshow(img)
     plt.axis('off')
 

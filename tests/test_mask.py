@@ -11,47 +11,35 @@ from tqdm import tqdm
 
 from part_of_hitogata.datasets import DataManager
 from part_of_hitogata.configs import load_config, load_config_far_away
-from part_of_hitogata.utils.bbox_tools import xywh2xyxy, xyxy2xywh, draw_bbox, grid_analysis
+from part_of_hitogata.utils.mask_tools import draw_mask
 
 
-def ga(data_dict, classes, rc, index=0):
-    bboxes = data_dict['bbox'][index].cpu().numpy()
-    print(data_dict['image'][index].shape)
+def ss(data_dict, classes, rc, index=0):
+    img = data_dict['image'][index]
+    mask = data_dict['mask'][index]
 
-    print(bboxes, 'b')
+    print(img.shape, mask.shape, data_dict['ori_size'][index])
 
-    res = rc(image=data_dict['image'][index], ori_size=data_dict['ori_size'][index], bbox=bboxes)
-    img1 = res['image']
-    img2 = img1.copy()
-    bboxes = res['bbox']
+    res = rc(image=img, ori_size=data_dict['ori_size'][index], mask=mask)
+    img = res['image']
+    mask = res['mask']
 
-    if 'ga_bbox' in data_dict:
-        ga_img = grid_analysis(img1, (8, 16, 32), data_dict['ga_bbox'][index], data_dict['ga_index'][index], len(bboxes))
-
-    b_img = draw_bbox(img2, res['bbox'], data_dict['bbox_meta'][index].get('score'), data_dict['bbox_meta'][index].get('class_id'), classes)
-    # b_img.save('1.jpg')
-    # ga_img.save('atssa.jpg')
-
-    print(bboxes, 'a')
-    print(data_dict['ori_size'][index])
-
-    if 'ga_bbox' in data_dict:
-        plt.subplot(211)
-        plt.imshow(b_img)
-        plt.axis('off')
-        plt.subplot(212)
-        plt.imshow(ga_img)
-        plt.axis('off')
-    else:
-        plt.imshow(b_img)
-        plt.axis('off')
+    plt.subplot(131)
+    plt.imshow(img)
+    # plt.axis('off')
+    plt.subplot(132)
+    mask, bar = draw_mask(img, mask, classes)
+    plt.imshow(mask)
+    plt.subplot(133)
+    plt.imshow(bar)
+    plt.axis('off')
 
 
 if __name__ == '__main__':
     np.set_printoptions(precision=4, suppress=True)
     # torch.set_printoptions(precision=4, threshold=None, edgeitems=None, linewidth=None, profile=None)
 
-    cfg = load_config_far_away('configs/bbox.py')
+    cfg = load_config_far_away('configs/mask.py')
     data_manager = DataManager(cfg.test_data)
     dataloader = data_manager.load_data()
     info = data_manager.info
@@ -64,7 +52,7 @@ if __name__ == '__main__':
     # exit()
 
     for data in tqdm(dataloader):
-        ga(data, info['classes'], rc, 0)
+        ss(data, info['mask_classes'], rc, 0)
         plt.show()
         break
 

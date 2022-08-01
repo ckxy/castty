@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 from .base_internode import BaseInternode
 from .builder import build_internode
-from ..utils.warp_tools import fix_cv2_matrix, warp_bbox, warp_mask, warp_point, warp_image
+from ..utils.warp_tools import fix_cv2_matrix, warp_bbox, warp_mask, warp_point, warp_image, warp_mask
 from ..utils.common import get_image_size, is_pil, clip_bbox, filter_bbox, filter_point, clip_poly, filter_point
 
 
@@ -64,6 +64,9 @@ class WarpInternode(BaseInternode):
                 data_dict['point'] = points.reshape(n, -1, 2)
                 # print(data_dict['point'])
                 # exit()
+
+            if 'mask' in data_dict.keys():
+                data_dict['mask'] = warp_mask(data_dict['mask'], M, dst_size, self.ccs)
 
         return data_dict
 

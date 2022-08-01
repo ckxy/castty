@@ -1,3 +1,4 @@
+import os
 import math
 import torch
 import colorsys
@@ -5,30 +6,22 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 
-def draw_mask(img, mask, classes, colorbar=True, erase_contour=False, have_background=True):
-    uni = np.unique(mask).tolist()
-    have_contour = 255 in uni
-
-    if have_contour and not erase_contour:
-        num_classes = len(classes)
+def draw_mask(img, mask, classes, colorbar=True, have_background=True):
+    if not isinstance(img, Image.Image):
+        is_np = True
+        img = Image.fromarray(img)
     else:
-        num_classes = len(classes) - 1
+        is_np = False
+
+    uni = np.unique(mask).tolist()
+    num_classes = len(classes)
     
     hsv_tuples = [(1.0 * x / num_classes, 1., 1.) for x in range(num_classes)]
     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
     colors = [(0, 0, 0)] + colors
 
-    if have_contour and not erase_contour:
-        tmp = colors.pop(-1)
-        for i in range(255 - len(colors)):
-            colors.append((0, 0, 0))
-        colors.append(tmp)
-    elif have_contour and erase_contour:
-        mask = np.array(mask).astype(np.int)
-        mask[mask == 255] = 0
-        mask = Image.fromarray(mask.astype(np.uint8))
-
+    mask = Image.fromarray(mask.astype(np.uint8))
     mask.putpalette(np.array(colors).flatten().tolist())
     mask = mask.convert("RGB")
 
@@ -47,7 +40,9 @@ def draw_mask(img, mask, classes, colorbar=True, erase_contour=False, have_backg
             bar = Image.new('RGB', (w, h), (255, 255, 255))
             l = math.sqrt(h * h + w * w)
             draw = ImageDraw.Draw(bar)
-            font = ImageFont.truetype("fonts/arial.ttf", int(l * 5e-2))
+
+            font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
+            font = ImageFont.truetype(font_path, int(l * 5e-2))
 
             pw = w
             ph = h // len(colors)
@@ -67,8 +62,13 @@ def draw_mask(img, mask, classes, colorbar=True, erase_contour=False, have_backg
             font = ImageFont.truetype("fonts/arial.ttf", int(l * 5e-2))
             draw.text((0, 0), 'no_label', fill=(0, 0, 0), font=font)
 
+        if is_np:
+            img = np.asarray(img)
+            bar = np.array(bar).astype(np.uint8)
         return img, bar
     else:
+        if is_np:
+            img = np.asarray(img)
         return img, None
 
 

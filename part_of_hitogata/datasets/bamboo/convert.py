@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 from PIL import Image
 from .base_internode import BaseInternode
@@ -17,14 +18,14 @@ class ToTensor(BaseInternode):
         data_dict['image'] = to_tensor(data_dict['image'])
         
         if 'mask' in data_dict.keys():
-            data_dict['mask'] = (to_tensor(data_dict['mask']) * 255).long().squeeze()
+            data_dict['mask'] = torch.from_numpy(data_dict['mask'])
         return data_dict
 
     def reverse(self, **kwargs):
         if 'image' in kwargs.keys():
             kwargs['image'] = to_pil_image(kwargs['image'])
         if 'mask' in kwargs.keys():
-            kwargs['mask'] = to_pil_image(kwargs['mask'].float() / 255)
+            kwargs['mask'] = kwargs['mask'].detach().cpu().numpy().astype(np.int32)
         return kwargs
 
     def rper(self):

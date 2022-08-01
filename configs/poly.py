@@ -47,6 +47,8 @@ test_data = dict(
             # dict(type='RescaleLimitedByBound', long_size_bound=1280, short_size_bound=640, ratio_range=(0.5, 3), mode='range'),
             # dict(type='WarpPerspective', distortion_scale=1, ccs=True),
             dict(type='FilterSelfOverlapping'),
+            # dict(type='AdaptiveCrop'),
+            dict(type='AdaptiveTranslate'),
             # dict(type='PSEEncode'),
             # dict(type='PSEMCEncode', num_classes=2),
             dict(type='DBEncode'),

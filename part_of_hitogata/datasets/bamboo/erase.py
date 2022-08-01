@@ -13,17 +13,16 @@ __all__ = ['RandomErasing', 'GridMask']
 
 @INTERNODE.register_module()
 class RandomErasing(BaseInternode):
-    def __init__(self, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=(0, 0, 0)):
+    def __init__(self, scale=(0.02, 0.33), ratio=(0.3, 3.3), offset=False, value=(0, 0, 0)):
         assert isinstance(value, tuple)
         if (scale[0] > scale[1]) or (ratio[0] > ratio[1]):
             warnings.warn("range should be of kind (min, max)")
         if scale[0] < 0 or scale[1] > 1:
             raise ValueError("range of scale should be between 0 and 1")
-        if p < 0 or p > 1:
-            raise ValueError("range of random erasing probability should be between 0 and 1")
 
         self.scale = scale
         self.ratio = ratio
+        self.offset = offset
         self.value = value
 
     def get_params(self, w, h):
@@ -45,28 +44,57 @@ class RandomErasing(BaseInternode):
     def __call__(self, data_dict):
         assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys()
 
-        if random.random() < self.p:
-            w, h = data_dict['image'].size
-            x, y, new_w, new_h = self.get_params(w, h)
+        w, h = get_image_size(data_dict['image'])
+        x, y, new_w, new_h = self.get_params(w, h)
 
-            if x is None:
-                return data_dict
+        if x is None:
+            return data_dict
 
+        if is_pil(data_dict['image']):
             mask = Image.new("L", data_dict['image'].size, 255)
             draw = ImageDraw.Draw(mask)
             draw.rectangle((x, y, x + new_w, y + new_h), fill=0)
-            bgd = Image.new(data_dict['image'].mode, data_dict['image'].size, self.value)
+
+            if self.offset:
+                offset = 2 * (np.random.rand(h, w) - 0.5)
+                offset = np.uint8(offset * 255)
+                bgd = Image.fromarray(offset).convert(data_dict['image'].mode)
+            else:
+                bgd = Image.new(data_dict['image'].mode, data_dict['image'].size, self.value)
 
             data_dict['image'] = Image.composite(data_dict['image'], bgd, mask)
+        else:
+            mask = np.ones((h, w, 3), np.uint8)
+            mask = cv2.rectangle(mask, (x, y), (x + new_w, y + new_h), (0, 0, 0), -1)
 
-            if 'mask' in data_dict.keys():
-                mask_bgd = Image.new(data_dict['mask'].mode, data_dict['mask'].size, 0)
-                data_dict['mask'] = Image.composite(data_dict['mask'], mask_bgd, mask)
+            if self.offset:
+                offset = 2 * (np.random.rand(h, w) - 0.5)
+                offset = np.uint8(offset * 255)
+                bgd = offset[..., np.newaxis]
+                bgd = np.repeat(bgd, 3, axis=-1)
+            else:
+                bgd = np.ones((h, w, 3), np.uint8)
+                bgd[..., 0] = self.value[0]
+                bgd[..., 1] = self.value[1]
+                bgd[..., 2] = self.value[2]
+
+            data_dict['image'] = data_dict['image'] * mask + bgd * (1 - mask)
+
+        if 'mask' in data_dict.keys():
+            if is_pil(data_dict['image']):
+                mask = (np.asarray(mask) > 0).astype(np.int32)
+            else:
+                mask = mask[..., 0]
+            bgd = np.zeros((h, w), np.int32)
+            data_dict['mask'] = data_dict['mask'] * mask + bgd * (1 - mask)
 
         return data_dict
 
     def __repr__(self):
-        return 'RandomErasing(scale={}, ratio={}, value={})'.format(self.scale, self.ratio, self.value)
+        if self.offset:
+            return 'RandomErasing(scale={}, ratio={}, offset={})'.format(self.scale, self.ratio, self.offset)
+        else:
+            return 'RandomErasing(scale={}, ratio={}, value={})'.format(self.scale, self.ratio, self.value)
 
 
 @INTERNODE.register_module()
@@ -116,7 +144,12 @@ class GridMask(BaseInternode):
 
         if self.offset:
             offset = 2 * (np.random.rand(h, w) - 0.5)
-            bgd = Image.fromarray(np.uint8(offset * 255)).convert(data_dict['image'].mode)
+            offset = np.uint8(offset * 255)
+            if is_pil(data_dict['image']):
+                bgd = Image.fromarray(offset).convert(data_dict['image'].mode)
+            else:
+                bgd = offset[..., np.newaxis]
+                bgd = np.repeat(bgd, 3, axis=-1)
         else:
             if is_pil(data_dict['image']):
                 bgd = Image.new(data_dict['image'].mode, data_dict['image'].size, 0)
@@ -136,19 +169,14 @@ class GridMask(BaseInternode):
         if is_pil(data_dict['image']):
             data_dict['image'] = Image.composite(data_dict['image'], bgd, mask)
         else:
-            # data_dict['image'] = data_dict['image'].astype(np.float32)
-            bgd = np.asarray(bgd)
-            mask = (np.asarray(mask) / 255).astype(np.uint8)[..., np.newaxis]
-            mask = np.repeat(mask, 3, axis=-1)
-            data_dict['image'] = data_dict['image'] * mask + bgd * (1 - mask)
-            # exit()
-            # print(data_dict['image'].shape, bgd.shape)
-            # data_dict['image'] = cv2.bitwise_and(data_dict['image'], data_dict['image'], mask=mask)
-            # data_dict['image'] = cv2.addWeighted(data_dict['image'], 1, bgd, 1, 0)
+            mask_cv2 = mask.convert('RGB')
+            mask_cv2 = (np.asarray(mask_cv2) > 0).astype(np.uint8)
+            data_dict['image'] = data_dict['image'] * mask_cv2 + bgd * (1 - mask_cv2)
 
-        # if 'mask' in data_dict.keys():
-        #     mask_bgd = Image.new(data_dict['mask'].mode, data_dict['mask'].size, 0)
-        #     data_dict['mask'] = Image.composite(data_dict['mask'], mask_bgd, mask)
+        if 'mask' in data_dict.keys():
+            mask = (np.asarray(mask) > 0).astype(np.int32)
+            bgd = np.zeros((h, w), np.int32)
+            data_dict['mask'] = data_dict['mask'] * mask + bgd * (1 - mask)
 
         return data_dict
 

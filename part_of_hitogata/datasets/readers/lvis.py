@@ -39,7 +39,7 @@ class LVISAPIReader(Reader):
         self._info = dict(
             forcat=dict(
                 type='det',
-                classes=self.thing_classes
+                bbox_classes=self.thing_classes
             ),
         )
 
