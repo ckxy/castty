@@ -32,13 +32,13 @@ test_data = dict(
         # reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='train', classes=classes),
         reader=dict(type='SBDReader', use_pil=False, root='../datasets/voc/benchmark_RELEASE/dataset', split='train', classes=classes),
         internodes=[
-            dict(type='DataSource'),
+            # dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
             #     dict(type='DataSource'),
             # ]),
-            # dict(type='Mosaic', internodes=[
-            #     dict(type='DataSource'),
-            # ]),
+            dict(type='Mosaic', internodes=[
+                dict(type='DataSource'),
+            ]),
             # dict(type='Mosaic', internodes=[
             #     dict(type='MixUp', internodes=[
             #         dict(type='DataSource'),

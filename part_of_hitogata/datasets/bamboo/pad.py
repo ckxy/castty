@@ -1,5 +1,6 @@
 import cv2
 import math
+import random
 import numbers
 import numpy as np
 from .base_internode import BaseInternode
@@ -8,7 +9,7 @@ from ..utils.common import clip_bbox, filter_bbox, is_pil, get_image_size, clip_
 from .builder import INTERNODE
 
 
-__all__ = ['Padding', 'PaddingBySize', 'PaddingByStride']
+__all__ = ['Padding', 'PaddingBySize', 'PaddingByStride', 'RandomExpand']
 
 
 CV2_PADDING_MODES = dict(
@@ -348,3 +349,48 @@ class PaddingByStride(BaseInternode):
 
     def __repr__(self):
         return 'PaddingByStride(stride={}, fill={}, padding_mode={}, center={})'.format(self.stride, self.fill, self.padding_mode, self.center)
+
+
+@INTERNODE.register_module()
+class RandomExpand(BaseInternode):
+    def __init__(self, ratio, fill=0, **kwargs):
+        assert ratio > 1
+        assert isinstance(fill, (numbers.Number, tuple))
+
+        self.ratio = ratio
+        self.fill = fill
+
+    def calc_padding(self, w, h):
+        r = random.random() * (self.ratio - 1) + 1
+
+        nw, nh = int(w * r), int(h * r)
+        # print(w, h, nw, nh, r)
+        left = random.randint(0, nw - w)
+        right = nw - w - left
+        top = random.randint(0, nh - h)
+        bottom = nh - h - top
+        return left, right, top, bottom
+
+    def __call__(self, data_dict):
+        w, h = get_image_size(data_dict['image'])
+
+        padding = self.calc_padding(w, h)
+
+        data_dict['image'] = pad_image(data_dict['image'], padding, self.fill, 'constant')
+
+        if 'bbox' in data_dict.keys():
+            data_dict['bbox'] = pad_bbox(data_dict['bbox'], padding)
+
+        if 'poly' in data_dict.keys():
+            data_dict['poly'] = pad_poly(data_dict['poly'], padding)
+
+        if 'point' in data_dict.keys():
+            data_dict['point'] = pad_point(data_dict['point'], padding)
+
+        if 'mask' in data_dict.keys():
+            data_dict['mask'] = pad_mask(data_dict['mask'], padding, 'constant')
+
+        return data_dict
+
+    def __repr__(self):
+        return 'RandomExpand(ratio={}, fill={})'.format(self.ratio, self.fill)

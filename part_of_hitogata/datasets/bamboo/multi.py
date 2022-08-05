@@ -67,9 +67,8 @@ class MixUp(Bamboo):
                 a['bbox'] = np.concatenate([a['bbox'], b['bbox']])
 
                 if 'bbox_meta' in k:
-                    i = a['bbox_meta'].index('score')
-                    a['bbox_meta'].values[i] *= lam
-                    b['bbox_meta'].values[i] *= 1 - lam
+                    a['bbox_meta']['score'] *= lam
+                    b['bbox_meta']['score'] *= 1 - lam
                     a['bbox_meta'] += b['bbox_meta']
 
             if 'label' in k:
@@ -270,8 +269,7 @@ class Mosaic(Bamboo):
             p4 = self.adjust_point(d4['point'], xc, yc)
             res['point'] = np.concatenate((p1, p2, p3, p4))
 
-            if 'bbox_meta' in k:
-                # i = d1['bbox_meta'].index('score')
+            if 'point_meta' in k:
                 d1['point_meta'] += d2['point_meta']
                 d1['point_meta'] += d3['point_meta']
                 d1['point_meta'] += d4['point_meta']
@@ -286,6 +284,19 @@ class Mosaic(Bamboo):
             mask4[yc:yc + h4, xc:xc + w4] = d4['mask']
 
             res['mask'] = mask4
+
+        if 'poly' in k:
+            p1 = self.adjust_poly(d1['poly'], xc - w1, yc - h1)
+            p2 = self.adjust_poly(d2['poly'], xc, yc - h2)
+            p3 = self.adjust_poly(d3['poly'], xc - w3, yc)
+            p4 = self.adjust_poly(d4['poly'], xc, yc)
+            res['poly'] = p1 + p2 + p3 + p4
+
+            if 'poly_meta' in k:
+                d1['poly_meta'] += d2['poly_meta']
+                d1['poly_meta'] += d3['poly_meta']
+                d1['poly_meta'] += d4['poly_meta']
+                res['poly_meta'] = deepcopy(d1['poly_meta'])
 
         return res
 
@@ -302,6 +313,13 @@ class Mosaic(Bamboo):
         point[..., 0] += ox
         point[..., 1] += oy
         return point
+
+    @staticmethod
+    def adjust_poly(polys, ox, oy):
+        for i in range(len(polys)):
+            polys[i][..., 0] += ox
+            polys[i][..., 1] += oy
+        return polys
 
     def rper(self):
         return type(self).__name__ + '(not available)'

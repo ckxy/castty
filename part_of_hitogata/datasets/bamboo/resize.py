@@ -4,10 +4,10 @@ import random
 import numpy as np
 from PIL import Image
 from .base_internode import BaseInternode
-from torchvision.transforms.functional import pad
+# from torchvision.transforms.functional import pad
 from ..utils.common import get_image_size, is_pil, clip_bbox, filter_bbox
 from .builder import INTERNODE
-from ..utils.warp_tools import warp_image
+# from ..utils.warp_tools import warp_image
 from .warp import WarpResize
 from .bamboo import Bamboo
 from .builder import build_internode

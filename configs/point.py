@@ -27,21 +27,21 @@ test_data = dict(
         num_threads=0,
         pin_memory=False,
         collator=[
-            dict(type='BboxCollateFN', names=('bbox',)),
-            dict(type='ListCollateFN', names=('point_meta', 'bbox_meta')),
+            # dict(type='BboxCollateFN', names=('bbox',)),
+            dict(type='ListCollateFN', names=('point_meta',)),
         ]
     ),
     dataset=dict(
-        # reader=dict(type='LSPReader', root='../datasets/lsp', set_path='../datasets/lsp/LEEDS_annotations.json', is_test=False),
-        reader=dict(type='WFLWSIReader', root='../datasets/WFLW/WFLW', txt_path='WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_train.txt', use_pil=True),
+        reader=dict(type='LSPReader', root='../datasets/lsp', set_path='../datasets/lsp/LEEDS_annotations.json', is_test=False),
+        # reader=dict(type='WFLWSIReader', root='../datasets/WFLW/WFLW', txt_path='WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_train.txt', use_pil=True),
         internodes=[
-            dict(type='DataSource'),
+            # dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
             #     dict(type='DataSource'),
             # ]),
-            # dict(type='Mosaic', internodes=[
-            #     dict(type='DataSource'),
-            # ]),
+            dict(type='Mosaic', internodes=[
+                dict(type='DataSource'),
+            ]),
             # dict(type='Mosaic', internodes=[
             #     dict(type='MixUp', internodes=[
             #         dict(type='DataSource'),

@@ -121,9 +121,9 @@ test_data = dict(
         ]
     ),
     dataset=dict(
-        reader=dict(type='LVISAPIReader', set_path='../datasets/coco/annotations/lvis_v1_val.json', img_root='../datasets/coco'),
+        # reader=dict(type='LVISAPIReader', set_path='../datasets/coco/annotations/lvis_v1_val.json', img_root='../datasets/coco'),
         # reader=dict(type='COCOAPIReader', set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017'),
-        # reader=dict(type='VOCReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        reader=dict(type='VOCReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
         # reader=dict(
         #     type='CatReader', 
         #     internodes=(
@@ -132,10 +132,10 @@ test_data = dict(
         #     ),
         # ),
         internodes=[
-            dict(type='DataSource'),
-            # dict(type='MixUp', internodes=[
-            #     dict(type='DataSource'),
-            # ]),
+            # dict(type='DataSource'),
+            dict(type='MixUp', internodes=[
+                dict(type='DataSource'),
+            ]),
             # dict(type='Mosaic', internodes=[
             #     dict(type='DataSource'),
             # ]),
@@ -212,7 +212,7 @@ test_data = dict(
             # dict(type='AdaptiveTranslate'),
             # dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
-            # dict(type='ToPILImage'),
+            dict(type='ToPILImage'),
             dict(type='ToTensor'),
         ],
     ),

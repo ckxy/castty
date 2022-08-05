@@ -114,7 +114,10 @@ def draw_bbox(img, bboxes, class_ids=None, classes=None, scores=None):
             bbox_color = colors[class_ind]
             draw.rectangle(tuple(coor), outline=bbox_color, width=max(1, int(l / 600)))
 
-            bbox_text = '{}: {:.2f}'.format(classes[class_ind], scores[i])
+            if scores is None:
+                bbox_text = '{}'.format(classes[class_ind])
+            else:
+                bbox_text = '{}: {:.2f}'.format(classes[class_ind], scores[i])
             t_size = draw.textsize(bbox_text, font)
             text_box = (coor[0], coor[1] - t_size[1], coor[0] + t_size[0], coor[1])
             draw.rectangle(text_box, fill=bbox_color)

@@ -14,13 +14,8 @@ try:
 except ImportError:
     pass
 
-try:
-    from .pse import pse
-except ImportError:
-    pass
 
-
-__all__ = ['PSEEncode', 'PSEMCEncode', 'PSEDecode', 'PSECrop']
+__all__ = ['PSEEncode', 'PSEMCEncode', 'PSECrop']
 
 
 def generate_kernel(img_size, polys, shrink_ratio, max_shrink=sys.maxsize, ignore_flags=None):
@@ -155,59 +150,6 @@ class PSEMCEncode(BaseInternode):
 
     def __repr__(self):
         return 'PSEMCEncode(num_classes={}, shrink_ratio={}, max_shrink={})'.format(self.num_classes, tuple(self.shrink_ratio), self.max_shrink)
-
-
-@INTERNODE.register_module()
-class PSEDecode(BaseInternode):
-    def __init__(self, 
-        mask_with_largest_kernel=False,
-        min_area=16,
-        threshold_point=0.7311,
-        threshold_area=0.93,
-        **kwargs):
-        
-        self.mask_with_largest_kernel = mask_with_largest_kernel
-        self.min_area = min_area
-        self.threshold_point = threshold_point
-        self.threshold_area = threshold_area
-
-    def reverse(self, **kwargs):
-        if 'ocrdet_kernel' in kwargs.keys():
-            kernels = kwargs['ocrdet_kernel'].numpy()[::-1]
-
-            masks = kernels >= self.threshold_point
-            if self.mask_with_largest_kernel:
-                masks[1:] *= masks[:1]
-            masks = masks.astype(np.uint8)
-
-            agg_kernel = pse(masks, self.min_area)
-
-            polys = []
-            for n in np.unique(agg_kernel):
-                mask = agg_kernel == n
-                mean_score = np.mean(kernels[0][mask])
-                # print(n, type(n), np.sum(mask), mean_score)
-
-                if mean_score < self.threshold_area:
-                    continue
-
-                points = np.array(np.where(mask)[::-1]).transpose((1, 0))
-
-                if len(points) < self.min_area:
-                    continue
-
-                rect = cv2.minAreaRect(points)
-                bbox = cv2.boxPoints(rect)
-                polys.append(bbox)
-
-            kwargs['poly'] = polys
-        return kwargs
-
-    def __repr__(self):
-        return type(self).__name__ + '(not available)'
-
-    def rper(self):
-        return 'PSEDecode(mask_with_largest_kernel={}, min_area={}, threshold_point={}, threshold_area={})'.format(self.mask_with_largest_kernel, self.min_area, self.threshold_point, self.threshold_area)
 
 
 @INTERNODE.register_module()
