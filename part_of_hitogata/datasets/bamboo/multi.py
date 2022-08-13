@@ -10,6 +10,7 @@ from .builder import INTERNODE
 from .bamboo import Bamboo
 from ..utils.common import get_image_size, is_pil
 from torchvision.transforms.functional import pad
+from .pad import unpad_image
 
 
 __all__ = ['MixUp', 'CutMix', 'Mosaic']
@@ -17,13 +18,6 @@ __all__ = ['MixUp', 'CutMix', 'Mosaic']
 
 @INTERNODE.register_module()
 class MixUp(Bamboo):
-    def __init__(self, internodes, **kwargs):
-        assert len(internodes) > 0
-
-        self.internodes = []
-        for cfg in internodes:
-            self.internodes.append(build_internode(cfg))
-
     @staticmethod
     def padding(image, right, bottom):
         if is_pil(image):
@@ -80,67 +74,96 @@ class MixUp(Bamboo):
 
             return a
 
-    def reverse(self, **kwargs):
-        return kwargs
-
     def rper(self):
         return type(self).__name__ + '(not available)'
 
 
+@INTERNODE.register_module()
 class CutMix(Bamboo):
-    def __init__(self, internodes, b=1.5, p=1):
-        assert len(internodes) > 0
-        assert 0 < p <= 1
-        assert b > 0
-
-        self.b = b
-        self.p = p
-
-        self.internodes = []
-        for k, v in internodes:
-            self.internodes.append(eval(k)(**v))
-
     def __call__(self, data_dict):
-        if random.random() < self.p:
-            index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
+        index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
+        # index_mix = 93
+        # print(index_mix)
 
-            if index_mix == data_dict['index']:
-                return super(CutMix, self).__call__(data_dict)
-            else:
-                data_dict_b = deepcopy(data_dict)
-                data_dict_b['index'] = index_mix
-                a = super(CutMix, self).__call__(data_dict)
-
-                k = a.keys()
-                assert 'bbox' not in k and 'point' not in  k
-
-                b = super(CutMix, self).__call__(data_dict_b)
-
-                assert a['image'].size == b['image'].size
-
-                lam = np.random.beta(self.b, self.b)
-
-                bbx1, bby1, bbx2, bby2 = self.rand_bbox(a['image'].size, lam)
-                a['image'].paste(b['image'].crop((bbx1, bby1, bbx2, bby2)), (bbx1, bby1, bbx2, bby2))
-                # adjust lambda to exactly match pixel ratio
-                lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (a['image'].size[0] * a['image'].size[1]))
-
-                if 'path' in k:
-                    a['path'] = a['path'] + '-**-' + str(lam) + '-**-' + b['path']
-
-                if 'label' in k:
-                    a['label_add'] = b['label']
-                    a['lam'] = lam
-
-                if 'mask' in k:
-                    a['mask'].paste(b['mask'].crop((bbx1, bby1, bbx2, bby2)), (bbx1, bby1, bbx2, bby2))
-
-                return a
-        else:
+        if index_mix == data_dict['index']:
             return super(CutMix, self).__call__(data_dict)
+        else:
+            reader = data_dict['reader']
+            len_data_lines = data_dict['len_data_lines']
+
+            a = super(CutMix, self).__call__(data_dict)
+
+            k = a.keys()
+            assert 'bbox' not in k and 'point' not in k and 'poly' not in k
+
+            data_dict['index'] = index_mix
+            data_dict['len_data_lines'] = len_data_lines
+            data_dict['reader'] = reader
+            b = super(CutMix, self).__call__(data_dict)
+
+            wa, ha = get_image_size(a['image'])
+            wb, hb = get_image_size(b['image'])
+
+            lam = np.random.beta(1.5, 1.5)
+
+            xa1, ya1, xa2, ya2 = self.rand_boxa(get_image_size(a['image']), lam)
+            # xa1, ya1, xa2, ya2 = 0, 0, 703, 565
+
+            w_bcut = int((xa2 - xa1) * wa / wb)
+            h_bcut = int((ya2 - ya1) * ha / hb)
+
+            # print(xa1, ya1, xa2, ya2)
+            # print(wa, wb)
+            # print(ha, hb)
+            # print(w_bcut, h_bcut)
+
+            if w_bcut > wb or h_bcut > hb:
+                # print(wb / w_bcut, hb / h_bcut)
+                r = min(wb / w_bcut, hb / h_bcut)
+
+                w_bcut = int(w_bcut * r)
+                h_bcut = int(h_bcut * r)
+
+                # print(w_bcut, h_bcut)
+                # exit()
+
+            xb1 = random.randint(0, wb - w_bcut)
+            yb1 = random.randint(0, hb - h_bcut)
+            xb2 = xb1 + w_bcut
+            yb2 = yb1 + h_bcut
+
+            # print(xb1, yb1, xb2, yb2)
+            # exit()
+
+            if is_pil(b['image']):
+                b_cut = b['image'].crop((xb1, yb1, xb2, yb2))
+                b_cut = b_cut.resize((xa2 - xa1, ya2 - ya1), Image.BILINEAR)
+                a['image'].paste(b_cut, (xa1, ya1, xa2, ya2))
+            else:
+                b_cut = b['image'][yb1:yb2, xb1:xb2]
+                b_cut = cv2.resize(b_cut, (xa2 - xa1, ya2 - ya1))
+                a['image'][ya1:ya2, xa1:xa2] = b_cut
+
+            # adjust lambda to exactly match pixel ratio
+            lam = 1 - ((xa2 - xa1) * (ya2 - ya1) / (wa * ha))
+
+            if 'path' in k:
+                a['path'] = '[cutmix]({}, {}, {})'.format(a['path'], b['path'], lam)
+
+            # if 'label' in k:
+            #     a['label_add'] = b['label']
+            #     a['lam'] = lam
+
+            if 'mask' in k:
+                bmask_cut = b['mask'][yb1:yb2, xb1:xb2]
+                bmask_cut = cv2.resize(bmask_cut, (xa2 - xa1, ya2 - ya1), interpolation=cv2.INTER_NEAREST)
+                a['mask'][ya1:ya2, xa1:xa2] = bmask_cut
+                # a['mask'].paste(b['mask'].crop((bbx1, bby1, bbx2, bby2)), (bbx1, bby1, bbx2, bby2))
+
+            return a
 
     @staticmethod
-    def rand_bbox(size, lam):
+    def rand_boxa(size, lam):
         W, H = size
         cut_rat = np.sqrt(1.0 - lam)
         cut_w = np.int(W * cut_rat)
@@ -150,58 +173,45 @@ class CutMix(Bamboo):
         cx = np.random.randint(W)
         cy = np.random.randint(H)
 
-        bbx1 = np.clip(cx - cut_w // 2, 0, W)
-        bby1 = np.clip(cy - cut_h // 2, 0, H)
-        bbx2 = np.clip(cx + cut_w // 2, 0, W)
-        bby2 = np.clip(cy + cut_h // 2, 0, H)
+        x1 = np.clip(cx - cut_w // 2, 0, W)
+        y1 = np.clip(cy - cut_h // 2, 0, H)
+        x2 = np.clip(cx + cut_w // 2, 0, W)
+        y2 = np.clip(cy + cut_h // 2, 0, H)
 
-        return bbx1, bby1, bbx2, bby2
-
-    def __repr__(self):
-        split_str = [i.__repr__() for i in self.internodes]
-        bamboo_str = ''
-        for i in range(len(split_str)):
-            bamboo_str += '\n  ' + split_str[i].replace('\n', '\n  ')
-        bamboo_str = '(\n{}\n  )'.format(bamboo_str[1:])
-
-        return 'CutMix(\n  p: {}\n  b: {}\n  internodes: {} \n)'.format(self.p, self.b, bamboo_str)
+        return x1, y1, x2, y2
 
     def rper(self):
-        return 'CutMix(not available)'
+        return type(self).__name__ + '(not available)'
 
 
 @INTERNODE.register_module()
 class Mosaic(Bamboo):
-    def __init__(self, internodes, **kwargs):
-        assert len(internodes) > 0
-
-        self.internodes = []
-        for cfg in internodes:
-            self.internodes.append(build_internode(cfg))
-
     def __call__(self, data_dict):
         res = dict()
         indices = [random.randint(0, data_dict['len_data_lines'] - 1) for _ in range(3)]
-        # indices = [1, 2, 3]
-        tmp = deepcopy(data_dict)
+        
+        reader = data_dict['reader']
+        len_data_lines = data_dict['len_data_lines']
 
-        # print(data_dict['index'])
         d1 = super(Mosaic, self).__call__(data_dict)
 
         k = d1.keys()
         assert 'label' not in k
 
-        t = deepcopy(tmp)
-        t['index'] = indices[0]
-        d2 = super(Mosaic, self).__call__(t)
-        t = deepcopy(tmp)
-        t['index'] = indices[1]
-        d3 = super(Mosaic, self).__call__(t)
-        t = deepcopy(tmp)
-        t['index'] = indices[2]
-        d4 = super(Mosaic, self).__call__(t)
+        data_dict['index'] = indices[0]
+        data_dict['len_data_lines'] = len_data_lines
+        data_dict['reader'] = reader
+        d2 = super(Mosaic, self).__call__(data_dict)
 
-        del tmp
+        data_dict['index'] = indices[1]
+        data_dict['len_data_lines'] = len_data_lines
+        data_dict['reader'] = reader
+        d3 = super(Mosaic, self).__call__(data_dict)
+
+        data_dict['index'] = indices[2]
+        data_dict['len_data_lines'] = len_data_lines
+        data_dict['reader'] = reader
+        d4 = super(Mosaic, self).__call__(data_dict)
 
         # 1 2
         # 3 4
@@ -227,15 +237,10 @@ class Mosaic(Bamboo):
         else:
             img4 = np.zeros((new_h, new_w, 3)).astype(np.uint8)
 
-            # print(img4[yc - h1:yc, xc - w1:xc].shape, d1['image'].shape)
-            # print(img4[yc - h2:yc, xc:xc + w2].shape, d2['image'].shape)
-            # print(img4[yc:yc + h3, xc - w3:xc].shape, d3['image'].shape)
-            # print(img4[yc:yc + h4, xc:xc + w4].shape, d4['image'].shape)
             img4[yc - h1:yc, xc - w1:xc] = d1['image']
             img4[yc - h2:yc, xc:xc + w2] = d2['image']
             img4[yc:yc + h3, xc - w3:xc] = d3['image']
             img4[yc:yc + h4, xc:xc + w4] = d4['image']
-            # exit()
 
         res['image'] = img4
         res['ori_size'] = np.array([new_h, new_w]).astype(np.float32)

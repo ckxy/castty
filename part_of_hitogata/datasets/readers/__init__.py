@@ -9,6 +9,7 @@ from .labelme import *
 from .lsp import *
 from .lvis import *
 from .market1501 import *
+from .mhp import *
 from .mpii import *
 from .voc import *
 from .wflw import *

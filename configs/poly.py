@@ -77,19 +77,25 @@ test_data = dict(
     dataset=dict(
         reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015', use_pil=False),
         internodes=[
-            dict(type='ChooseOne', branchs=[
-                dict(type='Mosaic', internodes=[
-                        dict(type='DataSource'),
-                        dict(type='EastRandomCrop', min_crop_side_ratio=0.4),
-                        dict(type='Resize', size=(640, 640), keep_ratio=True, short=False),
-                        dict(type='Rot90', k=[1, 2, 3], p=0.5),
-                ]),
-                dict(type='Bamboo', internodes=[
-                    dict(type='DataSource'),
-                    dict(type='EastRandomCrop', min_crop_side_ratio=0.4),
-                    dict(type='Rot90', k=[1, 2, 3], p=0.5),
-                    dict(type='RandomExpand', ratio=2, p=0.5),
-                ]),
+            # dict(type='ChooseOne', branchs=[
+            #     dict(type='Mosaic', internodes=[
+            #         dict(type='DataSource'),
+            #         dict(type='EastRandomCrop', min_crop_side_ratio=0.4),
+            #         dict(type='Resize', size=(640, 640), keep_ratio=True, short=False),
+            #         dict(type='Rot90', k=[1, 2, 3], p=0.5),
+            #     ]),
+            #     dict(type='Bamboo', internodes=[
+            #         dict(type='DataSource'),
+            #         dict(type='EastRandomCrop', min_crop_side_ratio=0.4),
+            #         dict(type='Rot90', k=[1, 2, 3], p=0.5),
+            #         dict(type='RandomExpand', ratio=2, p=0.5),
+            #     ]),
+            # ]),
+            dict(type='Mosaic', internodes=[
+                dict(type='DataSource'),
+                dict(type='EastRandomCrop', min_crop_side_ratio=0.4),
+                dict(type='Resize', size=(640, 640), keep_ratio=True, short=False),
+                dict(type='Rot90', k=[1, 2, 3], p=0.5),
             ]),
             dict(type='Resize', size=(1280, 1280), keep_ratio=True, short=False),
             dict(type='PaddingBySize', size=(1280, 1280), fill=0, padding_mode='constant', center=False),

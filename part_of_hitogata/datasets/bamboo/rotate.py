@@ -79,7 +79,7 @@ class Rot90(BaseInternode):
                 points = warp_point(points, M)
 
             if 'mask' in data_dict.keys():
-                data_dict['mask'] = warp_mask(data_dict['mask'], M, dst_size, self.ccs)
+                data_dict['mask'] = warp_mask(data_dict['mask'], M, dst_size, True)
 
         return data_dict
 

@@ -30,13 +30,17 @@ test_data = dict(
     ),
     dataset=dict(
         # reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='train', classes=classes),
-        reader=dict(type='SBDReader', use_pil=False, root='../datasets/voc/benchmark_RELEASE/dataset', split='train', classes=classes),
+        # reader=dict(type='SBDReader', use_pil=True, root='../datasets/voc/benchmark_RELEASE/dataset', split='train', classes=classes),
+        reader=dict(type='MHPV1Reader', use_pil=False, root='../datasets/LV-MHP-v1', split='test'),
         internodes=[
             # dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
             #     dict(type='DataSource'),
             # ]),
-            dict(type='Mosaic', internodes=[
+            # dict(type='Mosaic', internodes=[
+            #     dict(type='DataSource'),
+            # ]),
+            dict(type='CutMix', internodes=[
                 dict(type='DataSource'),
             ]),
             # dict(type='Mosaic', internodes=[
@@ -109,7 +113,7 @@ test_data = dict(
             # dict(type='HueEnhancement', hue=(0.5, 0.5)),
             # dict(type='Flip', horizontal=True),
             # dict(type='Crop', size=(512, 512)),
-            dict(type='RandomErasing', offset=True, value=(128, 128, 128)),
+            # dict(type='RandomErasing', offset=True, value=(128, 128, 128)),
             # dict(type='GridMask', offset=True),
             # dict(type='AdaptiveCrop'),
             # dict(type='AdaptiveTranslate'),

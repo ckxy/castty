@@ -59,7 +59,10 @@ def draw_mask(img, mask, classes, colorbar=True, have_background=True):
             bar = Image.new('RGB', (w, h), (255, 255, 255))
             l = math.sqrt(h * h + w * w)
             draw = ImageDraw.Draw(bar)
-            font = ImageFont.truetype("fonts/arial.ttf", int(l * 5e-2))
+
+            font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
+            font = ImageFont.truetype(font_path, int(l * 5e-2))
+            
             draw.text((0, 0), 'no_label', fill=(0, 0, 0), font=font)
 
         if is_np:

@@ -228,9 +228,9 @@ class SBDReader(Reader):
         w, h = get_image_size(img)
 
         mat = loadmat(self.mask_paths[index])
-        mask = mat['GTcls'][0]['Segmentation'][0].astype(np.uint8)
-        mask = Image.fromarray(mask, mode='P')
-        mask = np.array(mask).astype(np.int32)
+        mask = mat['GTcls'][0]['Segmentation'][0].astype(np.int32)
+        # mask = Image.fromarray(mask, mode='P')
+        # mask = np.array(mask).astype(np.int32)
 
         return dict(
             image=img,
