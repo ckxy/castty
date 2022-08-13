@@ -73,14 +73,20 @@ class ChooseABranchByID(ChooseOne):
 		return 'ChooseABranchByID(\n internodes:{}\n )'.format(bamboo_str)
 
 
+class InternodeWarpper(BaseInternode):
+	def __init__(self, internode, **kwargs):
+		self.internode = build_internode(internode)
+
+
 @INTERNODE.register_module()
-class RandomWarpper(BaseInternode):
+class RandomWarpper(InternodeWarpper):
 	def __init__(self, internode, p=0.5, **kwargs):
 		assert 0 < p < 1
 		internode.pop('p')
 
 		self.p = p
-		self.internode = build_internode(internode)
+		# self.internode = build_internode(internode)
+		super(RandomWarpper, self).__init__(internode, **kwargs)
 
 	def __call__(self, data_dict):
 		if random.random() < self.p:
@@ -95,10 +101,11 @@ class RandomWarpper(BaseInternode):
 
 
 @INTERNODE.register_module()
-class ForwardOnly(BaseInternode):
+class ForwardOnly(InternodeWarpper):
 	def __init__(self, internode, **kwargs):
 		internode.pop('one_way')
-		self.internode = build_internode(internode)
+		# self.internode = build_internode(internode)
+		super(ForwardOnly, self).__init__(internode, **kwargs)
 
 	def __call__(self, data_dict):
 		return self.internode(data_dict)
@@ -111,10 +118,11 @@ class ForwardOnly(BaseInternode):
 
 
 @INTERNODE.register_module()
-class BackwardOnly(BaseInternode):
+class BackwardOnly(InternodeWarpper):
 	def __init__(self, internode, **kwargs):
 		internode.pop('one_way')
-		self.internode = build_internode(internode)
+		# self.internode = build_internode(internode)
+		super(BackwardOnly, self).__init__(internode, **kwargs)
 
 	def reverse(self, **kwargs):
 		return self.internode.reverse(**kwargs)

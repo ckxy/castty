@@ -154,7 +154,7 @@ test_data = dict(
             # dict(type='ToCV2Image'),
             # dict(type='AdaptiveCrop'),
             # dict(type='Padding', padding=(20, 30, 40, 50), fill=50, padding_mode='reflect'),
-            # dict(type='PaddingBySize', size=(416, 416), fill=50, padding_mode='constant', center=True),
+            # dict(type='PaddingBySize', size=(416, 416), fill=(50, 50, 50), padding_mode='constant', center=True),
             # dict(type='PaddingByStride', stride=32, fill=(50, 50, 50), padding_mode='constant', center=False, one_way='orward'),
             # dict(type='Resize', size=(416, 416), keep_ratio=True, short=False),
             # dict(type='WarpResize', size=(416, 416), expand=True, keep_ratio=True, short=False, one_way='forward'),
@@ -169,12 +169,12 @@ test_data = dict(
             #         type='PaddingBySize',
             #         size=(416, 416),
             #         # type='PaddingByStride',
-            #         # stride=32,
+            #         # stride=100,
             #         fill=(0, 0, 0), 
             #         padding_mode='constant',
             #         center=False
             #     ),
-            #     one_way='forward'
+            #     # one_way='forward'
             # ),
             # dict(type='Warp', p=0.5, ccs=True, internodes=[
             #     # dict(type='WarpPerspective', expand=True, ccs=True),

@@ -42,11 +42,6 @@ def warp_bbox(bboxes, M):
     return xy.astype(np.float32)
 
 
-# def warp_mask(mask, M, dst_size):
-#     matrix = np.array(np.matrix(M).I).flatten().tolist()
-#     return mask.transform(dst_size, Image.PERSPECTIVE, matrix, Image.NEAREST)
-
-
 def warp_point(points, M):
     if len(points) == 0:
         return points
@@ -74,11 +69,7 @@ def warp_mask(mask, M, dst_size, ccs=False):
     matrix = np.matrix(M)
     if ccs:
         matrix = fix_cv2_matrix(matrix)
-    # mask = mask.astype(np.uint8)
-    # print(np.unique(mask))
     mask = cv2.warpPerspective(mask, matrix, dst_size, flags=cv2.INTER_NEAREST)
-    # print(np.unique(mask))
-    # exit()
     return mask
 
 

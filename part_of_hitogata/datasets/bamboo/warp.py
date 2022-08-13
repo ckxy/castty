@@ -5,8 +5,8 @@ from .bamboo import Bamboo
 from .builder import INTERNODE
 from .builder import build_internode
 from .warp_internode import WarpInternode
-from ..utils.warp_tools import calc_expand_size_and_matrix, warp_bbox, warp_point, warp_image
 from ..utils.common import get_image_size, clip_bbox, filter_bbox
+from ..utils.warp_tools import calc_expand_size_and_matrix, warp_bbox, warp_point, warp_image, warp_mask
 
 
 __all__ = ['Warp', 'WarpPerspective', 'WarpResize', 'WarpScale', 'WarpStretch', 'WarpRotate', 'WarpShear', 'WarpTranslate']
@@ -182,8 +182,7 @@ class WarpResize(WarpInternode):
 
         return CI @ R @ C
 
-    def calc_scale(self, size):
-        w, h = size
+    def calc_scale_and_new_size(self, w, h):
         tw, th = self.size
         rw, rh = tw / w, th / h
 
@@ -191,12 +190,32 @@ class WarpResize(WarpInternode):
             if self.short:
                 r = max(rh, rw)
                 scale = (r, r)
+
+                if h < w:
+                    nh = th
+                    nw = int(r * w)
+                else:
+                    nh = int(r * h)
+                    nw = tw
+
+                new_size = (nw, nh)
             else:
                 r = min(rh, rw)
                 scale = (r, r)
+
+                if h > w:
+                    nh = th
+                    nw = int(r * w)
+                else:
+                    nh = int(r * h)
+                    nw = tw
+
+                new_size = (nw, nh)
         else:
             scale = (rw, rh)
-        return scale
+            new_size = (tw, th)
+
+        return scale, new_size
 
     def __call__(self, data_dict):
         if 'warp_size' in data_dict.keys():
@@ -219,7 +238,7 @@ class WarpResize(WarpInternode):
         return data_dict
 
     def reverse(self, **kwargs):
-        if 'resize_and_padding_reverse_flag' not in kwargs.keys():
+        if 'inner_resize_and_padding_reverse_flag' not in kwargs.keys():
             return kwargs
 
         if 'ori_size' in kwargs.keys():
@@ -244,6 +263,9 @@ class WarpResize(WarpInternode):
             points = kwargs['point'].reshape(-1, 2)
             points = warp_point(points, M)
             kwargs['point'] = points.reshape(n, -1, 2)
+
+        if 'mask' in kwargs.keys():
+            kwargs['mask'] = warp_mask(kwargs['mask'], M, (w, h), self.ccs)
 
         return kwargs
 

@@ -24,12 +24,17 @@ def ss(data_dict, classes, rc, index=0):
     img = res['image']
     mask = res['mask']
 
+    print(mask.shape)
+
     plt.subplot(131)
     plt.imshow(img)
-    # plt.axis('off')
+    plt.axis('off')
+
     plt.subplot(132)
     mask, bar = draw_mask(img, mask, classes)
     plt.imshow(mask)
+    plt.axis('off')
+
     plt.subplot(133)
     plt.imshow(bar)
     plt.axis('off')

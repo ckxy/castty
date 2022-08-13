@@ -4,13 +4,16 @@ import random
 import numpy as np
 from PIL import Image
 from copy import deepcopy
-from .base_internode import BaseInternode
-from .builder import build_internode
-from .builder import INTERNODE
 from .bamboo import Bamboo
+from .builder import INTERNODE
+from .builder import build_internode
+from .base_internode import BaseInternode
 from ..utils.common import get_image_size, is_pil
 from torchvision.transforms.functional import pad
-from .pad import unpad_image
+
+from .pad import pad_image, pad_bbox, pad_poly, pad_point
+from .crop import crop_image, crop_mask
+from .resize import resize_image, resize_mask
 
 
 __all__ = ['MixUp', 'CutMix', 'Mosaic']
@@ -18,35 +21,32 @@ __all__ = ['MixUp', 'CutMix', 'Mosaic']
 
 @INTERNODE.register_module()
 class MixUp(Bamboo):
-    @staticmethod
-    def padding(image, right, bottom):
-        if is_pil(image):
-            return pad(image, (0, 0, right, bottom), 0, 'constant')
-        else:
-            return cv2.copyMakeBorder(image, 0, bottom, 0, right, cv2.BORDER_CONSTANT, value=(0, 0, 0))
-
     def __call__(self, data_dict):
         index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
 
         if index_mix == data_dict['index']:
             return super(MixUp, self).__call__(data_dict)
         else:
-            data_dict_b = deepcopy(data_dict)
-            data_dict_b['index'] = index_mix
+            reader = data_dict['reader']
+            len_data_lines = data_dict['len_data_lines']
+
             a = super(MixUp, self).__call__(data_dict)
 
             k = a.keys()
             assert 'mask' not in k and 'point' not in  k
 
-            b = super(MixUp, self).__call__(data_dict_b)
+            data_dict['index'] = index_mix
+            data_dict['len_data_lines'] = len_data_lines
+            data_dict['reader'] = reader
+            b = super(MixUp, self).__call__(data_dict)
 
             w_a, h_a = get_image_size(a['image'])
             w_b, h_b = get_image_size(b['image'])
             max_w = max(w_a, w_b)
             max_h = max(h_a, h_b)
 
-            a['image'] = self.padding(a['image'], max(max_w - w_a, 0), max(max_h - h_a, 0))
-            b['image'] = self.padding(b['image'], max(max_w - w_b, 0), max(max_h - h_b, 0))
+            a['image'] = pad_image(a['image'], (0, 0, max(max_w - w_a, 0), max(max_h - h_a, 0)))
+            b['image'] = pad_image(b['image'], (0, 0, max(max_w - w_b, 0), max(max_h - h_b, 0)))
 
             a['ori_size'] = np.array([max_h, max_w]).astype(np.float32)
 
@@ -135,13 +135,16 @@ class CutMix(Bamboo):
             # print(xb1, yb1, xb2, yb2)
             # exit()
 
+            b_cut = crop_image(b['image'], xb1, yb1, xb2, yb2)
+            b_cut = resize_image(b_cut, (xa2 - xa1, ya2 - ya1))
+
             if is_pil(b['image']):
-                b_cut = b['image'].crop((xb1, yb1, xb2, yb2))
-                b_cut = b_cut.resize((xa2 - xa1, ya2 - ya1), Image.BILINEAR)
+                # b_cut = b['image'].crop((xb1, yb1, xb2, yb2))
+                # b_cut = b_cut.resize((xa2 - xa1, ya2 - ya1), Image.BILINEAR)
                 a['image'].paste(b_cut, (xa1, ya1, xa2, ya2))
             else:
-                b_cut = b['image'][yb1:yb2, xb1:xb2]
-                b_cut = cv2.resize(b_cut, (xa2 - xa1, ya2 - ya1))
+                # b_cut = b['image'][yb1:yb2, xb1:xb2]
+                # b_cut = cv2.resize(b_cut, (xa2 - xa1, ya2 - ya1))
                 a['image'][ya1:ya2, xa1:xa2] = b_cut
 
             # adjust lambda to exactly match pixel ratio
@@ -155,10 +158,11 @@ class CutMix(Bamboo):
             #     a['lam'] = lam
 
             if 'mask' in k:
-                bmask_cut = b['mask'][yb1:yb2, xb1:xb2]
-                bmask_cut = cv2.resize(bmask_cut, (xa2 - xa1, ya2 - ya1), interpolation=cv2.INTER_NEAREST)
+                # bmask_cut = b['mask'][yb1:yb2, xb1:xb2]
+                # bmask_cut = cv2.resize(bmask_cut, (xa2 - xa1, ya2 - ya1), interpolation=cv2.INTER_NEAREST)
+                bmask_cut = crop_mask(b['mask'], xb1, yb1, xb2, yb2)
+                bmask_cut = resize_mask(bmask_cut, (xa2 - xa1, ya2 - ya1))
                 a['mask'][ya1:ya2, xa1:xa2] = bmask_cut
-                # a['mask'].paste(b['mask'].crop((bbx1, bby1, bbx2, bby2)), (bbx1, bby1, bbx2, bby2))
 
             return a
 
@@ -247,10 +251,10 @@ class Mosaic(Bamboo):
         res['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['path'], d2['path'], d3['path'], d4['path'])
 
         if 'bbox' in k:
-            b1 = self.adjust_bbox(d1['bbox'], xc - w1, yc - h1)
-            b2 = self.adjust_bbox(d2['bbox'], xc, yc - h2)
-            b3 = self.adjust_bbox(d3['bbox'], xc - w3, yc)
-            b4 = self.adjust_bbox(d4['bbox'], xc, yc)
+            b1 = pad_bbox(d1['bbox'], xc - w1, yc - h1)
+            b2 = pad_bbox(d2['bbox'], xc, yc - h2)
+            b3 = pad_bbox(d3['bbox'], xc - w3, yc)
+            b4 = pad_bbox(d4['bbox'], xc, yc)
             res['bbox'] = np.concatenate((b1, b2, b3, b4))
 
             if 'bbox_meta' in k:
@@ -268,10 +272,10 @@ class Mosaic(Bamboo):
                 # exit()
 
         if 'point' in k:
-            p1 = self.adjust_point(d1['point'], xc - w1, yc - h1)
-            p2 = self.adjust_point(d2['point'], xc, yc - h2)
-            p3 = self.adjust_point(d3['point'], xc - w3, yc)
-            p4 = self.adjust_point(d4['point'], xc, yc)
+            p1 = pad_point(d1['point'], xc - w1, yc - h1)
+            p2 = pad_point(d2['point'], xc, yc - h2)
+            p3 = pad_point(d3['point'], xc - w3, yc)
+            p4 = pad_point(d4['point'], xc, yc)
             res['point'] = np.concatenate((p1, p2, p3, p4))
 
             if 'point_meta' in k:
@@ -291,10 +295,10 @@ class Mosaic(Bamboo):
             res['mask'] = mask4
 
         if 'poly' in k:
-            p1 = self.adjust_poly(d1['poly'], xc - w1, yc - h1)
-            p2 = self.adjust_poly(d2['poly'], xc, yc - h2)
-            p3 = self.adjust_poly(d3['poly'], xc - w3, yc)
-            p4 = self.adjust_poly(d4['poly'], xc, yc)
+            p1 = pad_poly(d1['poly'], xc - w1, yc - h1)
+            p2 = pad_poly(d2['poly'], xc, yc - h2)
+            p3 = pad_poly(d3['poly'], xc - w3, yc)
+            p4 = pad_poly(d4['poly'], xc, yc)
             res['poly'] = p1 + p2 + p3 + p4
 
             if 'poly_meta' in k:
@@ -305,26 +309,26 @@ class Mosaic(Bamboo):
 
         return res
 
-    @staticmethod
-    def adjust_bbox(bbox, ox, oy):
-        bbox[:, 0] += ox
-        bbox[:, 1] += oy
-        bbox[:, 2] += ox
-        bbox[:, 3] += oy
-        return bbox
+    # @staticmethod
+    # def adjust_bbox(bbox, ox, oy):
+    #     bbox[:, 0] += ox
+    #     bbox[:, 1] += oy
+    #     bbox[:, 2] += ox
+    #     bbox[:, 3] += oy
+    #     return bbox
 
-    @staticmethod
-    def adjust_point(point, ox, oy):
-        point[..., 0] += ox
-        point[..., 1] += oy
-        return point
+    # @staticmethod
+    # def adjust_point(point, ox, oy):
+    #     point[..., 0] += ox
+    #     point[..., 1] += oy
+    #     return point
 
-    @staticmethod
-    def adjust_poly(polys, ox, oy):
-        for i in range(len(polys)):
-            polys[i][..., 0] += ox
-            polys[i][..., 1] += oy
-        return polys
+    # @staticmethod
+    # def adjust_poly(polys, ox, oy):
+    #     for i in range(len(polys)):
+    #         polys[i][..., 0] += ox
+    #         polys[i][..., 1] += oy
+    #     return polys
 
     def rper(self):
         return type(self).__name__ + '(not available)'

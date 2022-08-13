@@ -31,7 +31,7 @@ test_data = dict(
     dataset=dict(
         # reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='train', classes=classes),
         # reader=dict(type='SBDReader', use_pil=True, root='../datasets/voc/benchmark_RELEASE/dataset', split='train', classes=classes),
-        reader=dict(type='MHPV1Reader', use_pil=False, root='../datasets/LV-MHP-v1', split='test'),
+        reader=dict(type='MHPV1Reader', use_pil=True, root='../datasets/LV-MHP-v1', split='test'),
         internodes=[
             # dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
@@ -64,21 +64,22 @@ test_data = dict(
             # dict(type='WarpResize', size=(416, 416), expand=True, keep_ratio=True, short=False, one_way='forward'),
             # dict(type='ResizeAndPadding', 
             #     resize=dict(
-            #         type='Resize',
+            #         type='WarpResize',
             #         size=(416, 416),
             #         keep_ratio=True,
             #         short=False,
+            #         # one_way='forward'
             #     ),
             #     padding=dict(
-            #         type='PaddingBySize',
-            #         size=(416, 416),
-            #         # type='PaddingByStride',
-            #         # stride=32,
+            #         # type='PaddingBySize',
+            #         # size=(416, 416),
+            #         type='PaddingByStride',
+            #         stride=100,
             #         fill=(0, 0, 0), 
             #         padding_mode='constant',
             #         center=False
             #     ),
-            #     one_way='forward'
+            #     # one_way='forward'
             # ),
             # dict(type='Warp', ccs=True, internodes=[
             #     dict(type='WarpPerspective', expand=True, ccs=True),
@@ -119,7 +120,7 @@ test_data = dict(
             # dict(type='AdaptiveTranslate'),
             # dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
-            dict(type='ToPILImage'),
+            # dict(type='ToPILImage'),
             dict(type='ToTensor'),
             # dict(type='EraseContour', one_way='forward'),
         ],

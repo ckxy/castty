@@ -3,29 +3,23 @@ import math
 import random
 import numpy as np
 from PIL import Image
-from .base_internode import BaseInternode
-# from torchvision.transforms.functional import pad
-from ..utils.common import get_image_size, is_pil, clip_bbox, filter_bbox
-from .builder import INTERNODE
-# from ..utils.warp_tools import warp_image
-from .warp import WarpResize
 from .bamboo import Bamboo
+from .warp import WarpResize
+from .builder import INTERNODE
 from .builder import build_internode
+from .base_internode import BaseInternode
+from .control_flow import InternodeWarpper
+from ..utils.common import get_image_size, is_pil, clip_bbox, filter_bbox
 
 
 __all__ = ['Resize', 'Rescale', 'RescaleLimitedByBound', 'ResizeAndPadding']
 
 
-def resize_image(image, scale):
-    w, h = get_image_size(image)
-    nw = int(scale[0] * w)
-    nh = int(scale[1] * h)
-
+def resize_image(image, size):
     if is_pil(image):
-        image = image.resize((nw, nh), Image.BILINEAR)
+        image = image.resize(size, Image.BILINEAR)
     else:
-        image = cv2.resize(image, (nw, nh))
-
+        image = cv2.resize(image, size)
     return image
 
 
@@ -53,12 +47,8 @@ def resize_point(points, scale):
     return points
 
 
-def resize_mask(mask, scale):
-    w, h = get_image_size(mask)
-    nw = int(scale[0] * w)
-    nh = int(scale[1] * h)
-
-    mask = cv2.resize(mask, (nw, nh), interpolation=cv2.INTER_NEAREST)
+def resize_mask(mask, size):
+    mask = cv2.resize(mask, size, interpolation=cv2.INTER_NEAREST)
     return mask
 
 
@@ -72,8 +62,7 @@ class Resize(BaseInternode):
         self.keep_ratio = keep_ratio
         self.short = short
 
-    def calc_scale(self, size):
-        w, h = size
+    def calc_scale_and_new_size(self, w, h):
         tw, th = self.size
         rw, rh = tw / w, th / h
 
@@ -81,15 +70,38 @@ class Resize(BaseInternode):
             if self.short:
                 r = max(rh, rw)
                 scale = (r, r)
+
+                if h < w:
+                    nh = th
+                    nw = int(r * w)
+                else:
+                    nh = int(r * h)
+                    nw = tw
+
+                new_size = (nw, nh)
             else:
                 r = min(rh, rw)
                 scale = (r, r)
+
+                if h > w:
+                    nh = th
+                    nw = int(r * w)
+                else:
+                    nh = int(r * h)
+                    nw = tw
+
+                new_size = (nw, nh)
         else:
             scale = (rw, rh)
-        return scale
+            new_size = (tw, th)
 
-    def resize(self, data_dict, scale):
-        data_dict['image'] = resize_image(data_dict['image'], scale)
+        return scale, new_size
+
+    def __call__(self, data_dict):
+        w, h = get_image_size(data_dict['image'])
+        scale, new_size = self.calc_scale_and_new_size(w, h)
+        
+        data_dict['image'] = resize_image(data_dict['image'], new_size)
 
         if 'bbox' in data_dict.keys():
             data_dict['bbox'] = resize_bbox(data_dict['bbox'], scale)
@@ -101,29 +113,24 @@ class Resize(BaseInternode):
             data_dict['point'] = resize_point(data_dict['point'], scale)
 
         if 'mask' in data_dict.keys():
-            data_dict['mask'] = resize_mask(data_dict['mask'], scale)
+            data_dict['mask'] = resize_mask(data_dict['mask'], new_size)
 
         return data_dict
 
-    def __call__(self, data_dict):
-        w, h = get_image_size(data_dict['image'])
-        scale = self.calc_scale((w, h))
-        return self.resize(data_dict, scale)
-
     def reverse(self, **kwargs):
-        if 'resize_and_padding_reverse_flag' not in kwargs.keys():
+        if 'inner_resize_and_padding_reverse_flag' not in kwargs.keys():
             return kwargs
 
         if 'ori_size' in kwargs.keys():
             h, w = kwargs['ori_size']
             h, w = int(h), int(w)
-            scale = self.calc_scale((w, h))
+            scale, _ = self.calc_scale_and_new_size(w, h)
             scale = (1 / scale[0], 1 / scale[1])
         else:
             return kwargs
 
         if 'image' in kwargs.keys():
-            kwargs['image'] = resize_image(kwargs['image'], scale)
+            kwargs['image'] = resize_image(kwargs['image'], (w, h))
 
         if 'bbox' in kwargs.keys():
             kwargs['bbox'] = resize_bbox(kwargs['bbox'], scale)
@@ -135,7 +142,7 @@ class Resize(BaseInternode):
             kwargs['point'] = resize_point(kwargs['point'], scale)
 
         if 'mask' in kwargs.keys():
-            kwargs['mask'] = resize_mask(kwargs['mask'], scale)
+            kwargs['mask'] = resize_mask(kwargs['mask'], (w, h))
 
         return kwargs
 
@@ -156,12 +163,13 @@ class Rescale(Resize):
         self.ratio_range = ratio_range
         self.mode = mode
 
-    def calc_scale(self, size):
+    def calc_scale_and_new_size(self, w, h):
         if self.mode == 'range':
             scale = np.random.random_sample() * (self.ratio_range[1] - self.ratio_range[0]) + self.ratio_range[0]
         elif self.mode == 'value':
             scale = random.choice(self.ratio_range)
-        return scale, scale
+
+        return (scale, scale), (int(scale * w), int(scale * h))
 
     def reverse(self, **kwargs):
         return kwargs
@@ -179,26 +187,25 @@ class RescaleLimitedByBound(Rescale):
         self.long_size_bound = long_size_bound
         self.short_size_bound = short_size_bound
 
-    def calc_scale(self, size):
-        w, h = size
+    def calc_scale_and_new_size(self, w, h):
         scale1 = 1
 
         if max(h, w) > self.long_size_bound:
             scale1 = self.long_size_bound * 1.0 / max(h, w)
 
-        scale2, _ = super(RescaleLimitedByBound, self).calc_scale(size)
-        scale = scale1 * scale2
+        scale2, _ = super(RescaleLimitedByBound, self).calc_scale_and_new_size(w, h)
+        scale = scale1 * scale2[0]
 
         if min(h, w) * scale <= self.short_size_bound:
             scale = (self.short_size_bound + 10) * 1.0 / min(h, w)
 
-        return scale, scale
+        return (scale, scale), (int(scale * w), int(scale * h))
 
     def reverse(self, **kwargs):
         return kwargs
 
     def __repr__(self):
-        return 'Rescale(ratio_range={}, mode={})'.format(self.ratio_range, self.mode)
+        return 'RescaleLimitedByBound(ratio_range={}, mode={}, long_size_bound={}, short_size_bound={})'.format(self.ratio_range, self.mode, self.long_size_bound, self.short_size_bound)
 
 
 @INTERNODE.register_module()
@@ -226,19 +233,16 @@ class ResizeAndPadding(Bamboo):
             h, w = int(h), int(w)
             ori_size = (h, w)
 
-            if hasattr(self.internodes[0], 'calc_scale'):
-                scale = self.internodes[0].calc_scale((w, h))
-
-                nw = math.ceil(scale[0] * w)
-                nh = math.ceil(scale[1] * h)
-
+            if hasattr(self.internodes[0], 'calc_scale_and_new_size'):
+                scale, (nw, nh) = self.internodes[0].calc_scale_and_new_size(w, h)
+                resize_size = (nh, nw)
+            elif isinstance(self.internodes[0], InternodeWarpper) and hasattr(self.internodes[0].internode, 'calc_scale_and_new_size'):
+                scale, (nw, nh) = self.internodes[0].internode.calc_scale_and_new_size(w, h)
                 resize_size = (nh, nw)
             else:
                 resize_size = ori_size
 
-        # print(ori_size, resize_size)
-
-        kwargs['resize_and_padding_reverse_flag'] = True
+        kwargs['inner_resize_and_padding_reverse_flag'] = True
 
         kwargs['ori_size'] = resize_size
         kwargs = self.internodes[1].reverse(**kwargs)
@@ -246,7 +250,7 @@ class ResizeAndPadding(Bamboo):
         kwargs['ori_size'] = ori_size
         kwargs = self.internodes[0].reverse(**kwargs)
 
-        kwargs.pop('resize_and_padding_reverse_flag')
+        kwargs.pop('inner_resize_and_padding_reverse_flag')
 
         return kwargs
 
