@@ -1,12 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # copy from mmocr
+import cv2
+import sys
+import torch
+import numpy as np
+from ..builder import INTERNODE
 from ..base_internode import BaseInternode
 from ...utils.common import get_image_size, is_pil, clip_poly
-from ..builder import INTERNODE
-import numpy as np
-import cv2
-import torch
-import sys
 
 try:
     import pyclipper
