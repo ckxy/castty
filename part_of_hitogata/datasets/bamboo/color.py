@@ -3,8 +3,8 @@ import random
 import numpy as np
 from PIL import Image
 from .builder import INTERNODE
-from .base_internode import BaseInternode
 from ..utils.common import is_pil
+from .base_internode import BaseInternode
 from torchvision.transforms.functional import normalize, to_grayscale, adjust_brightness, adjust_contrast, adjust_saturation, adjust_hue
 
 

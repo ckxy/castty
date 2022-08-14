@@ -1,13 +1,11 @@
 import os
 import numpy as np
-from PIL import Image
-from addict import Dict
 from copy import deepcopy
 from .reader import Reader
-from .lvis_v1_categories import LVIS_CATEGORIES as LVIS_V1_CATEGORIES
 from .builder import READER
 from ..utils.structures import Meta
 from ..utils.common import get_image_size
+from .lvis_v1_categories import LVIS_CATEGORIES as LVIS_V1_CATEGORIES
 
 
 __all__ = ['LVISAPIReader']

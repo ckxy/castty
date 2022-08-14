@@ -132,10 +132,10 @@ test_data = dict(
         #     ),
         # ),
         internodes=[
-            # dict(type='DataSource'),
-            dict(type='MixUp', internodes=[
-                dict(type='DataSource'),
-            ]),
+            dict(type='DataSource'),
+            # dict(type='MixUp', internodes=[
+            #     dict(type='DataSource'),
+            # ]),
             # dict(type='Mosaic', internodes=[
             #     dict(type='DataSource'),
             # ]),
@@ -210,7 +210,7 @@ test_data = dict(
             # dict(type='Flip', horizontal=True),
             # dict(type='AdaptiveCrop'),
             # dict(type='AdaptiveTranslate'),
-            # dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
+            dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
             dict(type='ToPILImage'),
             dict(type='ToTensor'),

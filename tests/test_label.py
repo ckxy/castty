@@ -14,34 +14,14 @@ from part_of_hitogata.configs import load_config, load_config_far_away
 from part_of_hitogata.utils.label_tools import draw_label
 
 
-def cl(data_dict, classes, rc, index=0):
-    img = data_dict['image'][index]
-    label = data_dict['label'][index].numpy()
-
-    print(img.shape)
-    print(data_dict['path'][index])
-    print(label, 'label')
-
-    res = rc(image=img, ori_size=data_dict['ori_size'][index], label=label)
-    img = res['image']
-    label = res['label']
-
-    img = draw_label(img, label, classes)
-
-    plt.title(classes[label])
-    plt.imshow(img)
-    plt.axis('off')
-
-
 def mcl(data_dict, classes, rc, index=0):
     img = data_dict['image'][index]
-    label = data_dict['label'][index].numpy()
+    label = data_dict['label'][index]
 
     print(img.shape)
     print(data_dict['path'][index])
     print(label)
     print(classes)
-    exit()
 
     # print(img.shape)
 

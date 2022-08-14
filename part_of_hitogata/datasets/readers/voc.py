@@ -3,16 +3,16 @@ import cv2
 import ntpath
 import numpy as np
 from PIL import Image
-from scipy.io import loadmat
 from .reader import Reader
+from .builder import READER
+from scipy.io import loadmat
+from ..utils.structures import Meta
 from .utils import read_image_paths
+from ..utils.common import get_image_size
 try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
-from .builder import READER
-from ..utils.structures import Meta
-from ..utils.common import get_image_size
 
 
 __all__ = ['VOCReader', 'VOCSegReader', 'SBDReader']

@@ -51,23 +51,22 @@ class Crop(BaseInternode):
         assert len(size) == 2 and size[0] > 0 and size[1] > 0
         self.size = size
 
-    def __call__(self, data_dict):
-        assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys() and 'poly' not in data_dict.keys()
-
-        w, h = get_image_size(data_dict['image'])
-
+    def calc_cropping(self, w, h):
         xmin = random.randint(0, w - self.size[0])
         ymin = random.randint(0, h - self.size[1])
         xmax = xmin + self.size[0]
         ymax = ymin + self.size[1]
+        return xmin, ymin, xmax, ymax
 
-        if is_pil(data_dict['image']):
-            data_dict['image'] = data_dict['image'].crop((xmin, ymin, xmax, ymax))
-        else:
-            data_dict['image'] = data_dict['image'][ymin:ymax, xmin:xmax]
+    def __call__(self, data_dict):
+        assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys() and 'poly' not in data_dict.keys()
+
+        xmin, ymin, xmax, ymax = self.calc_cropping(*get_image_size(data_dict['image']))
+
+        data_dict['image'] = crop_image(data_dict['image'], xmin, ymin, xmax, ymax)
 
         if 'mask' in data_dict.keys():
-            data_dict['mask'] = data_dict['mask'][ymin:ymax, xmin:xmax]
+            data_dict['mask'] = crop_mask(data_dict['mask'], xmin, ymin, xmax, ymax)
 
         return data_dict
 
@@ -177,14 +176,14 @@ class MinIOUCrop(BaseInternode):
     def __init__(self, threshs, aspect_ratio=2, attempts=50, **kwargs):
         assert aspect_ratio >= 1
 
-        self.iou_threshs = [None] + list(threshs)
+        self.threshs = [None] + list(threshs)
         self.aspect_ratio = aspect_ratio
         self.attempts = attempts
 
     def calc_cropping(self, data_dict):
         width, height = get_image_size(data_dict['image'])
         while True:
-            mode = random.choice(self.iou_threshs)
+            mode = random.choice(self.threshs)
             if mode is None:
                 return None
 
@@ -242,18 +241,14 @@ class MinIOUCrop(BaseInternode):
         return data_dict
 
     def __repr__(self):
-        return 'MinIOUCrop(iou_threshs={}, aspect_ratio={}, attempts={})'.format(self.iou_threshs, self.aspect_ratio, self.attempts)
+        return 'MinIOUCrop(iou_threshs={}, aspect_ratio={}, attempts={})'.format(self.threshs, self.aspect_ratio, self.attempts)
 
 
 @INTERNODE.register_module()
-class MinIOGCrop(BaseInternode):
+class MinIOGCrop(MinIOUCrop):
     def __init__(self, threshs, aspect_ratio=2, attempts=50, **kwargs):
-        assert aspect_ratio >= 1
-
-        self.iog_threshs = [None] + list(threshs)
-        self.ar = aspect_ratio
-        self.attempts = attempts
-        self.ul = (3 / 10 / self.ar, 10 * self.ar / 3)
+        super(MinIOGCrop, self).__init__(threshs, aspect_ratio, attempts, **kwargs)
+        self.ul = (3 / 10 / self.aspect_ratio, 10 * self.aspect_ratio / 3)
 
     def iog_calc(self, boxes1, boxes2):
         boxes1_area = (boxes1[..., 2] - boxes1[..., 0]) * (boxes1[..., 3] - boxes1[..., 1])
@@ -269,14 +264,14 @@ class MinIOGCrop(BaseInternode):
 
     def check(self, p, lower, upper):
         ps = []
-        if p / self.ar <= upper <= p * self.ar:
+        if p / self.aspect_ratio <= upper <= p * self.aspect_ratio:
             ps.append(upper)
-        if p / self.ar <= lower <= p * self.ar:
+        if p / self.aspect_ratio <= lower <= p * self.aspect_ratio:
             ps.append(lower)
-        if lower <= p * self.ar <= upper:
-            ps.append(p * self.ar)
-        if lower <= p / self.ar <= upper:
-            ps.append(p / self.ar)
+        if lower <= p * self.aspect_ratio <= upper:
+            ps.append(p * self.aspect_ratio)
+        if lower <= p / self.aspect_ratio <= upper:
+            ps.append(p / self.aspect_ratio)
         return sorted(list(set(ps)))
 
     def calc_cropping(self, data_dict):
@@ -307,7 +302,7 @@ class MinIOGCrop(BaseInternode):
         y = ps[:, 1]
 
         while True:
-            mode = random.choice(self.iog_threshs)
+            mode = random.choice(self.threshs)
             if mode is None:
                 return None
 
@@ -340,59 +335,26 @@ class MinIOGCrop(BaseInternode):
 
                 return rect[0], rect[1], rect[2], rect[3], keep
 
-    def __call__(self, data_dict):
-        assert 'bbox' in data_dict.keys()
-
-        res = self.calc_cropping(data_dict)
-
-        if res is None:
-            return data_dict
-
-        x1, y1, x2, y2, keep = res
-
-        data_dict['image'] = crop_image(data_dict['image'], x1, y1, x2, y2)
-
-        data_dict['bbox'] = data_dict['bbox'][keep]
-        data_dict['bbox'] = crop_bbox(data_dict['bbox'], x1, y1)
-        data_dict['bbox'] = clip_bbox(data_dict['bbox'], get_image_size(data_dict['image']))
-        if 'bbox_meta' in data_dict.keys():
-            data_dict['bbox_meta'].filter(keep)
-
-        return data_dict
-
     def __repr__(self):
-        return 'MinIOGCrop(iog_threshs={}, aspect_ratio={}, attempts={})'.format(self.iog_threshs, self.ar, self.attempts)
+        return 'MinIOGCrop(iog_threshs={}, aspect_ratio={}, attempts={})'.format(self.threshs, self.aspect_ratio, self.attempts)
 
 
-class CenterCrop(BaseInternode):
-    def __init__(self, size):
-        assert len(size) == 2 and size[0] > 0 and size[1] > 0
-        self.size = size
-
-    def __call__(self, data_dict):
-        assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys()
-        w, h = data_dict['image'].size
-
+@INTERNODE.register_module()
+class CenterCrop(Crop):
+    def calc_cropping(self, w, h):
         x1 = int(round((w - self.size[0]) / 2.))
         y1 = int(round((h - self.size[1]) / 2.))
         assert x1 >= 0 and y1 >= 0
 
-        data_dict['image'] = data_dict['image'].crop((x1, y1, x1 + self.size[0], y1 + self.size[1]))
-
-        if 'mask' in data_dict.keys():
-            data_dict['mask'] = data_dict['mask'].crop((x1, y1, x1 + self.size[0], y1 + self.size[1]))
-
-        return data_dict
+        return x1, y1, x1 + self.size[0], y1 + self.size[1]
 
     def __repr__(self):
         return 'CenterCrop(size={})'.format(self.size)
 
-    def rper(self):
-        return 'CenterCrop(not available)'
 
-
-class RandomAreaCrop(BaseInternode):
-    def __init__(self, scale=(0.08, 1.0), ratio=(3 / 4, 4 / 3), attempts=10):
+@INTERNODE.register_module()
+class RandomAreaCrop(Crop):
+    def __init__(self, scale=(0.08, 1.0), ratio=(3 / 4, 4 / 3), attempts=10, **kwargs):
         assert scale[0] < scale[1]
         assert scale[1] <= 1 and scale[0] > 0
         assert ratio[0] <= ratio[1]
@@ -401,7 +363,7 @@ class RandomAreaCrop(BaseInternode):
         self.ratio = ratio
         self.attempts = attempts
 
-    def _calc_crop_coor(self, height, width):
+    def calc_cropping(self, height, width):
         area = height * width
 
         for attempt in range(self.attempts):
@@ -415,7 +377,8 @@ class RandomAreaCrop(BaseInternode):
             if 0 < w <= width and 0 < h <= height:
                 i = random.randint(0, height - h)
                 j = random.randint(0, width - w)
-                return i, j, h, w
+                # return i, j, h, w
+                return j, i, j + w, i + h
 
         # Fallback to central crop
         in_ratio = float(width) / float(height)
@@ -430,20 +393,8 @@ class RandomAreaCrop(BaseInternode):
             h = height
         i = (height - h) // 2
         j = (width - w) // 2
-        return i, j, h, w
-
-    def __call__(self, data_dict):
-        assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys()
-
-        w, h = data_dict['image'].size
-        top, left, height, width = self._calc_crop_coor(h, w)
-
-        data_dict['image'] = data_dict['image'].crop((left, top, left + width, top + height))
-
-        if 'mask' in data_dict.keys():
-            data_dict['mask'] = data_dict['mask'].crop((left, top, left + width, top + height))
-
-        return data_dict
+        # return i, j, h, w
+        return j, i, j + w, i + h
 
     def __repr__(self):
         return 'RandomAreaCrop(scale={}, ratio={}, attempts={})'.format(self.scale, self.ratio, self.attempts)

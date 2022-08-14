@@ -81,21 +81,18 @@ class RandomSwapChannels(BaseInternode):
 
 @INTERNODE.register_module()
 class GaussianBlur(BaseInternode):
-    def __init__(self, radius, p=1):
-        assert 0 < p <= 1
-        self.p = p
+    def __init__(self, radius):
         self.radius = radius
 
     def __call__(self, data_dict):
-        if random.random() < self.p:
-            if self.radius <= 0:
-                data_dict['image'] = data_dict['image'].filter(ImageFilter.GaussianBlur(radius=random.random()))
-            else:
-                data_dict['image'] = data_dict['image'].filter(ImageFilter.GaussianBlur(radius=self.radius))
+        if self.radius <= 0:
+            data_dict['image'] = data_dict['image'].filter(ImageFilter.GaussianBlur(radius=random.random()))
+        else:
+            data_dict['image'] = data_dict['image'].filter(ImageFilter.GaussianBlur(radius=self.radius))
         return data_dict
 
     def __repr__(self):
         if self.radius <= 0:
-            return 'GaussianBlur(p={}, random radius)'.format(self.p)
+            return 'GaussianBlur(random radius)'
         else:
-            return 'GaussianBlur(p={}, radius={})'.format(self.p, self.radius)
+            return 'GaussianBlur(radius={})'.format(self.radius)

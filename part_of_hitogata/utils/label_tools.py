@@ -7,37 +7,15 @@ from .utils import get_concat_h
 from PIL import Image, ImageDraw, ImageFont
 
 
-def draw_label(img, labels, classes, scores=None):
-    if len(classes) > 1:
-        return draw_grouped_label(img, labels, classes, scores)
-
-    if isinstance(labels, int) or isinstance(labels, float):
-        labs = [labels]
-    else:
-        if isinstance(labels, np.ndarray) and labels.shape == ():
-            labs = [labels]
-        else:
-            labs = labels
-
-    if scores is not None:
-        if isinstance(scores, int) or isinstance(scores, float):
-            scs = [scores]
-        else:
-            if isinstance(scores, np.ndarray) and scores.shape == ():
-                scs = [scores]
-            else:
-                scs = scores
-
-        assert len(labs) == len(scs)
-    else:
-        scs = None
+def draw_label(img, labels, classes):
+    if not isinstance(classes[0], str):
+        return draw_grouped_label(img, labels, classes)
 
     text = ''
-    for i, label in enumerate(labs):
-        text += '{}'.format(classes[0][label])
-        if scs is not None:
-            text += ': {:.3f}'.format(scs[i])
-        text += '\n'
+    for i, label in enumerate(labels):
+        label = float(label)
+        if label > 0:
+            text += '{}: {:.3f}\n'.format(classes[i], label)
     text = text[:-1]
 
     if not isinstance(img, Image.Image):
@@ -62,10 +40,7 @@ def draw_label(img, labels, classes, scores=None):
     return img
 
 
-def draw_grouped_label(img, labels, classes, scores=None):
-    if scores is not None:
-        assert len(labels) == len(scores)
-
+def draw_grouped_label(img, grouped_labels, classes):
     w, h = img.size
     l = math.sqrt(h * h + w * w)
     font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
@@ -75,17 +50,14 @@ def draw_grouped_label(img, labels, classes, scores=None):
     draw = ImageDraw.Draw(bar)
 
     text = ''
-    for i, label in enumerate(labels):
+    for i, labels in enumerate(grouped_labels):
         if len(classes[i]) == 1:
-            if scores is None:
-                text += '{}: {:.3f}'.format(classes[i][0], label)
-            else:
-                text += '{}: {:.3f}'.format(classes[i][0], scores[i])
+            text += 'g{:0>2d} {}: {:.3f}\n'.format(i, classes[i][0], float(labels))
         else:
-            text += '{}'.format(classes[i][label])
-            if scores is not None and scores[i] != -1:
-                text += ': {:.3f}'.format(scores[i])
-        text += '\n'
+            for j, label in enumerate(labels):
+                label = float(label)
+                if label > 0:
+                    text += 'g{:0>2d} {}: {:.3f}\n'.format(i, classes[i][j], label)
     text = text[:-1]
 
     draw.multiline_text((0, 0), text, fill=(0, 0, 0), font=font)

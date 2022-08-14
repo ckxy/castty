@@ -2,9 +2,9 @@ import cv2
 import math
 import random
 import numpy as np
-from PIL import Image, ImageOps, ImageDraw
-from .base_internode import BaseInternode
 from .builder import INTERNODE
+from .base_internode import BaseInternode
+from PIL import Image, ImageOps, ImageDraw
 from ..utils.common import get_image_size, is_pil
 
 

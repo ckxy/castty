@@ -2,8 +2,8 @@ import os
 import numpy as np
 from .reader import Reader
 from .builder import READER
-from ..utils.common import get_image_size
 from ..utils.structures import Meta
+from ..utils.common import get_image_size
 
 
 __all__ = ['ICDARDetReader']

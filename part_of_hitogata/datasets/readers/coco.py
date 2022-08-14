@@ -1,10 +1,10 @@
 import os
 import numpy as np
 from PIL import Image
-from ...utils.bbox_tools import xywh2xyxy
 from .reader import Reader
 from .builder import READER
 from ..utils.structures import Meta
+from ...utils.bbox_tools import xywh2xyxy
 
 
 __all__ = ['COCOAPIReader']

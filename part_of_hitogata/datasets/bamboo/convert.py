@@ -1,10 +1,10 @@
 import torch
 import numpy as np
 from PIL import Image
-from .base_internode import BaseInternode
-from torchvision.transforms.functional import to_tensor, to_pil_image
 from .builder import INTERNODE
 from ..utils.common import is_pil
+from .base_internode import BaseInternode
+from torchvision.transforms.functional import to_tensor, to_pil_image
 
 
 __all__ = ['ToTensor', 'ToPILImage', 'ToCV2Image']

@@ -66,8 +66,10 @@ class MixUp(Bamboo):
                     a['bbox_meta'] += b['bbox_meta']
 
             if 'label' in k:
-                print(a['label'], b['label'])
-                exit()
+                for i in range(len(a['label'])):
+                    a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
+                # print(a['label'], b['label'])
+                # exit()
 
             if 'path' in k:
                 a['path'] = '[mixup]({}, {}, {})'.format(a['path'], b['path'], lam)
@@ -153,9 +155,9 @@ class CutMix(Bamboo):
             if 'path' in k:
                 a['path'] = '[cutmix]({}, {}, {})'.format(a['path'], b['path'], lam)
 
-            # if 'label' in k:
-            #     a['label_add'] = b['label']
-            #     a['lam'] = lam
+            if 'label' in k:
+                for i in range(len(a['label'])):
+                    a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
 
             if 'mask' in k:
                 # bmask_cut = b['mask'][yb1:yb2, xb1:xb2]

@@ -1,12 +1,10 @@
 import os
 import numpy as np
-from addict import Dict
-from PIL import Image
 from .reader import Reader
-from .utils import is_image_file
 from .builder import READER
-from ..utils.common import get_image_size
+from .utils import is_image_file
 from ..utils.structures import Meta
+from ..utils.common import get_image_size
 
 
 __all__ = ['ImageFolderReader']
@@ -39,7 +37,7 @@ class ImageFolderReader(Reader):
         self._info = dict(
             forcat=dict(
                 type='cls',
-                classes=(tuple(self.classes),)
+                classes=self.classes
             )
         )
 

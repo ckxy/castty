@@ -1,11 +1,9 @@
 import os
 import numpy as np
-from addict import Dict
-from PIL import Image
 from .reader import Reader
 from .builder import READER
-from ..utils.common import get_image_size
 from ..utils.structures import Meta
+from ..utils.common import get_image_size
 
 
 __all__ = ['WFLWReader', 'WFLWSIReader']

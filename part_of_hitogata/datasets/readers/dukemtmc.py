@@ -16,7 +16,7 @@ class DukeMTMCAttritubesReader(Reader):
         super(DukeMTMCAttritubesReader, self).__init__(**kwargs)
 
         self.root = root
-        labels = ('backpack', 'bag', 'handbag', 
+        classes = ('backpack', 'bag', 'handbag', 
             'boots', 'gender', 'hat', 'shoes', 
             'top', 'downblack', 'downwhite', 
             'downred', 'downgray', 'downblue', 
@@ -26,10 +26,10 @@ class DukeMTMCAttritubesReader(Reader):
 
         if group == 'train':
             img_root = os.path.join(root , 'bounding_box_train')
-            self.labels = labels
+            self.classes = classes
         elif group == 'test':
             img_root = os.path.join(root, 'bounding_box_test')
-            self.labels = ('boots', 'shoes', 'top', 
+            self.classes = ('boots', 'shoes', 'top', 
                 'gender', 'hat', 'backpack', 'bag', 
                 'handbag', 'downblack', 'downwhite', 
                 'downred', 'downgray', 'downblue', 
@@ -42,7 +42,7 @@ class DukeMTMCAttritubesReader(Reader):
         self.mode = mode
 
         if self.mode == 'b':
-            self.grouped_labels = (
+            self.grouped_classes = (
                 ('carrying backpack',),
                 ('carrying bag',),
                 ('carrying handbag',),
@@ -55,7 +55,7 @@ class DukeMTMCAttritubesReader(Reader):
                 ('upunknown', 'upblack', 'upwhite', 'upred', 'uppurple', 'upgray', 'upblue', 'upgreen', 'upbrown'),
             )
         elif self.mode == 'c':
-            self.grouped_labels = (
+            self.grouped_classes = (
                 ('without backpack', 'with backpack'),
                 ('without bag', 'with bag'),
                 ('without handbag', 'with handbag'),
@@ -68,7 +68,7 @@ class DukeMTMCAttritubesReader(Reader):
                 ('upunknown', 'upblack', 'upwhite', 'upred', 'uppurple', 'upgray', 'upblue', 'upgreen', 'upbrown'),
             )
         elif self.mode == 'ab':
-            self.grouped_labels = (
+            self.grouped_classes = (
                 ('carrying backpack',),
                 ('carrying bag',),
                 ('carrying handbag',),
@@ -97,8 +97,8 @@ class DukeMTMCAttritubesReader(Reader):
             raise ValueError
 
         self.mapping = []
-        for i, label in enumerate(labels):
-            self.mapping.append(self.labels.index(labels[i]))
+        for i, c in enumerate(classes):
+            self.mapping.append(self.classes.index(c))
 
         self.group = group
 
@@ -119,17 +119,9 @@ class DukeMTMCAttritubesReader(Reader):
         self._info = dict(
             forcat=dict(
                 type='cls',
-                classes=self.grouped_labels
+                classes=self.grouped_classes
             )
         )
-
-    # def get_dataset_info(self):
-    #     return range(len(self.img_paths)), Dict({'classes': self.grouped_labels})
-
-    # def get_data_info(self, index):
-    #     img = Image.open(self.img_paths[index][0])
-    #     w, h = img.size
-    #     return dict(h=h, w=w)
 
     def __call__(self, index):
         img = self.read_image(self.img_paths[index])
@@ -143,10 +135,10 @@ class DukeMTMCAttritubesReader(Reader):
         tmp = []
         # print(self.pids[pid])
         if self.mode == 'ab':
-            for i in range(len(self.labels)):
+            for i in range(len(self.classes)):
                 labels.append(self.f[self.mapping[i]][0][pid] - 1)
         else:
-            for i in range(len(self.labels)):
+            for i in range(len(self.classes)):
                 if 8 <= i <= 14:
                     tmp.append(self.f[self.mapping[i]][0][pid])
                     if i == 14:
@@ -166,13 +158,21 @@ class DukeMTMCAttritubesReader(Reader):
             elif pid == 326:
                 labels[7] = 1
 
-        labels = np.array(labels).astype(np.long)
+        grouped_labels = []
+        for i, gc in enumerate(self.grouped_classes):
+            # print(gc)
+            if len(gc) == 1:
+                gl = np.array(labels[i]).astype(np.int32)
+            else:
+                gl = np.zeros(len(gc)).astype(np.int32)
+                gl[labels[i]] = 1
+            grouped_labels.append(gl)
 
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
             path=path,
-            label=labels
+            label=grouped_labels
         )
 
     def __len__(self):

@@ -104,21 +104,25 @@ class BboxCollateFN(CollateFN):
         return 'BboxCollateFN(names={})'.format(self.names)
 
 
-# @COLLATEFN.register_module()
-# class PolyCollateFN(CollateFN):
-#     def collate(self):
-#         res = dict()
-#         for k in self.buffer.keys():
-#             for i in range(len(self.buffer[k])):
-#                 self.buffer[k][i] = [self.buffer[k][i]]
-#             print(self.buffer[k])
-#             exit()
-#             res[k] = [torch.from_numpy(b).type(torch.float32) for b in self.buffer[k]]
-#             self.buffer[k].clear()
-#         return res
+@COLLATEFN.register_module()
+class LabelCollateFN(CollateFN):
+    def collate(self):
+        res = dict()
+        for k in self.buffer.keys():
+            res[k] = []
+            for i in range(len(self.buffer[k])):
+                if len(self.buffer[k][0]) > 1:
+                    t = []
+                    for j in range(len(self.buffer[k][0])):
+                        t.append(torch.from_numpy(self.buffer[k][i][j]).type(torch.float32))
+                    res[k].append(t)
+                else:
+                    res[k].append(torch.from_numpy(self.buffer[k][i][0]).type(torch.float32))
+            self.buffer[k].clear()
+        return res
 
-#     def __repr__(self):
-#         return 'PolyCollateFN(names={})'.format(self.names)
+    def __repr__(self):
+        return 'LabelCollateFN(names={})'.format(self.names)
 
 
 @COLLATEFN.register_module()

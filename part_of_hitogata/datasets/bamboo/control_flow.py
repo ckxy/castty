@@ -1,7 +1,7 @@
-from .base_internode import BaseInternode
-from .builder import build_internode
-from .builder import INTERNODE
 import random
+from .builder import INTERNODE
+from .builder import build_internode
+from .base_internode import BaseInternode
 
 
 __all__ = ['ChooseOne', 'ChooseSome', 'RandomWarpper', 'ForwardOnly', 'BackwardOnly']

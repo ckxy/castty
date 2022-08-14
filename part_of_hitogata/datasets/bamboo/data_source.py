@@ -1,5 +1,5 @@
-from .base_internode import BaseInternode
 from .builder import INTERNODE
+from .base_internode import BaseInternode
 
 
 __all__ = ['DataSource']
