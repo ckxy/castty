@@ -29,9 +29,9 @@ test_data = dict(
         # ]
     ),
     dataset=dict(
-        reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='train', classes=classes),
+        reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='val', classes=classes),
         # reader=dict(type='SBDReader', use_pil=False, root='../datasets/voc/benchmark_RELEASE/dataset', split='train', classes=classes),
-        # reader=dict(type='MHPV1Reader', use_pil=False, root='../datasets/LV-MHP-v1', split='test'),
+        # reader=dict(type='MHPV1Reader', use_pil=False, root='../datasets/LV-MHP-v1', split='train'),
         internodes=[
             dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
@@ -60,7 +60,7 @@ test_data = dict(
             # dict(type='Padding', padding=(20, 30, 40, 50), fill=50, padding_mode='reflect'),
             # dict(type='PaddingBySize', size=(416, 416), fill=(50, 50, 50), padding_mode='constant', center=True),
             # dict(type='PaddingByStride', stride=100, fill=(50, 50, 50), padding_mode='constant', center=False, one_way='orward'),
-            dict(type='Resize', size=(640, 640), keep_ratio=False, short=False),
+            # dict(type='Resize', size=(640, 640), keep_ratio=False, short=False),
             # dict(type='WarpResize', size=(416, 416), expand=True, keep_ratio=True, short=False, one_way='forward'),
             # dict(type='ResizeAndPadding', 
             #     resize=dict(
@@ -118,7 +118,7 @@ test_data = dict(
             # dict(type='GridMask', offset=True),
             # dict(type='AdaptiveCrop'),
             # dict(type='AdaptiveTranslate'),
-            dict(type='RandomAreaCrop'),
+            # dict(type='RandomAreaCrop'),
             # dict(type='Padding', padding=(100, 200, 300, 400)),
             # dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),

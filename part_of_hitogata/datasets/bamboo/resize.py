@@ -28,7 +28,6 @@ def resize_bbox(bboxes, scale):
     bboxes[:, 1] *= scale[1]
     bboxes[:, 2] *= scale[0]
     bboxes[:, 3] *= scale[1]
-
     return bboxes
 
 
@@ -36,14 +35,12 @@ def resize_poly(polys, scale):
     for i in range(len(polys)):
         polys[i][..., 0] *= scale[0]
         polys[i][..., 1] *= scale[1]
-
     return polys
 
 
 def resize_point(points, scale):
     points[..., 0] *= scale[0]
     points[..., 1] *= scale[1]
-
     return points
 
 
@@ -97,53 +94,87 @@ class Resize(BaseInternode):
 
         return scale, new_size
 
-    def __call__(self, data_dict):
+    def calc_intl_param_forward(self, data_dict):
         w, h = get_image_size(data_dict['image'])
-        scale, new_size = self.calc_scale_and_new_size(w, h)
-        
-        data_dict['image'] = resize_image(data_dict['image'], new_size)
+        data_dict['intl_scale'], data_dict['intl_new_size'] = self.calc_scale_and_new_size(w, h)
+        return data_dict
+
+    def forward(self, data_dict):
+        if 'image' in data_dict.keys():
+            data_dict['image'] = resize_image(data_dict['image'], data_dict['intl_new_size'])
 
         if 'bbox' in data_dict.keys():
-            data_dict['bbox'] = resize_bbox(data_dict['bbox'], scale)
+            data_dict['bbox'] = resize_bbox(data_dict['bbox'], data_dict['intl_scale'])
 
         if 'poly' in data_dict.keys():
-            data_dict['poly'] = resize_poly(data_dict['poly'], scale)
+            data_dict['poly'] = resize_poly(data_dict['poly'], data_dict['intl_scale'])
 
         if 'point' in data_dict.keys():
-            data_dict['point'] = resize_point(data_dict['point'], scale)
+            data_dict['point'] = resize_point(data_dict['point'], data_dict['intl_scale'])
 
         if 'mask' in data_dict.keys():
-            data_dict['mask'] = resize_mask(data_dict['mask'], new_size)
+            data_dict['mask'] = resize_mask(data_dict['mask'], data_dict['intl_new_size'])
+        return data_dict
 
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_scale')
+        data_dict.pop('intl_new_size')
+        return data_dict
+
+    def __call__(self, data_dict):
+        data_dict = self.calc_intl_param_forward(data_dict)
+        data_dict = self.forward(data_dict)
+        data_dict = self.erase_intl_param_forward(data_dict)
+        return data_dict
+
+    def calc_intl_param_backward(self, data_dict):
+        if 'intl_resize_and_padding_reverse_flag' in data_dict.keys():
+            h, w = data_dict['ori_size']
+            h, w = int(h), int(w)
+            scale, _ = self.calc_scale_and_new_size(w, h)
+            data_dict['intl_scale'] = (1 / scale[0], 1 / scale[1])
+            data_dict['intl_new_size'] = (w, h)
+        return data_dict
+
+    def backward(self, data_dict):
+        if 'intl_scale' in data_dict.keys():
+            data_dict = self.forward(data_dict)
+        return data_dict
+
+    def erase_intl_param_backward(self, data_dict):
+        if 'intl_scale' in data_dict.keys():
+            data_dict = self.erase_intl_param_forward(data_dict)
         return data_dict
 
     def reverse(self, **kwargs):
-        if 'inner_resize_and_padding_reverse_flag' not in kwargs.keys():
-            return kwargs
+        # if 'intl_resize_and_padding_reverse_flag' not in kwargs.keys():
+        #     return kwargs
 
-        if 'ori_size' in kwargs.keys():
-            h, w = kwargs['ori_size']
-            h, w = int(h), int(w)
-            scale, _ = self.calc_scale_and_new_size(w, h)
-            scale = (1 / scale[0], 1 / scale[1])
-        else:
-            return kwargs
+        # if 'ori_size' in kwargs.keys():
+        #     h, w = kwargs['ori_size']
+        #     h, w = int(h), int(w)
+        #     scale, _ = self.calc_scale_and_new_size(w, h)
+        #     scale = (1 / scale[0], 1 / scale[1])
+        # else:
+        #     return kwargs
 
-        if 'image' in kwargs.keys():
-            kwargs['image'] = resize_image(kwargs['image'], (w, h))
+        # if 'image' in kwargs.keys():
+        #     kwargs['image'] = resize_image(kwargs['image'], (w, h))
 
-        if 'bbox' in kwargs.keys():
-            kwargs['bbox'] = resize_bbox(kwargs['bbox'], scale)
+        # if 'bbox' in kwargs.keys():
+        #     kwargs['bbox'] = resize_bbox(kwargs['bbox'], scale)
 
-        if 'poly' in kwargs.keys():
-            kwargs['poly'] = resize_poly(kwargs['poly'], scale)
+        # if 'poly' in kwargs.keys():
+        #     kwargs['poly'] = resize_poly(kwargs['poly'], scale)
 
-        if 'point' in kwargs.keys():
-            kwargs['point'] = resize_point(kwargs['point'], scale)
+        # if 'point' in kwargs.keys():
+        #     kwargs['point'] = resize_point(kwargs['point'], scale)
 
-        if 'mask' in kwargs.keys():
-            kwargs['mask'] = resize_mask(kwargs['mask'], (w, h))
-
+        # if 'mask' in kwargs.keys():
+        #     kwargs['mask'] = resize_mask(kwargs['mask'], (w, h))
+        kwargs = self.calc_intl_param_backward(kwargs)
+        kwargs = self.backward(kwargs)
+        kwargs = self.erase_intl_param_backward(kwargs)
         return kwargs
 
     def __repr__(self):
@@ -227,30 +258,67 @@ class ResizeAndPadding(Bamboo):
         else:
             self.internodes.append(build_internode(dict(type='BaseInternode')))
 
-    def reverse(self, **kwargs):
-        if 'ori_size' in kwargs.keys():
-            h, w = kwargs['ori_size']
+    def calc_intl_param_backward(self, data_dict):
+        if 'ori_size' in data_dict.keys():
+            h, w = data_dict['ori_size']
             h, w = int(h), int(w)
-            ori_size = (h, w)
 
             if hasattr(self.internodes[0], 'calc_scale_and_new_size'):
-                scale, (nw, nh) = self.internodes[0].calc_scale_and_new_size(w, h)
-                resize_size = (nh, nw)
+                _, (nw, nh) = self.internodes[0].calc_scale_and_new_size(w, h)
+                data_dict['intl_resize_size'] = (nh, nw)
             elif isinstance(self.internodes[0], InternodeWarpper) and hasattr(self.internodes[0].internode, 'calc_scale_and_new_size'):
-                scale, (nw, nh) = self.internodes[0].internode.calc_scale_and_new_size(w, h)
-                resize_size = (nh, nw)
+                _, (nw, nh) = self.internodes[0].internode.calc_scale_and_new_size(w, h)
+                data_dict['intl_resize_size'] = (nh, nw)
             else:
-                resize_size = ori_size
+                data_dict['intl_resize_size'] = (h, w)
 
-        kwargs['inner_resize_and_padding_reverse_flag'] = True
+            data_dict['intl_resize_and_padding_reverse_flag'] = True
+        return data_dict
 
-        kwargs['ori_size'] = resize_size
-        kwargs = self.internodes[1].reverse(**kwargs)
+    def backward(self, data_dict):
+        if 'intl_resize_and_padding_reverse_flag' in data_dict.keys():
+            ori_size = data_dict['ori_size']
 
-        kwargs['ori_size'] = ori_size
-        kwargs = self.internodes[0].reverse(**kwargs)
+            data_dict['ori_size'] = data_dict['intl_resize_size']
+            data_dict = self.internodes[1].reverse(**data_dict)
 
-        kwargs.pop('inner_resize_and_padding_reverse_flag')
+            data_dict['ori_size'] = ori_size
+            data_dict = self.internodes[0].reverse(**data_dict)
+        return data_dict
+
+    def erase_intl_param_backward(self, data_dict):
+        if 'intl_resize_and_padding_reverse_flag' in data_dict.keys():
+            data_dict.pop('intl_resize_and_padding_reverse_flag')
+            data_dict.pop('intl_resize_size')
+        return data_dict
+
+    def reverse(self, **kwargs):
+        # if 'ori_size' in kwargs.keys():
+        #     h, w = kwargs['ori_size']
+        #     h, w = int(h), int(w)
+        #     ori_size = (h, w)
+
+        #     if hasattr(self.internodes[0], 'calc_scale_and_new_size'):
+        #         scale, (nw, nh) = self.internodes[0].calc_scale_and_new_size(w, h)
+        #         resize_size = (nh, nw)
+        #     elif isinstance(self.internodes[0], InternodeWarpper) and hasattr(self.internodes[0].internode, 'calc_scale_and_new_size'):
+        #         scale, (nw, nh) = self.internodes[0].internode.calc_scale_and_new_size(w, h)
+        #         resize_size = (nh, nw)
+        #     else:
+        #         resize_size = ori_size
+
+        # kwargs['inner_resize_and_padding_reverse_flag'] = True
+
+        # kwargs['ori_size'] = resize_size
+        # kwargs = self.internodes[1].reverse(**kwargs)
+
+        # kwargs['ori_size'] = ori_size
+        # kwargs = self.internodes[0].reverse(**kwargs)
+
+        # kwargs.pop('inner_resize_and_padding_reverse_flag')
+        kwargs = self.calc_intl_param_backward(kwargs)
+        kwargs = self.backward(kwargs)
+        kwargs = self.erase_intl_param_backward(kwargs)
 
         return kwargs
 

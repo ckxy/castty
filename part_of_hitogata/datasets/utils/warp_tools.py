@@ -14,16 +14,26 @@ def fix_cv2_matrix(M):
 
 def calc_expand_size_and_matrix(M, img_size):
     w, h = img_size
-    xx = []
-    yy = []
-    for x, y in ((0, 0), (w, 0), (w, h), (0, h)):
-        xx.append(M[0, 0] * x + M[0, 1] * y + M[0, 2])
-        yy.append(M[1, 0] * x + M[1, 1] * y + M[1, 2])
-    nw = math.ceil(max(xx)) - math.floor(min(xx))
-    nh = math.ceil(max(yy)) - math.floor(min(yy))
+    # xx = []
+    # yy = []
+    # for x, y in ((0, 0), (w, 0), (w, h), (0, h)):
+    #     xx.append(M[0, 0] * x + M[0, 1] * y + M[0, 2])
+    #     yy.append(M[1, 0] * x + M[1, 1] * y + M[1, 2])
+    # nw = math.ceil(max(xx)) - math.floor(min(xx))
+    # nh = math.ceil(max(yy)) - math.floor(min(yy))
+    P = np.array([(0, 0), (w, 0), (w, h), (0, h)], dtype=np.float32)
+    P = warp_point(P, M)
+    # print(P)
+    # print(np.min(P[..., 0]), np.min(P[..., 1]))
+    # exit()
+
+    nw = int(np.ceil(np.max(P[..., 0])) - np.floor(np.min(P[..., 0])))
+    nh = int(np.ceil(np.max(P[..., 1])) - np.floor(np.min(P[..., 1])))
     E = np.eye(3)
-    E[0, 2] = (nw - w) / 2
-    E[1, 2] = (nh - h) / 2
+    # E[0, 2] = (nw - w) / 2
+    # E[1, 2] = (nh - h) / 2
+    E[0, 2] = -np.min(P[..., 0])
+    E[1, 2] = -np.min(P[..., 1])
     return E, (nw, nh)
 
 

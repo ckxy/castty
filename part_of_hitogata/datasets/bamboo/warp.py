@@ -14,25 +14,34 @@ __all__ = ['Warp', 'WarpPerspective', 'WarpResize', 'WarpScale', 'WarpStretch', 
 
 @INTERNODE.register_module()
 class Warp(Bamboo):
-    def __init__(self, internodes, ccs=True, **kwargs):
+    def __init__(self, internodes, expand=False, ccs=True, **kwargs):
         assert len(internodes) > 0
 
         self.internode = WarpInternode(ccs=ccs)
         self.internodes = []
         self.ccs = ccs
+        self.expand = expand
 
         for cfg in internodes:
+            assert cfg['type'] in ['WarpPerspective', 'WarpScale', 'WarpStretch', 'WarpRotate', 'WarpShear', 'WarpTranslate']
             cfg['ccs'] = False
+            cfg['expand'] = False
             self.internodes.append(build_internode(cfg))
 
     def __call__(self, data_dict):
         data_dict['warp_matrix'] = np.eye(3)
-        data_dict['warp_size'] = get_image_size(data_dict['image'])
+        # data_dict['warp_size'] = get_image_size(data_dict['image'])
 
         data_dict = super(Warp, self).__call__(data_dict)
 
         data_dict['warp_tmp_matrix'] = data_dict.pop('warp_matrix')
-        data_dict['warp_tmp_size'] = data_dict.pop('warp_size')
+        data_dict['warp_tmp_size'] = get_image_size(data_dict['image'])
+
+        if self.expand:
+            E, data_dict['warp_tmp_size'] = calc_expand_size_and_matrix(data_dict['warp_tmp_matrix'], data_dict['warp_tmp_size'])
+            data_dict['warp_tmp_matrix'] = E @ data_dict['warp_tmp_matrix']
+
+        print(data_dict['warp_tmp_matrix'], data_dict['warp_tmp_size'])
 
         data_dict = self.internode(data_dict)
 
@@ -47,7 +56,8 @@ class Warp(Bamboo):
         for i in range(len(split_str)):
             bamboo_str += '\n  ' + split_str[i].replace('\n', '\n  ')
         bamboo_str += '\n  ccs={}'.format(self.ccs)
-        bamboo_str = '{}\n)'.format(bamboo_str)
+        bamboo_str += '\n  expand={}'.format(self.expand)
+        bamboo_str += '\n)'
 
         return bamboo_str
 
@@ -83,9 +93,10 @@ class WarpPerspective(WarpInternode):
                     random.randint(height - int(distortion_scale * half_height) - 1, height - 1))
         botleft = (random.randint(0, int(distortion_scale * half_width)),
                    random.randint(height - int(distortion_scale * half_height) - 1, height - 1))
-        startpoints = [(0, 0), (width - 1, 0), (width - 1, height - 1), (0, height - 1)]
+        # startpoints = [(0, 0), (width - 1, 0), (width - 1, height - 1), (0, height - 1)]
+        startpoints = [(0, 0), (width, 0), (width, height), (0, height)]
         endpoints = [topleft, topright, botright, botleft]
-        # endpoints = [(83, 18), (605, 25), (605, 397), (139, 341)]
+        # endpoints = [(105, 14), (427, 46), (396, 327), (92, 354)]
         # endpoints = [[ 39.440895,  23.079351], [505.36182,   87.89065 ], [505.36182,   89.89065 ],[ 18.866693,  85.40677 ]]
         return startpoints, endpoints
 
@@ -103,31 +114,37 @@ class WarpPerspective(WarpInternode):
         c = np.matrix(c).reshape(3, 3)
         return np.array(c)
 
-    def __call__(self, data_dict):
-        if 'warp_size' in data_dict.keys():
-            size = data_dict['warp_size']
-        else:
-            size = get_image_size(data_dict['image'])
+    def calc_intl_param_forward(self, data_dict):
+        # if 'warp_size' in data_dict.keys():
+        #     size = data_dict['warp_size']
+        # else:
+        size = get_image_size(data_dict['image'])
 
         width, height = size
         startpoints, endpoints = self.get_params(width, height, self.distortion_scale)
         M = self.build_matrix(startpoints, endpoints)
 
         if self.expand:
-            xx = [int(e[0]) for e in endpoints]
-            yy = [int(e[1]) for e in endpoints]
-            nw = max(xx) - min(xx)
-            nh = max(yy) - min(yy)
-            E = np.eye(3)
-            E[0, 2] = -min(xx)
-            E[1, 2] = -min(yy)
+            # xx = [int(e[0]) for e in endpoints]
+            # yy = [int(e[1]) for e in endpoints]
+            # nw = max(xx) - min(xx)
+            # nh = max(yy) - min(yy)
+            # E = np.eye(3)
+            # E[0, 2] = -min(xx)
+            # E[1, 2] = -min(yy)
 
+            # M = E @ M
+            # size = (nw, nh)
+            # print(E, (nw, nh), 'aaa')
+
+            E, new_size = calc_expand_size_and_matrix(M, size)
+            # print(E, size)
             M = E @ M
-            size = (nw, nh)
+            size = new_size
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        data_dict = super(WarpPerspective, self).__call__(data_dict)
+        data_dict = super(WarpPerspective, self).calc_intl_param_forward(data_dict)
 
         return data_dict
 
@@ -217,11 +234,11 @@ class WarpResize(WarpInternode):
 
         return scale, new_size
 
-    def __call__(self, data_dict):
-        if 'warp_size' in data_dict.keys():
-            size = data_dict['warp_size']
-        else:
-            size = get_image_size(data_dict['image'])
+    def calc_intl_param_forward(self, data_dict):
+        # if 'warp_size' in data_dict.keys():
+        #     size = data_dict['warp_size']
+        # else:
+        size = get_image_size(data_dict['image'])
 
         M = self.build_matrix(size)
 
@@ -233,40 +250,33 @@ class WarpResize(WarpInternode):
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        data_dict = super(WarpResize, self).__call__(data_dict)
+        data_dict = super(WarpResize, self).calc_intl_param_forward(data_dict)
 
         return data_dict
 
-    def reverse(self, **kwargs):
-        if 'inner_resize_and_padding_reverse_flag' not in kwargs.keys():
-            return kwargs
-
-        if 'ori_size' in kwargs.keys():
-            h, w = kwargs['ori_size']
+    def calc_intl_param_backward(self, data_dict):
+        if 'intl_resize_and_padding_reverse_flag' in data_dict.keys():
+            h, w = data_dict['ori_size']
             h, w = int(h), int(w)
             M = self.build_matrix((w, h))
-            M = np.array(np.matrix(M).I)
-        else:
-            return kwargs
+            data_dict['warp_tmp_matrix'] = np.array(np.matrix(M).I)
+            data_dict['warp_tmp_size'] = (w, h)
+        return data_dict
 
-        if 'image' in kwargs.keys():
-            kwargs['image'] = warp_image(kwargs['image'], M, (w, h), self.ccs)
+    def backward(self, data_dict):
+        if 'warp_tmp_matrix' in data_dict.keys():
+            data_dict = self.forward(data_dict)
+        return data_dict
 
-        if 'bbox' in kwargs.keys():
-            kwargs['bbox'] = warp_bbox(kwargs['bbox'], M)
+    def erase_intl_param_backward(self, data_dict):
+        if 'warp_tmp_matrix' in data_dict.keys():
+            data_dict = self.erase_intl_param_forward(data_dict)
+        return data_dict
 
-        if 'poly' in kwargs.keys():
-            kwargs['poly'] = [warp_point(p, M) for p in kwargs['poly']]
-
-        if 'point' in kwargs.keys():
-            n = len(kwargs['point'])
-            points = kwargs['point'].reshape(-1, 2)
-            points = warp_point(points, M)
-            kwargs['point'] = points.reshape(n, -1, 2)
-
-        if 'mask' in kwargs.keys():
-            kwargs['mask'] = warp_mask(kwargs['mask'], M, (w, h), self.ccs)
-
+    def reverse(self, **kwargs):
+        kwargs = self.calc_intl_param_backward(kwargs)
+        kwargs = self.backward(kwargs)
+        kwargs = self.erase_intl_param_backward(kwargs)
         return kwargs
 
     def __repr__(self):
@@ -300,18 +310,23 @@ class WarpScale(WarpInternode):
 
         return CI @ R @ C
 
-    def __call__(self, data_dict):
-        if 'warp_size' in data_dict.keys():
-            size = data_dict['warp_size']
-        else:
-            size = get_image_size(data_dict['image'])
+    def calc_intl_param_forward(self, data_dict):
+        # if 'warp_size' in data_dict.keys():
+        #     size = data_dict['warp_size']
+        # else:
+        size = get_image_size(data_dict['image'])
 
         r = random.uniform(*self.r)
         M = self.build_matrix(r, size)
 
+        if self.expand:
+            E, new_size = calc_expand_size_and_matrix(M, size)
+            M = E @ M
+            size = new_size
+
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        data_dict = super(WarpScale, self).__call__(data_dict)
+        data_dict = super(WarpScale, self).calc_intl_param_forward(data_dict)
 
         return data_dict
 
@@ -348,19 +363,24 @@ class WarpStretch(WarpInternode):
 
         return CI @ R @ C
 
-    def __call__(self, data_dict):
-        if 'warp_size' in data_dict.keys():
-            size = data_dict['warp_size']
-        else:
-            size = get_image_size(data_dict['image'])
+    def calc_intl_param_forward(self, data_dict):
+        # if 'warp_size' in data_dict.keys():
+        #     size = data_dict['warp_size']
+        # else:
+        size = get_image_size(data_dict['image'])
 
         rw = random.uniform(*self.rw)
         rh = random.uniform(*self.rh)
         M = self.build_matrix((rw, rh), size)
 
+        if self.expand:
+            E, new_size = calc_expand_size_and_matrix(M, size)
+            M = E @ M
+            size = new_size
+
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        data_dict = super(WarpStretch, self).__call__(data_dict)
+        data_dict = super(WarpStretch, self).calc_intl_param_forward(data_dict)
 
         return data_dict
 
@@ -399,14 +419,14 @@ class WarpRotate(WarpInternode):
 
         return CI @ R @ C
 
-    def __call__(self, data_dict):
+    def calc_intl_param_forward(self, data_dict):
         angle = random.uniform(self.angle[0], self.angle[1])
 
         if angle != 0:
-            if 'warp_size' in data_dict.keys():
-                size = data_dict['warp_size']
-            else:
-                size = get_image_size(data_dict['image'])
+            # if 'warp_size' in data_dict.keys():
+            #     size = data_dict['warp_size']
+            # else:
+            size = get_image_size(data_dict['image'])
 
             M = self.build_matrix(angle, size)
 
@@ -417,7 +437,7 @@ class WarpRotate(WarpInternode):
 
             data_dict['warp_tmp_matrix'] = M
             data_dict['warp_tmp_size'] = size
-            data_dict = super(WarpRotate, self).__call__(data_dict)
+            data_dict = super(WarpRotate, self).calc_intl_param_forward(data_dict)
 
         return data_dict
 
@@ -455,11 +475,11 @@ class WarpShear(WarpInternode):
 
         return CI @ S @ C
 
-    def __call__(self, data_dict):
-        if 'warp_size' in data_dict.keys():
-            size = data_dict['warp_size']
-        else:
-            size = get_image_size(data_dict['image'])
+    def calc_intl_param_forward(self, data_dict):
+        # if 'warp_size' in data_dict.keys():
+        #     size = data_dict['warp_size']
+        # else:
+        size = get_image_size(data_dict['image'])
 
         shear = (random.uniform(*self.ax), random.uniform(*self.ay))
 
@@ -472,7 +492,7 @@ class WarpShear(WarpInternode):
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        data_dict = super(WarpShear, self).__call__(data_dict)
+        data_dict = super(WarpShear, self).calc_intl_param_forward(data_dict)
 
         return data_dict
 
@@ -498,11 +518,11 @@ class WarpTranslate(WarpInternode):
         T[1, 2] = translations[1]
         return T
 
-    def __call__(self, data_dict):
-        if 'warp_size' in data_dict.keys():
-            size = data_dict['warp_size']
-        else:
-            size = get_image_size(data_dict['image'])
+    def calc_intl_param_forward(self, data_dict):
+        # if 'warp_size' in data_dict.keys():
+        #     size = data_dict['warp_size']
+        # else:
+        size = get_image_size(data_dict['image'])
 
         min_dx = self.rw[0] * size[0]
         min_dy = self.rh[0] * size[1]
@@ -515,7 +535,7 @@ class WarpTranslate(WarpInternode):
 
         data_dict['warp_tmp_matrix'] = M
         data_dict['warp_tmp_size'] = size
-        data_dict = super(WarpTranslate, self).__call__(data_dict)
+        data_dict = super(WarpTranslate, self).calc_intl_param_forward(data_dict)
 
         return data_dict
 

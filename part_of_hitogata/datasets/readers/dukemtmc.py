@@ -1,8 +1,5 @@
 import os
-import ntpath
 import numpy as np
-from addict import Dict
-from PIL import Image
 from .reader import Reader
 from .builder import READER
 

@@ -1,16 +1,16 @@
 import os
+import json
 import numpy as np
-from addict import Dict
-from PIL import Image
 from .reader import Reader
 from .builder import READER
+from scipy.io import loadmat
 
 
-__all__ = ['MPIIH5Reader']
+__all__ = ['MPIIReader']
 
 
 @READER.register_module()
-class MPIIH5Reader(Reader):
+class MPIIReader(Reader):
     def __init__(self, root, set_path, length=200, **kwargs):
         self.root = root
         self.img_root = os.path.join(self.root, 'images')
@@ -20,8 +20,9 @@ class MPIIH5Reader(Reader):
 
         self.set_path = set_path
 
-        import h5py
-        self.h5f = h5py.File(self.set_path, 'r')
+        mat = loadmat(set_path)
+        print(mat['RELEASE'])
+        exit()
         self.length = length
 
         self.data_lines = [0] * len(self.h5f['index'])
@@ -70,4 +71,4 @@ class MPIIH5Reader(Reader):
         return len(self.data_lines)
 
     def __repr__(self):
-        return 'MPIIH5Reader(root={}, set_path={}, length={}, {})'.format(self.root, self.set_path, self.length, super(MPIIH5Reader, self).__repr__())
+        return 'MPIIReader(root={}, set_path={}, length={}, {})'.format(self.root, self.set_path, self.length, super(MPIIH5Reader, self).__repr__())
