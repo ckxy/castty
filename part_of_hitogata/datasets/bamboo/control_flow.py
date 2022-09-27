@@ -56,11 +56,12 @@ class ChooseSome(ChooseOne):
 
 @INTERNODE.register_module()
 class ChooseABranchByID(ChooseOne):
-	def __init__(self, branchs, **kwargs):
+	def __init__(self, branchs, tag='branch_id', **kwargs):
 		super(ChooseABranchByID, self).__init__(branchs, **kwargs)
+		self.tag = 'intl_' + tag
 
 	def __call__(self, data_dict):
-		data_dict = self.branchs[data_dict['branch_id']](data_dict)
+		data_dict = self.branchs[data_dict[self.tag]](data_dict)
 		return data_dict
 
 	def __repr__(self):

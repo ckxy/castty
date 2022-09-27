@@ -107,6 +107,7 @@ test_data = dict(
             #     ]),
             #     dict(type='WarpRotate', angle=(-30, 0)),
             # ]),
+            dict(type='Rot90', k=[1, 2, 3]),
             # dict(type='ToGrayscale'),
             # dict(type='BrightnessEnhancement', brightness=(0.5, 0.5)),
             # dict(type='ContrastEnhancement', contrast=(0.5, 0.5)),

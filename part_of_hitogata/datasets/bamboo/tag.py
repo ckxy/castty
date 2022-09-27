@@ -11,14 +11,19 @@ __all__ = ['EraseTags', 'RenameTag', 'CopyTag']
 class EraseTags(BaseInternode):
     def __init__(self, tags):
         if isinstance(tags, str):
+            assert not tags.startswith('intl_')
+
             self.tags = [tags]
         else:
             if isinstance(tags, Iterable):
+                for tag in tags:
+                    assert not tag.startswith('intl_')
+
                 self.tags = list(tags)
             else:
                 raise ValueError
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         for tag in self.tags:
             data_dict.pop(tag)
         return data_dict
@@ -30,10 +35,13 @@ class EraseTags(BaseInternode):
 @INTERNODE.register_module()
 class RenameTag(BaseInternode):
     def __init__(self, old_name, new_name):
+        assert not old_name.startswith('intl_')
+        assert not new_name.startswith('intl_')
+
         self.old_name = old_name
         self.new_name = new_name
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         data_dict[self.new_name] = data_dict.pop(self.old_name)
         return data_dict
 
@@ -52,10 +60,13 @@ class RenameTag(BaseInternode):
 @INTERNODE.register_module()
 class CopyTag(BaseInternode):
     def __init__(self, src_tag, dst_tag):
+        assert not src_tag.startswith('intl_')
+        assert not dst_tag.startswith('intl_')
+
         self.src_tag = src_tag
         self.dst_tag = dst_tag
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         data_dict[self.dst_tag] = copy.deepcopy(data_dict[self.src_tag])
         return data_dict
 

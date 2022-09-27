@@ -6,6 +6,7 @@ from .dukemtmc import *
 from .icdar import *
 from .image import *
 from .labelme import *
+from .lmdb_dtrb import *
 from .lsp import *
 from .lvis import *
 from .market1501 import *

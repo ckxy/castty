@@ -56,8 +56,11 @@ def po(data_dict, rc, index=0):
     #     plt.imshow(data_dict['ocrdet_kernel'][index][i].numpy(), cmap='gray')
     #     plt.axis('off')
 
-    # print(data_dict['ocrdet_shrink_map'].shape, data_dict['ocrdet_shrink_mask'].shape)
-    # print(data_dict['ocrdet_thr_map'].shape, data_dict['ocrdet_thr_mask'].shape)
+    print(data_dict['ocrdet_shrink_map'].shape, data_dict['ocrdet_shrink_mask'].shape)
+    print(data_dict['ocrdet_shrink_map'].dtype, data_dict['ocrdet_shrink_mask'].dtype)
+    print(data_dict['ocrdet_thr_map'].shape, data_dict['ocrdet_thr_mask'].shape)
+    print(data_dict['ocrdet_thr_map'].dtype, data_dict['ocrdet_thr_mask'].dtype)
+    # exit()
 
     plt.subplot(2, 3, 1)
     plt.title('img')
@@ -66,12 +69,12 @@ def po(data_dict, rc, index=0):
 
     plt.subplot(2, 3, 2)
     plt.title('shrink_mask')
-    plt.imshow(data_dict['ocrdet_shrink_mask'][index].numpy(), cmap='gray')
+    plt.imshow(data_dict['ocrdet_shrink_mask'][index][0].numpy(), cmap='gray')
     plt.axis('off')
 
     plt.subplot(2, 3, 3)
     plt.title('thr_mask')
-    plt.imshow(data_dict['ocrdet_thr_mask'][index].numpy(), cmap='gray')
+    plt.imshow(data_dict['ocrdet_thr_mask'][index][0].numpy(), cmap='gray')
     plt.axis('off')
 
     # plt.subplot(2, 3, 4)

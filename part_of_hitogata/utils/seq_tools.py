@@ -1,26 +1,39 @@
+import os
 import math
 import torch
 import numpy as np
 from collections import Iterable
-from utils.utils import get_concat_h
+from .utils import get_concat_h
 from PIL import Image, ImageDraw, ImageFont
 from nltk.metrics.distance import edit_distance
 
 
 def draw_seq(img, text):
     if len(text) == 0:
-        return img.convert('RGB')
+        return img
+
+    if not isinstance(img, Image.Image):
+        is_np = True
+        img = Image.fromarray(img)
+    else:
+        is_np = False
+
     w, h = img.size
     l = math.sqrt(h * h + w * w)
     img = img.convert('RGB')
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("fonts/arial.ttf", int(l * 5e-2))
+
+    font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'RuiZiChaoPaiYanWeiSongJian-Shan-ZhunCu(REEJI-SwallowGB-Flash-Medium)-2.ttf')
+    font = ImageFont.truetype(font_path, int(l * 5e-2))
 
     # text = seq2str(seq, chars)
 
     t_size = draw.textsize(text, font)
     draw.rectangle((0, 0, t_size[0], t_size[1]), fill=(0, 255, 255))
     draw.text((0, 0), text, fill=(0, 0, 0), font=font)
+
+    if is_np:
+        img = np.asarray(img)
 
     return img
 

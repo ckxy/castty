@@ -11,7 +11,7 @@ from .builder import READER
 __all__ = ['LabelmeMaskReader']
 
 
-@READER.register_module()
+# @READER.register_module()
 class LabelmeMaskReader(Reader):
     def __init__(self, root, classes, **kwargs):
         super(LabelmeMaskReader, self).__init__(**kwargs)

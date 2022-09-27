@@ -29,19 +29,17 @@ class Warp(Bamboo):
             self.internodes.append(build_internode(cfg))
 
     def __call__(self, data_dict):
-        data_dict['warp_matrix'] = np.eye(3)
+        data_dict['intl_warp_matrix'] = np.eye(3)
         # data_dict['warp_size'] = get_image_size(data_dict['image'])
 
         data_dict = super(Warp, self).__call__(data_dict)
 
-        data_dict['warp_tmp_matrix'] = data_dict.pop('warp_matrix')
-        data_dict['warp_tmp_size'] = get_image_size(data_dict['image'])
+        data_dict['intl_warp_tmp_matrix'] = data_dict.pop('intl_warp_matrix')
+        data_dict['intl_warp_tmp_size'] = get_image_size(data_dict['image'])
 
         if self.expand:
-            E, data_dict['warp_tmp_size'] = calc_expand_size_and_matrix(data_dict['warp_tmp_matrix'], data_dict['warp_tmp_size'])
-            data_dict['warp_tmp_matrix'] = E @ data_dict['warp_tmp_matrix']
-
-        print(data_dict['warp_tmp_matrix'], data_dict['warp_tmp_size'])
+            E, data_dict['intl_warp_tmp_size'] = calc_expand_size_and_matrix(data_dict['intl_warp_tmp_matrix'], data_dict['intl_warp_tmp_size'])
+            data_dict['intl_warp_tmp_matrix'] = E @ data_dict['intl_warp_tmp_matrix']
 
         data_dict = self.internode(data_dict)
 
@@ -142,8 +140,8 @@ class WarpPerspective(WarpInternode):
             M = E @ M
             size = new_size
 
-        data_dict['warp_tmp_matrix'] = M
-        data_dict['warp_tmp_size'] = size
+        data_dict['intl_warp_tmp_matrix'] = M
+        data_dict['intl_warp_tmp_size'] = size
         data_dict = super(WarpPerspective, self).calc_intl_param_forward(data_dict)
 
         return data_dict
@@ -248,8 +246,8 @@ class WarpResize(WarpInternode):
         else:
             size = self.size
 
-        data_dict['warp_tmp_matrix'] = M
-        data_dict['warp_tmp_size'] = size
+        data_dict['intl_warp_tmp_matrix'] = M
+        data_dict['intl_warp_tmp_size'] = size
         data_dict = super(WarpResize, self).calc_intl_param_forward(data_dict)
 
         return data_dict
@@ -259,17 +257,17 @@ class WarpResize(WarpInternode):
             h, w = data_dict['ori_size']
             h, w = int(h), int(w)
             M = self.build_matrix((w, h))
-            data_dict['warp_tmp_matrix'] = np.array(np.matrix(M).I)
-            data_dict['warp_tmp_size'] = (w, h)
+            data_dict['intl_warp_tmp_matrix'] = np.array(np.matrix(M).I)
+            data_dict['intl_warp_tmp_size'] = (w, h)
         return data_dict
 
     def backward(self, data_dict):
-        if 'warp_tmp_matrix' in data_dict.keys():
+        if 'intl_warp_tmp_matrix' in data_dict.keys():
             data_dict = self.forward(data_dict)
         return data_dict
 
     def erase_intl_param_backward(self, data_dict):
-        if 'warp_tmp_matrix' in data_dict.keys():
+        if 'intl_warp_tmp_matrix' in data_dict.keys():
             data_dict = self.erase_intl_param_forward(data_dict)
         return data_dict
 
@@ -324,8 +322,8 @@ class WarpScale(WarpInternode):
             M = E @ M
             size = new_size
 
-        data_dict['warp_tmp_matrix'] = M
-        data_dict['warp_tmp_size'] = size
+        data_dict['intl_warp_tmp_matrix'] = M
+        data_dict['intl_warp_tmp_size'] = size
         data_dict = super(WarpScale, self).calc_intl_param_forward(data_dict)
 
         return data_dict
@@ -378,8 +376,8 @@ class WarpStretch(WarpInternode):
             M = E @ M
             size = new_size
 
-        data_dict['warp_tmp_matrix'] = M
-        data_dict['warp_tmp_size'] = size
+        data_dict['intl_warp_tmp_matrix'] = M
+        data_dict['intl_warp_tmp_size'] = size
         data_dict = super(WarpStretch, self).calc_intl_param_forward(data_dict)
 
         return data_dict
@@ -435,8 +433,8 @@ class WarpRotate(WarpInternode):
                 M = E @ M
                 size = new_size
 
-            data_dict['warp_tmp_matrix'] = M
-            data_dict['warp_tmp_size'] = size
+            data_dict['intl_warp_tmp_matrix'] = M
+            data_dict['intl_warp_tmp_size'] = size
             data_dict = super(WarpRotate, self).calc_intl_param_forward(data_dict)
 
         return data_dict
@@ -490,8 +488,8 @@ class WarpShear(WarpInternode):
             M = E @ M
             size = new_size
 
-        data_dict['warp_tmp_matrix'] = M
-        data_dict['warp_tmp_size'] = size
+        data_dict['intl_warp_tmp_matrix'] = M
+        data_dict['intl_warp_tmp_size'] = size
         data_dict = super(WarpShear, self).calc_intl_param_forward(data_dict)
 
         return data_dict
@@ -533,8 +531,8 @@ class WarpTranslate(WarpInternode):
 
         M = self.build_matrix(translations)
 
-        data_dict['warp_tmp_matrix'] = M
-        data_dict['warp_tmp_size'] = size
+        data_dict['intl_warp_tmp_matrix'] = M
+        data_dict['intl_warp_tmp_size'] = size
         data_dict = super(WarpTranslate, self).calc_intl_param_forward(data_dict)
 
         return data_dict

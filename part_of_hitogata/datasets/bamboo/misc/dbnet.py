@@ -183,8 +183,17 @@ class DBEncode(BaseInternode):
 
         data_dict['ocrdet_thr_map'], data_dict['ocrdet_thr_mask'] = self.generate_thr_map((h, w), data_dict['poly'], ignore_flags)
 
-        data_dict['ocrdet_shrink_map'] = data_dict['ocrdet_shrink_map'][np.newaxis, ...]
-        data_dict['ocrdet_thr_map'] = data_dict['ocrdet_thr_map'][np.newaxis, ...]
+        # data_dict['ocrdet_shrink_map'] = data_dict['ocrdet_shrink_map'][np.newaxis, ...]
+        # data_dict['ocrdet_thr_map'] = data_dict['ocrdet_thr_map'][np.newaxis, ...]
+
+        # data_dict['ocrdet_shrink_mask'] = data_dict['ocrdet_shrink_mask'][np.newaxis, ...]
+        # data_dict['ocrdet_thr_mask'] = data_dict['ocrdet_thr_mask'][np.newaxis, ...]
+
+        data_dict['ocrdet_shrink_map'] = torch.from_numpy(data_dict['ocrdet_shrink_map']).unsqueeze(0)
+        data_dict['ocrdet_thr_map'] = torch.from_numpy(data_dict['ocrdet_thr_map']).unsqueeze(0)
+
+        data_dict['ocrdet_shrink_mask'] = torch.from_numpy(data_dict['ocrdet_shrink_mask']).unsqueeze(0)
+        data_dict['ocrdet_thr_mask'] = torch.from_numpy(data_dict['ocrdet_thr_mask']).unsqueeze(0)
 
         if 'poly_meta' in data_dict.keys():
             data_dict['poly_meta']['ignore_flag'] = ignore_flags
@@ -239,7 +248,16 @@ class DBMCEncode(DBEncode):
         data_dict['ocrdet_shrink_mask'] = generate_effective_mask((w, h), data_dict['poly'], ignore_flags)
 
         data_dict['ocrdet_thr_map'], data_dict['ocrdet_thr_mask'] = self.generate_thr_map((h, w), data_dict['poly'], ignore_flags)
-        data_dict['ocrdet_thr_map'] = data_dict['ocrdet_thr_map'][np.newaxis, ...]
+        # data_dict['ocrdet_thr_map'] = data_dict['ocrdet_thr_map'][np.newaxis, ...]
+
+        # data_dict['ocrdet_shrink_mask'] = data_dict['ocrdet_shrink_mask'][np.newaxis, ...]
+        # data_dict['ocrdet_thr_mask'] = data_dict['ocrdet_thr_mask'][np.newaxis, ...]
+
+        data_dict['ocrdet_shrink_map'] = torch.from_numpy(data_dict['ocrdet_shrink_map'])
+        data_dict['ocrdet_thr_map'] = torch.from_numpy(data_dict['ocrdet_thr_map']).unsqueeze(0)
+        
+        data_dict['ocrdet_shrink_mask'] = torch.from_numpy(data_dict['ocrdet_shrink_mask']).unsqueeze(0).expand(data_dict['ocrdet_shrink_map'].shape[0], -1, -1)
+        data_dict['ocrdet_thr_mask'] = torch.from_numpy(data_dict['ocrdet_thr_mask']).unsqueeze(0)
 
         if 'poly_meta' in data_dict.keys():
             data_dict['poly_meta']['ignore_flag'] = ignore_flags

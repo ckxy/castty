@@ -193,7 +193,6 @@ class CutMix(Bamboo):
 @INTERNODE.register_module()
 class Mosaic(Bamboo):
     def __call__(self, data_dict):
-        res = dict()
         indices = [random.randint(0, data_dict['len_data_lines'] - 1) for _ in range(3)]
         
         reader = data_dict['reader']
@@ -248,16 +247,16 @@ class Mosaic(Bamboo):
             img4[yc:yc + h3, xc - w3:xc] = d3['image']
             img4[yc:yc + h4, xc:xc + w4] = d4['image']
 
-        res['image'] = img4
-        res['ori_size'] = np.array([new_h, new_w]).astype(np.float32)
-        res['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['path'], d2['path'], d3['path'], d4['path'])
+        d1['image'] = img4
+        d1['ori_size'] = np.array([new_h, new_w]).astype(np.float32)
+        d1['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['path'], d2['path'], d3['path'], d4['path'])
 
         if 'bbox' in k:
             b1 = pad_bbox(d1['bbox'], xc - w1, yc - h1)
             b2 = pad_bbox(d2['bbox'], xc, yc - h2)
             b3 = pad_bbox(d3['bbox'], xc - w3, yc)
             b4 = pad_bbox(d4['bbox'], xc, yc)
-            res['bbox'] = np.concatenate((b1, b2, b3, b4))
+            d1['bbox'] = np.concatenate((b1, b2, b3, b4))
 
             if 'bbox_meta' in k:
                 if 'box2point' in d1['bbox_meta'].keys():
@@ -268,23 +267,20 @@ class Mosaic(Bamboo):
                 d1['bbox_meta'] += d2['bbox_meta']
                 d1['bbox_meta'] += d3['bbox_meta']
                 d1['bbox_meta'] += d4['bbox_meta']
-                res['bbox_meta'] = deepcopy(d1['bbox_meta'])
-
-                # print(res['bbox_meta'])
-                # exit()
+                # res['bbox_meta'] = deepcopy(d1['bbox_meta'])
 
         if 'point' in k:
             p1 = pad_point(d1['point'], xc - w1, yc - h1)
             p2 = pad_point(d2['point'], xc, yc - h2)
             p3 = pad_point(d3['point'], xc - w3, yc)
             p4 = pad_point(d4['point'], xc, yc)
-            res['point'] = np.concatenate((p1, p2, p3, p4))
+            d1['point'] = np.concatenate((p1, p2, p3, p4))
 
             if 'point_meta' in k:
                 d1['point_meta'] += d2['point_meta']
                 d1['point_meta'] += d3['point_meta']
                 d1['point_meta'] += d4['point_meta']
-                res['point_meta'] = deepcopy(d1['point_meta'])
+                # res['point_meta'] = deepcopy(d1['point_meta'])
 
         if 'mask' in k:
             mask4 = np.zeros((new_h, new_w)).astype(np.int32)
@@ -294,43 +290,22 @@ class Mosaic(Bamboo):
             mask4[yc:yc + h3, xc - w3:xc] = d3['mask']
             mask4[yc:yc + h4, xc:xc + w4] = d4['mask']
 
-            res['mask'] = mask4
+            d1['mask'] = mask4
 
         if 'poly' in k:
             p1 = pad_poly(d1['poly'], xc - w1, yc - h1)
             p2 = pad_poly(d2['poly'], xc, yc - h2)
             p3 = pad_poly(d3['poly'], xc - w3, yc)
             p4 = pad_poly(d4['poly'], xc, yc)
-            res['poly'] = p1 + p2 + p3 + p4
+            d1['poly'] = p1 + p2 + p3 + p4
 
             if 'poly_meta' in k:
                 d1['poly_meta'] += d2['poly_meta']
                 d1['poly_meta'] += d3['poly_meta']
                 d1['poly_meta'] += d4['poly_meta']
-                res['poly_meta'] = deepcopy(d1['poly_meta'])
+                # res['poly_meta'] = deepcopy(d1['poly_meta'])
 
-        return res
-
-    # @staticmethod
-    # def adjust_bbox(bbox, ox, oy):
-    #     bbox[:, 0] += ox
-    #     bbox[:, 1] += oy
-    #     bbox[:, 2] += ox
-    #     bbox[:, 3] += oy
-    #     return bbox
-
-    # @staticmethod
-    # def adjust_point(point, ox, oy):
-    #     point[..., 0] += ox
-    #     point[..., 1] += oy
-    #     return point
-
-    # @staticmethod
-    # def adjust_poly(polys, ox, oy):
-    #     for i in range(len(polys)):
-    #         polys[i][..., 0] += ox
-    #         polys[i][..., 1] += oy
-    #     return polys
+        return d1
 
     def rper(self):
         return type(self).__name__ + '(not available)'

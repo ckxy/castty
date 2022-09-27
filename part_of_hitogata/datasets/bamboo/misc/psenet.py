@@ -55,7 +55,7 @@ def generate_kernel(img_size, polys, shrink_ratio, max_shrink=sys.maxsize, ignor
 
 def generate_effective_mask(img_size, polys, ignore_flags):
     w, h = img_size
-    mask = np.ones((h, w))
+    mask = np.ones((h, w), dtype=np.uint8)
 
     for poly, tag in zip(polys, ignore_flags):
         if tag:

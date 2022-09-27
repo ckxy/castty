@@ -2,8 +2,8 @@ import torch
 import random
 import numpy as np
 from copy import deepcopy
-from torch.utils.data._utils.collate import default_collate
 from ..utils.registry import Registry, build_from_cfg
+from torch.utils.data._utils.collate import default_collate
 
 
 COLLATEFN = Registry('collatefn')
@@ -102,6 +102,19 @@ class BboxCollateFN(CollateFN):
 
     def __repr__(self):
         return 'BboxCollateFN(names={})'.format(self.names)
+
+
+@COLLATEFN.register_module()
+class EnSeqCollateFN(CollateFN):
+    def collate(self):
+        res = dict()
+        for k in self.buffer.keys():
+            res[k] = torch.cat(self.buffer[k])
+            self.buffer[k].clear()
+        return res
+
+    def __repr__(self):
+        return 'EnSeqCollateFN(names={})'.format(self.names)
 
 
 @COLLATEFN.register_module()

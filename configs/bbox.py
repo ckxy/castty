@@ -123,33 +123,47 @@ test_data = dict(
     dataset=dict(
         # reader=dict(type='LVISAPIReader', set_path='../datasets/coco/annotations/lvis_v1_val.json', img_root='../datasets/coco'),
         # reader=dict(type='COCOAPIReader', set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017'),
-        reader=dict(type='VOCReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
-        # reader=dict(
-        #     type='CatReader', 
-        #     internodes=(
-        #         dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
-        #         dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2012', split='trainval', filter_difficult=False, classes=classes),
-        #     ),
-        # ),
+        # reader=dict(type='VOCReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        reader=dict(
+            type='CatReader', 
+            internodes=(
+                dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+                dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2012', split='trainval', filter_difficult=False, classes=classes),
+            ),
+            output_gid=True,
+        ),
         internodes=[
-            dict(type='DataSource'),
+            # dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
             #     dict(type='DataSource'),
             # ]),
             # dict(type='Mosaic', internodes=[
             #     dict(type='DataSource'),
             # ]),
-            # dict(type='Mosaic', internodes=[
-            #     dict(type='MixUp', internodes=[
+            dict(type='Mosaic', internodes=[
+                dict(type='MixUp', internodes=[
+                    dict(type='DataSource'),
+                ]),
+            ]),
+            # dict(
+            #     type='ChooseABranchByID', 
+            #     branchs=[
+            #         dict(
+            #             type='MixUp', 
+            #             internodes=[dict(type='DataSource')]
+            #         ),
             #         dict(type='DataSource'),
-            #     ]),
-            # ]),
-            # dict(type='ChooseABranchByID', branchs=[
-            #     dict(type='MixUp', internodes=[
-            #         dict(type='DataSource'),
-            #     ]),
-            #     dict(type='DataSource'),
-            # ]),
+            #     ],
+            #     tag='branch_id',
+            # ),
+            # dict(
+            #     type='ChooseABranchByID', 
+            #     branchs=[
+            #         dict(type='WarpRotate', angle=(-30, -30), expand=True),
+            #         dict(type='WarpRotate', angle=(30, 30), expand=True),
+            #     ],
+            #     tag='group_id',
+            # ),
             # dict(type='CopyTag', src_tag='image', dst_tag='ori_image'),
             # dict(type='ToCV2Image'),
             # dict(type='AdaptiveCrop'),
@@ -177,15 +191,15 @@ test_data = dict(
             #     ),
             #     # one_way='forward'
             # ),
-            dict(type='Warp', expand=True, ccs=True, internodes=[
-                dict(type='WarpPerspective'),
-                dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5)),
-                dict(type='WarpScale', r=(2, 2)),
-                dict(type='WarpShear', ax=(-45, -45), ay=(15, 15), p=0.5),
-                dict(type='WarpRotate', angle=(-30, -30)),
-                # dict(type='WarpTranslate', rw=(-0.2, -0.2), rh=(0.2, 0.2)),
-                # dict(type='WarpResize', size=(416, 416), keep_ratio=True),
-            ]),
+            # dict(type='Warp', expand=True, ccs=True, internodes=[
+            #     dict(type='WarpPerspective'),
+            #     dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5)),
+            #     dict(type='WarpScale', r=(2, 2)),
+            #     dict(type='WarpShear', ax=(-45, -45), ay=(15, 15), p=0.5),
+            #     dict(type='WarpRotate', angle=(-30, -30)),
+            #     # dict(type='WarpTranslate', rw=(-0.2, -0.2), rh=(0.2, 0.2)),
+            #     # dict(type='WarpResize', size=(416, 416), keep_ratio=True),
+            # ]),
             # dict(type='WarpPerspective', expand=True, ccs=True),
             # dict(type='WarpScale', r=(0.5, 2), expand=True),
             # dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5), expand=True),
@@ -224,7 +238,7 @@ test_data = dict(
             # dict(type='FilterBboxByAreaRatio', min_a=0.05),
             # dict(type='FilterBboxByAspectRatio', aspect_ratio=(0.5, 2)),
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
-            dict(type='ToPILImage'),
+            # dict(type='ToPILImage'),
             dict(type='ToTensor'),
         ],
     ),

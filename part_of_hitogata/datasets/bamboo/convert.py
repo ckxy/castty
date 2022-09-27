@@ -35,11 +35,13 @@ class ToTensor(BaseInternode):
 @INTERNODE.register_module()
 class ToPILImage(BaseInternode):
     def __call__(self, data_dict):
+        assert not is_pil(data_dict['image'])
         data_dict['image'] = Image.fromarray(data_dict['image'])
         return data_dict
 
     def reverse(self, **kwargs):
         if 'image' in kwargs.keys():
+            assert is_pil(kwargs['image'])
             kwargs['image'] = np.array(kwargs['image'])
         return kwargs
 
@@ -50,14 +52,31 @@ class ToPILImage(BaseInternode):
 @INTERNODE.register_module()
 class ToCV2Image(BaseInternode):
     def __call__(self, data_dict):
+        assert is_pil(data_dict['image'])
         data_dict['image'] = np.array(data_dict['image'])
         return data_dict
 
     def reverse(self, **kwargs):
         if 'image' in kwargs.keys():
+            assert not is_pil(kwargs['image'])
             kwargs['image'] = Image.fromarray(kwargs['image'])
         return kwargs
 
     def rper(self):
         return 'ToPILImage()'
 
+
+@INTERNODE.register_module()
+class To1CHTensor(BaseInternode):
+    def forward(self, data_dict):
+        if 'image' in data_dict.keys():
+            data_dict['image'] = data_dict['image'][0].unsqueeze(0)
+        return data_dict
+
+    def backward(self, data_dict):
+        if 'image' in data_dict.keys():
+            data_dict['image'] = data_dict['image'].repeat(3, 1, 1)
+        return data_dict
+
+    def rper(self):
+        return 'To3CHTensor()'

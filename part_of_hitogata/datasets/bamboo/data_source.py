@@ -1,3 +1,4 @@
+import copy
 from .builder import INTERNODE
 from .base_internode import BaseInternode
 
@@ -12,5 +13,8 @@ class DataSource(BaseInternode):
             index = data_dict.pop('index')
             reader = data_dict.pop('reader')
             data_dict.pop('len_data_lines')
-            data_dict = reader(index)
+
+            tmp = copy.deepcopy(data_dict)
+            tmp.update(reader(index))
+            return tmp
         return data_dict

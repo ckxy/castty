@@ -18,11 +18,13 @@ def is_pil(img):
 def get_image_size(img):
     if isinstance(img, Image.Image):
         w, h = img.size
-    else:
+    elif isinstance(img, np.ndarray):
         if len(img.shape) == 3:
             h, w, _ = img.shape
         else:
             h, w = img.shape
+    else:
+        _, h, w = img.shape
     return w, h
 
 

@@ -12,7 +12,7 @@ __all__ = ['WFLWCrop']
 
 @INTERNODE.register_module()
 class WFLWCrop(BaseInternode):
-    def __init__(self, mode='point', expand=(1, 1), return_offset=False):
+    def __init__(self, mode='point', expand=(1, 1), return_offset=False, **kwargs):
         assert mode in ['point', 'box']
         self.mode = mode
         self.expand = expand
