@@ -14,6 +14,7 @@ from .pad import *
 from .resize import *
 from .rotate import *
 from .tag import *
+from .tps import *
 from .warp import *
 from .warp_internode import *
 

@@ -12,13 +12,13 @@ from ..utils.structures import Meta
 from ..utils.common import get_image_size
 
 
-__all__ = ['LmdbDTRBDataset']
+__all__ = ['LmdbDTRBReader']
 
 
 @READER.register_module()
-class LmdbDTRBDataset(Reader):
+class LmdbDTRBReader(Reader):
     def __init__(self, root, char_path, max_length=25, data_filtering_off=False, sensitive=False, **kwargs):
-        super(LmdbDTRBDataset, self).__init__(**kwargs)
+        super(LmdbDTRBReader, self).__init__(**kwargs)
 
         assert os.path.exists(root)
         assert os.path.exists(char_path)
@@ -117,4 +117,4 @@ class LmdbDTRBDataset(Reader):
         return self.nSamples
 
     def __repr__(self):
-        return 'LmdbDTRBDataset(root={}, char_path={}, max_length={}, data_filtering_off={}, sensitive={}, {})'.format(self.root, self.char_path, self.max_length, self.data_filtering_off, self.sensitive, super(LmdbDTRBDataset, self).__repr__())
+        return 'LmdbDTRBReader(root={}, char_path={}, max_length={}, data_filtering_off={}, sensitive={}, {})'.format(self.root, self.char_path, self.max_length, self.data_filtering_off, self.sensitive, super(LmdbDTRBReader, self).__repr__())

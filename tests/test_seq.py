@@ -45,7 +45,7 @@ if __name__ == '__main__':
     print(data_manager.dataset.bamboo.rper())
 
     for data in tqdm(dataloader):
-        print(data['encoded_seq'], data['encoded_seq'].shape)
+        # print(data['encoded_seq'], data['encoded_seq'].shape)
         sq(data, rc, 0)
         plt.show()
         break

@@ -23,7 +23,7 @@ def draw_seq(img, text):
     img = img.convert('RGB')
     draw = ImageDraw.Draw(img)
 
-    font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'RuiZiChaoPaiYanWeiSongJian-Shan-ZhunCu(REEJI-SwallowGB-Flash-Medium)-2.ttf')
+    font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'simsun.ttf')
     font = ImageFont.truetype(font_path, int(l * 5e-2))
 
     # text = seq2str(seq, chars)
