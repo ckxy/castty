@@ -1,14 +1,14 @@
 import random
-import torchvision
-from PIL import Image, ImageFilter
-from itertools import permutations
-from torch.nn.functional import interpolate as interpolate
-from .base_internode import BaseInternode
-from torchvision.transforms.functional import normalize, to_grayscale
+import numpy as np
+from PIL import Image
 from .builder import INTERNODE
+from ..utils.common import is_pil
+from itertools import permutations
+from .base_internode import BaseInternode
+from torchvision.transforms.functional import normalize
 
 
-__all__ = ['Normalize', 'SwapChannels', 'RandomSwapChannels', 'GaussianBlur']
+__all__ = ['Normalize', 'SwapChannels', 'RandomSwapChannels']
 
 
 @INTERNODE.register_module()
@@ -25,14 +25,14 @@ class Normalize(BaseInternode):
         self.r_mean = tuple(self.r_mean)
         self.r_std = tuple(self.r_std)
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         data_dict['image'] = normalize(data_dict['image'], self.mean, self.std)
         return data_dict
 
-    def reverse(self, **kwargs):
-        if 'image' in kwargs.keys():
-            kwargs['image'] = normalize(kwargs['image'], self.r_mean, self.r_std)
-        return kwargs
+    def backward(self, data_dict):
+        if 'image' in data_dict.keys():
+            data_dict['image'] = normalize(data_dict['image'], self.r_mean, self.r_std)
+        return data_dict
 
     def __repr__(self):
         return 'Normalize(mean={}, std={})'.format(self.mean, self.std)
@@ -52,14 +52,28 @@ class SwapChannels(BaseInternode):
             self.r_swap.append(idx)
         self.r_swap = tuple(self.r_swap)
 
-    def __call__(self, data_dict):
-        data_dict['image'] = data_dict['image'][self.swap, ...]
+    @staticmethod
+    def swap_channels(image, swap):
+        if is_pil(image):
+            image = np.asarray(image)
+            is_np = False
+        else:
+            is_np = True
+
+        image = image[..., swap]
+
+        if not is_np:
+            image = Image.fromarray(image)
+        return image
+
+    def forward(self, data_dict):
+        data_dict['image'] = self.swap_channels(data_dict['image'], self.swap)
         return data_dict
 
-    def reverse(self, **kwargs):
-        if 'image' in kwargs.keys():
-            kwargs['image'] = kwargs['image'][self.r_swap, ...]
-        return kwargs
+    def backward(self, data_dict):
+        if 'image' in data_dict.keys():
+            data_dict['image'] = self.swap_channels(data_dict['image'], self.r_swap)
+        return data_dict
 
     def __repr__(self):
         return 'SwapChannels(swap={})'.format(self.swap)
@@ -69,30 +83,27 @@ class SwapChannels(BaseInternode):
 
 
 @INTERNODE.register_module()
-class RandomSwapChannels(BaseInternode):
+class RandomSwapChannels(SwapChannels):
     def __init__(self, **kwargs):
         self.perms = list(permutations(range(3), 3))[1:]
 
-    def __call__(self, data_dict):
-        swap = random.choice(self.perms)
-        data_dict['image'] = data_dict['image'][swap, ...]
+    def calc_intl_param_forward(self, data_dict):
+        data_dict['intl_swap'] = random.choice(self.perms)
         return data_dict
 
+    def forward(self, data_dict):
+        data_dict['image'] = self.swap_channels(data_dict['image'], data_dict['intl_swap'])
+        return data_dict
 
-@INTERNODE.register_module()
-class GaussianBlur(BaseInternode):
-    def __init__(self, radius):
-        self.radius = radius
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_swap')
+        return data_dict
 
-    def __call__(self, data_dict):
-        if self.radius <= 0:
-            data_dict['image'] = data_dict['image'].filter(ImageFilter.GaussianBlur(radius=random.random()))
-        else:
-            data_dict['image'] = data_dict['image'].filter(ImageFilter.GaussianBlur(radius=self.radius))
+    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):
-        if self.radius <= 0:
-            return 'GaussianBlur(random radius)'
-        else:
-            return 'GaussianBlur(radius={})'.format(self.radius)
+        return type(self).__name__ + '()'
+
+    def rper(self):
+        return type(self).__name__ + '(not available)'

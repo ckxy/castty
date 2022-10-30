@@ -39,6 +39,12 @@ def grid_analysis(img, grid_sizes, bboxes_groups, indices_groups, bboxes_num, as
     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
 
+    if not isinstance(img, Image.Image):
+        is_np = True
+        img = Image.fromarray(img)
+    else:
+        is_np = False
+
     w, h = img.size
     assert len(grid_sizes) == len(bboxes_groups) == len(indices_groups)
 
@@ -76,9 +82,14 @@ def grid_analysis(img, grid_sizes, bboxes_groups, indices_groups, bboxes_num, as
         # dst.save('1.jpg')
         # exit()
         # return np.hstack(img_tmps[:-1]).astype(np.uint8)
+        if is_np:
+            dst = np.asarray(dst)
         return dst
     else:
-        return [img for img in img_tmps]
+        if is_np:
+            dst = [np.asarray(img) for img in img_tmps]
+        else:
+            return [img for img in img_tmps]
 
 
 def draw_bbox(img, bboxes, class_ids=None, classes=None, scores=None):

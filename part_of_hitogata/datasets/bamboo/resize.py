@@ -17,7 +17,7 @@ __all__ = ['Resize', 'Rescale', 'RescaleLimitedByBound', 'ResizeAndPadding']
 
 def resize_image(image, size):
     if is_pil(image):
-        image = image.resize(size, Image.BILINEAR)
+        image = image.resize(size, Image.Resampling.BILINEAR)
     else:
         image = cv2.resize(image, size)
     return image

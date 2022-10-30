@@ -6,24 +6,6 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 
-# def draw_point(img, landmarks):
-#     img = np.array(img).copy()
-#     h, w = img.shape[:2]
-#     l = math.sqrt(h * h + w * w)
-#     for idx, point in enumerate(landmarks):
-#         point = np.around(point).astype(np.int)
-#         pos = (point[0], point[1])
-#         cv2.putText(img, str(idx), pos,
-#                     fontFace=cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
-#                     fontScale=l * 1e-3,
-#                     color=(0, 0, 255),
-#                     thickness=int(l / 500))
-#         t_size = cv2.getTextSize(str(idx), cv2.FONT_HERSHEY_SIMPLEX, l * 1e-3 , int(l / 500))[0]
-#         print(t_size)
-#         cv2.circle(img, pos, max(2, int(l / 200)), color=(255, 0, 0), thickness=-1)
-#     return Image.fromarray(img.astype(np.uint8))
-
-
 def draw_point(img, landmarks, visible=None):
     if not isinstance(img, Image.Image):
         is_np = True

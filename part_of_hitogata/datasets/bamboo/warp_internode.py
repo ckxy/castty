@@ -49,19 +49,20 @@ class WarpInternode(BaseInternode):
 
         if 'point' in data_dict.keys():
             n = len(data_dict['point'])
-            points = data_dict['point'].reshape(-1, 2)
-            points = warp_point(points, M)
+            if n > 0:
+                points = data_dict['point'].reshape(-1, 2)
+                points = warp_point(points, M)
 
-            discard = filter_point(points, dst_size)
+                discard = filter_point(points, dst_size)
 
-            if 'point_meta' in data_dict.keys():
-                visible = data_dict['point_meta']['visible'].reshape(-1)
-                visible[discard] = False
-                data_dict['point_meta']['visible'] = visible.reshape(n, -1)
-            else:
-                points[discard] = -1
+                if 'point_meta' in data_dict.keys():
+                    visible = data_dict['point_meta']['visible'].reshape(-1)
+                    visible[discard] = False
+                    data_dict['point_meta']['visible'] = visible.reshape(n, -1)
+                else:
+                    points[discard] = -1
 
-            data_dict['point'] = points.reshape(n, -1, 2)
+                data_dict['point'] = points.reshape(n, -1, 2)
 
         if 'mask' in data_dict.keys():
             data_dict['mask'] = warp_mask(data_dict['mask'], M, dst_size, self.ccs)

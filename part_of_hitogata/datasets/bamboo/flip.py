@@ -25,7 +25,7 @@ class Flip(BaseInternode):
             self.map_idx = list(map(int, map_idx))
             self.map_path = mapping
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         w, h = get_image_size(data_dict['image'])
 
         if is_pil(data_dict['image']):

@@ -9,7 +9,7 @@ from ..utils.common import get_image_size, is_pil
 from torchvision.transforms.functional import to_tensor, to_pil_image
 
 
-__all__ = ['TPSStretch']
+__all__ = ['TPSStretch', 'TPSDistort']
 
 
 def calc_points(length):
@@ -238,4 +238,3 @@ class TPSDistort(TPS):
 
     def __repr__(self):
         return 'TPSDistort(segment={}, resize={})'.format(self.segment, self.resize)
-

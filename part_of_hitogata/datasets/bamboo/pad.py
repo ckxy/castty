@@ -124,11 +124,11 @@ class Padding(BaseInternode):
         data_dict.pop('intl_padding')
         return data_dict
 
-    def __call__(self, data_dict):
-        data_dict = self.calc_intl_param_forward(data_dict)
-        data_dict = self.forward(data_dict)
-        data_dict = self.erase_intl_param_forward(data_dict)
-        return data_dict
+    # def __call__(self, data_dict):
+    #     data_dict = self.calc_intl_param_forward(data_dict)
+    #     data_dict = self.forward(data_dict)
+    #     data_dict = self.erase_intl_param_forward(data_dict)
+    #     return data_dict
 
     def __repr__(self):
         return 'Padding(padding={}, fill={}, padding_mode={})'.format(self.padding, self.fill, self.padding_mode)
@@ -218,60 +218,60 @@ class PaddingBySize(Padding):
             data_dict = self.erase_intl_param_forward(data_dict)
         return data_dict
 
-    def reverse(self, **kwargs):
-        # if 'intl_resize_and_padding_reverse_flag' not in kwargs.keys():
-        #     return kwargs
+    # def reverse(self, **kwargs):
+    #     # if 'intl_resize_and_padding_reverse_flag' not in kwargs.keys():
+    #     #     return kwargs
 
-        # if 'ori_size' in kwargs.keys():
-        #     h, w = kwargs['ori_size']
-        #     h, w = int(h), int(w)
+    #     # if 'ori_size' in kwargs.keys():
+    #     #     h, w = kwargs['ori_size']
+    #     #     h, w = int(h), int(w)
 
-        #     left, top, right, bottom = self.calc_padding(w, h)
-        # else:
-        #     return kwargs
+    #     #     left, top, right, bottom = self.calc_padding(w, h)
+    #     # else:
+    #     #     return kwargs
 
-        # if 'image' in kwargs.keys():
-        #     kwargs['image'] = unpad_image(kwargs['image'], (left, top, right, bottom))
+    #     # if 'image' in kwargs.keys():
+    #     #     kwargs['image'] = unpad_image(kwargs['image'], (left, top, right, bottom))
 
-        # if 'mask' in kwargs.keys():
-        #     kwargs['mask'] = unpad_mask(kwargs['mask'], (left, top, right, bottom))
+    #     # if 'mask' in kwargs.keys():
+    #     #     kwargs['mask'] = unpad_mask(kwargs['mask'], (left, top, right, bottom))
 
-        # if 'bbox' in kwargs.keys():
-        #     kwargs['bbox'] = unpad_bbox(kwargs['bbox'], left, top)
+    #     # if 'bbox' in kwargs.keys():
+    #     #     kwargs['bbox'] = unpad_bbox(kwargs['bbox'], left, top)
 
-        #     boxes = clip_bbox(kwargs['bbox'], (w, h))
-        #     keep = filter_bbox(boxes)
-        #     kwargs['bbox'] = boxes[keep]
+    #     #     boxes = clip_bbox(kwargs['bbox'], (w, h))
+    #     #     keep = filter_bbox(boxes)
+    #     #     kwargs['bbox'] = boxes[keep]
 
-        #     if 'bbox_meta' in kwargs.keys():
-        #         kwargs['bbox_meta'].filter(keep)
+    #     #     if 'bbox_meta' in kwargs.keys():
+    #     #         kwargs['bbox_meta'].filter(keep)
 
-        # if 'poly' in kwargs.keys():
-        #     kwargs['poly'] = unpad_poly(kwargs['poly'], left, top)
+    #     # if 'poly' in kwargs.keys():
+    #     #     kwargs['poly'] = unpad_poly(kwargs['poly'], left, top)
 
-        #     kwargs['poly'], keep = clip_poly(kwargs['poly'], (w, h))
-        #     if 'poly_meta' in kwargs.keys():
-        #         kwargs['poly_meta'].filter(keep)
+    #     #     kwargs['poly'], keep = clip_poly(kwargs['poly'], (w, h))
+    #     #     if 'poly_meta' in kwargs.keys():
+    #     #         kwargs['poly_meta'].filter(keep)
 
-        # if 'point' in kwargs.keys():
-        #     n = len(kwargs['point'])
-        #     points = kwargs['point'].reshape(-1, 2)
-        #     points = unpad_point(points, left, top)
+    #     # if 'point' in kwargs.keys():
+    #     #     n = len(kwargs['point'])
+    #     #     points = kwargs['point'].reshape(-1, 2)
+    #     #     points = unpad_point(points, left, top)
 
-        #     discard = filter_point(points, (w, h))
+    #     #     discard = filter_point(points, (w, h))
 
-        #     if 'point_meta' in kwargs.keys():
-        #         visible = kwargs['point_meta']['visible'].reshape(-1)
-        #         visible[discard] = False
-        #         kwargs['point_meta']['visible'] = visible.reshape(n, -1)
-        #     else:
-        #         points[discard] = -1
+    #     #     if 'point_meta' in kwargs.keys():
+    #     #         visible = kwargs['point_meta']['visible'].reshape(-1)
+    #     #         visible[discard] = False
+    #     #         kwargs['point_meta']['visible'] = visible.reshape(n, -1)
+    #     #     else:
+    #     #         points[discard] = -1
 
-        #     kwargs['point'] = points.reshape(n, -1, 2)
-        kwargs = self.calc_intl_param_backward(kwargs)
-        kwargs = self.backward(kwargs)
-        kwargs = self.erase_intl_param_backward(kwargs)
-        return kwargs
+    #     #     kwargs['point'] = points.reshape(n, -1, 2)
+    #     kwargs = self.calc_intl_param_backward(kwargs)
+    #     kwargs = self.backward(kwargs)
+    #     kwargs = self.erase_intl_param_backward(kwargs)
+    #     return kwargs
 
     def __repr__(self):
         return 'PaddingBySize(size={}, fill={}, padding_mode={}, center={})'.format(self.size, self.fill, self.padding_mode, self.center)

@@ -8,7 +8,7 @@ __all__ = ['DataSource']
 
 @INTERNODE.register_module()
 class DataSource(BaseInternode):
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         if 'reader' in data_dict.keys():
             index = data_dict.pop('index')
             reader = data_dict.pop('reader')

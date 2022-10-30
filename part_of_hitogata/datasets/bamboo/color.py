@@ -20,16 +20,22 @@ class BrightnessEnhancement(BaseInternode):
 
         self.brightness = brightness
 
-    def __call__(self, data_dict):
-        factor = random.uniform(self.brightness[0], self.brightness[1])
+    def calc_intl_param_forward(self, data_dict):
+        data_dict['intl_factor'] = random.uniform(self.brightness[0], self.brightness[1])
+        return data_dict
 
+    def forward(self, data_dict):
         if is_pil(data_dict['image']):
-            data_dict['image'] = adjust_brightness(data_dict['image'], factor)
+            data_dict['image'] = adjust_brightness(data_dict['image'], data_dict['intl_factor'])
         else:
             data_dict['image'] = Image.fromarray(data_dict['image'])
-            data_dict['image'] = adjust_brightness(data_dict['image'], factor)
+            data_dict['image'] = adjust_brightness(data_dict['image'], data_dict['intl_factor'])
             data_dict['image'] = np.asarray(data_dict['image'])
 
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_factor')
         return data_dict
 
     def __repr__(self):
@@ -45,16 +51,22 @@ class ContrastEnhancement(BaseInternode):
 
         self.contrast = contrast
 
-    def __call__(self, data_dict):
-        factor = random.uniform(self.contrast[0], self.contrast[1])
+    def calc_intl_param_forward(self, data_dict):
+        data_dict['intl_factor'] = random.uniform(self.contrast[0], self.contrast[1])
+        return data_dict
 
+    def forward(self, data_dict):
         if is_pil(data_dict['image']):
-            data_dict['image'] = adjust_contrast(data_dict['image'], factor)
+            data_dict['image'] = adjust_contrast(data_dict['image'], data_dict['intl_factor'])
         else:
             data_dict['image'] = Image.fromarray(data_dict['image'])
-            data_dict['image'] = adjust_contrast(data_dict['image'], factor)
+            data_dict['image'] = adjust_contrast(data_dict['image'], data_dict['intl_factor'])
             data_dict['image'] = np.asarray(data_dict['image'])
 
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_factor')
         return data_dict
 
     def __repr__(self):
@@ -70,16 +82,22 @@ class SaturationEnhancement(BaseInternode):
 
         self.saturation = saturation
 
-    def __call__(self, data_dict):
-        factor = random.uniform(self.saturation[0], self.saturation[1])
+    def calc_intl_param_forward(self, data_dict):
+        data_dict['intl_factor'] = random.uniform(self.saturation[0], self.saturation[1])
+        return data_dict
 
+    def forward(self, data_dict):
         if is_pil(data_dict['image']):
-            data_dict['image'] = adjust_saturation(data_dict['image'], factor)
+            data_dict['image'] = adjust_saturation(data_dict['image'], data_dict['intl_factor'])
         else:
             data_dict['image'] = Image.fromarray(data_dict['image'])
-            data_dict['image'] = adjust_saturation(data_dict['image'], factor)
+            data_dict['image'] = adjust_saturation(data_dict['image'], data_dict['intl_factor'])
             data_dict['image'] = np.asarray(data_dict['image'])
 
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_factor')
         return data_dict
 
     def __repr__(self):
@@ -95,16 +113,22 @@ class HueEnhancement(BaseInternode):
 
         self.hue = hue
 
-    def __call__(self, data_dict):
-        factor = random.uniform(self.hue[0], self.hue[1])
+    def calc_intl_param_forward(self, data_dict):
+        data_dict['intl_factor'] = random.uniform(self.hue[0], self.hue[1])
+        return data_dict
 
+    def forward(self, data_dict):
         if is_pil(data_dict['image']):
-            data_dict['image'] = adjust_hue(data_dict['image'], factor)
+            data_dict['image'] = adjust_hue(data_dict['image'], data_dict['intl_factor'])
         else:
             data_dict['image'] = Image.fromarray(data_dict['image'])
-            data_dict['image'] = adjust_hue(data_dict['image'], factor)
+            data_dict['image'] = adjust_hue(data_dict['image'], data_dict['intl_factor'])
             data_dict['image'] = np.asarray(data_dict['image'])
 
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_factor')
         return data_dict
 
     def __repr__(self):
@@ -113,7 +137,7 @@ class HueEnhancement(BaseInternode):
 
 @INTERNODE.register_module()
 class ToGrayscale(BaseInternode):
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         if is_pil(data_dict['image']):
             data_dict['image'] = to_grayscale(data_dict['image'], num_output_channels=3)
         else:

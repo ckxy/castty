@@ -15,3 +15,4 @@ from .mpii import *
 from .text_gen import *
 from .voc import *
 from .wflw import *
+from .wtw import *

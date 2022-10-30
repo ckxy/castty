@@ -175,52 +175,5 @@ class NanoCollateFN(CollateFN):
     def __repr__(self):
         return 'NanoCollateFN(names={})'.format(self.names)
 
-
-@COLLATEFN.register_module()
-class SYoloCollateFN(CollateFN):
-    def __init__(self, **kwargs):
-        super(SYoloCollateFN, self).__init__(names=('lbbox', 'mbbox', 'sbbox'))
-
-    def collate(self):
-        max_sbbox_per_img = max([0] + [len(b) for b in self.buffer['sbbox']])
-        max_mbbox_per_img = max([0] + [len(b) for b in self.buffer['mbbox']])
-        max_lbbox_per_img = max([0] + [len(b) for b in self.buffer['lbbox']])
-
-        # print(max_sbbox_per_img, max_mbbox_per_img, max_lbbox_per_img)
-        # exit()
-
-        zeros = np.zeros((1, 4), dtype=np.float32)
-        self.buffer['sbbox'] = [b if len(b) > 0 else zeros for b in self.buffer['sbbox']]
-        self.buffer['mbbox'] = [b if len(b) > 0 else zeros for b in self.buffer['mbbox']]
-        self.buffer['lbbox'] = [b if len(b) > 0 else zeros for b in self.buffer['lbbox']]
-
-        batch_sbboxes = np.array(
-            [np.concatenate([sbboxes, np.zeros((max_sbbox_per_img + 1 - len(sbboxes), 4), dtype=np.float32)], axis=0)
-             for sbboxes in self.buffer['sbbox']]).astype(np.float32)
-        batch_mbboxes = np.array(
-            [np.concatenate([mbboxes, np.zeros((max_mbbox_per_img + 1 - len(mbboxes), 4), dtype=np.float32)], axis=0)
-             for mbboxes in self.buffer['mbbox']]).astype(np.float32)
-        batch_lbboxes = np.array(
-            [np.concatenate([lbboxes, np.zeros((max_lbbox_per_img + 1 - len(lbboxes), 4), dtype=np.float32)], axis=0)
-             for lbboxes in self.buffer['lbbox']]).astype(np.float32)
-
-        # print(batch_sbboxes, batch_sbboxes.shape)
-        # print(batch_mbboxes, batch_mbboxes.shape)
-        # print(batch_lbboxes, batch_lbboxes.shape)
-        # exit()
-
-        for k in self.buffer.keys():
-            self.buffer[k].clear()
-
-        return dict(
-            sbbox=torch.from_numpy(batch_sbboxes),
-            mbbox=torch.from_numpy(batch_mbboxes),
-            lbbox=torch.from_numpy(batch_lbboxes)
-        )
-
-    def __repr__(self):
-        return 'SYoloCollateFN(names={})'.format(self.names)
-
-
 if __name__ == '__main__':
     pass

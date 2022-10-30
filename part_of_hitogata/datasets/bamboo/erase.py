@@ -13,7 +13,7 @@ __all__ = ['RandomErasing', 'GridMask']
 
 @INTERNODE.register_module()
 class RandomErasing(BaseInternode):
-    def __init__(self, scale=(0.02, 0.33), ratio=(0.3, 3.3), offset=False, value=(0, 0, 0)):
+    def __init__(self, scale=(0.02, 0.33), ratio=(0.3, 3.3), offset=False, value=(0, 0, 0), **kwargs):
         assert isinstance(value, tuple)
         if (scale[0] > scale[1]) or (ratio[0] > ratio[1]):
             warnings.warn("range should be of kind (min, max)")
@@ -25,7 +25,10 @@ class RandomErasing(BaseInternode):
         self.offset = offset
         self.value = value
 
-    def get_params(self, w, h):
+    def calc_intl_param_forward(self, data_dict):
+        assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys()
+
+        w, h = get_image_size(data_dict['image'])
         area = w * h
         for attempt in range(10):
             erase_area = random.uniform(self.scale[0], self.scale[1]) * area
@@ -37,31 +40,32 @@ class RandomErasing(BaseInternode):
             if new_h < h and new_w < w:
                 y = random.randint(0, h - new_h)
                 x = random.randint(0, w - new_w)
-                return x, y, new_w, new_h
 
-        return None, None, None, None
+                data_dict['intl_erase_mask'] = Image.new("L", data_dict['image'].size, 255)
+                draw = ImageDraw.Draw(data_dict['intl_erase_mask'])
+                draw.rectangle((x, y, x + new_w, y + new_h), fill=0)
 
-    def __call__(self, data_dict):
-        assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys()
+                if 'image' in data_dict.keys():
+                    if self.offset:
+                        offset = 2 * (np.random.rand(h, w) - 0.5)
+                        offset = np.uint8(offset * 255)
+                        data_dict['intl_erase_bgd'] = Image.fromarray(offset).convert(data_dict['image'].mode)
+                    else:
+                        data_dict['intl_erase_bgd'] = Image.new(data_dict['image'].mode, data_dict['image'].size, self.value)
+                break
 
-        w, h = get_image_size(data_dict['image'])
-        x, y, new_w, new_h = self.get_params(w, h)
+        return data_dict
 
-        if x is None:
+    def forward(self, data_dict):
+        if 'intl_erase_mask' not in data_dict.keys():
             return data_dict
 
+        # x, y, new_w, new_h = data_dict['intl_erase_params']
+        # x, y, new_w, new_h = 234, 3, 152, 345
+        mask = data_dict['intl_erase_mask']
+
         if is_pil(data_dict['image']):
-            mask = Image.new("L", data_dict['image'].size, 255)
-            draw = ImageDraw.Draw(mask)
-            draw.rectangle((x, y, x + new_w, y + new_h), fill=0)
-
-            if self.offset:
-                offset = 2 * (np.random.rand(h, w) - 0.5)
-                offset = np.uint8(offset * 255)
-                bgd = Image.fromarray(offset).convert(data_dict['image'].mode)
-            else:
-                bgd = Image.new(data_dict['image'].mode, data_dict['image'].size, self.value)
-
+            bgd = data_dict['intl_erase_bgd']
             data_dict['image'] = Image.composite(data_dict['image'], bgd, mask)
         else:
             mask = np.ones((h, w, 3), np.uint8)
@@ -85,9 +89,17 @@ class RandomErasing(BaseInternode):
                 mask = (np.asarray(mask) > 0).astype(np.int32)
             else:
                 mask = mask[..., 0]
+            w, h = get_image_size(data_dict['image'])
             bgd = np.zeros((h, w), np.int32)
             data_dict['mask'] = data_dict['mask'] * mask + bgd * (1 - mask)
 
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        if 'intl_erase_mask' in data_dict.keys():
+            data_dict.pop('intl_erase_mask')
+        if 'intl_erase_bgd' in data_dict.keys():
+            data_dict.pop('intl_erase_bgd')
         return data_dict
 
     def __repr__(self):
@@ -99,7 +111,7 @@ class RandomErasing(BaseInternode):
 
 @INTERNODE.register_module()
 class GridMask(BaseInternode):
-    def __init__(self, use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=1):
+    def __init__(self, use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=1, **kwargs):
         assert 0 <= rotate < 90
 
         self.use_h = use_h
@@ -108,6 +120,30 @@ class GridMask(BaseInternode):
         self.offset = offset
         self.invert = invert
         self.ratio = ratio
+
+    def calc_intl_param_forward(self, data_dict):
+        w, h = get_image_size(data_dict['image'])
+
+        hh = int(1.5 * h)
+        ww = int(1.5 * w)
+        d = np.random.randint(2, min(h, w))
+
+        if self.ratio == 1:
+            l = np.random.randint(1, d)
+        else:
+            l = min(max(int(d * self.ratio + 0.5), 1), d - 1)
+
+        st_h = np.random.randint(d)
+        st_w = np.random.randint(d)
+
+        return data_dict
+
+    def forward(self, data_dict):
+        assert 'point' not in data_dict.keys()
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        return data_dict
 
     def __call__(self, data_dict):
         assert 'point' not in data_dict.keys()
@@ -122,9 +158,6 @@ class GridMask(BaseInternode):
             l = np.random.randint(1, d)
         else:
             l = min(max(int(d * self.ratio + 0.5), 1), d - 1)
-
-        # ch = len(data_dict['image'].getbands())
-        # print(l, d)
 
         mask = np.ones((hh, ww), np.float32)
         st_h = np.random.randint(d)
