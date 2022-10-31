@@ -124,12 +124,6 @@ class Padding(BaseInternode):
         data_dict.pop('intl_padding')
         return data_dict
 
-    # def __call__(self, data_dict):
-    #     data_dict = self.calc_intl_param_forward(data_dict)
-    #     data_dict = self.forward(data_dict)
-    #     data_dict = self.erase_intl_param_forward(data_dict)
-    #     return data_dict
-
     def __repr__(self):
         return 'Padding(padding={}, fill={}, padding_mode={})'.format(self.padding, self.fill, self.padding_mode)
 
@@ -213,65 +207,44 @@ class PaddingBySize(Padding):
                 data_dict['point'] = points.reshape(n, -1, 2)
         return data_dict
 
+    # def clip_and_filter(self, data_dict):
+    #     xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+    #     dst_size = (xmax - xmin, ymax - ymin)
+
+    #     if 'bbox' in data_dict.keys():
+    #         boxes = data_dict['bbox'].copy()
+    #         boxes = clip_bbox(boxes, dst_size)
+    #         keep = filter_bbox(boxes)
+    #         data_dict['bbox'] = boxes[keep]
+
+    #         if 'bbox_meta' in data_dict.keys():
+    #             data_dict['bbox_meta'].filter(keep)
+
+    #     if 'point' in data_dict.keys():
+    #         n = len(data_dict['point'])
+    #         if n > 0:
+    #             points = data_dict['point'].reshape(-1, 2)
+
+    #             discard = filter_point(points, dst_size)
+
+    #             visible = data_dict['point_meta']['visible'].reshape(-1)
+    #             visible[discard] = False
+    #             data_dict['point_meta']['visible'] = visible.reshape(n, -1)
+
+    #             data_dict['point'] = points.reshape(n, -1, 2)
+
+    #     if 'poly' in data_dict.keys():
+    #         data_dict['poly'], keep = clip_poly(data_dict['poly'], dst_size)
+
+    #         if 'poly_meta' in data_dict.keys():
+    #             data_dict['poly_meta'].filter(keep)
+
+    #     return data_dict
+
     def erase_intl_param_backward(self, data_dict):
         if 'intl_padding' in data_dict.keys():
             data_dict = self.erase_intl_param_forward(data_dict)
         return data_dict
-
-    # def reverse(self, **kwargs):
-    #     # if 'intl_resize_and_padding_reverse_flag' not in kwargs.keys():
-    #     #     return kwargs
-
-    #     # if 'ori_size' in kwargs.keys():
-    #     #     h, w = kwargs['ori_size']
-    #     #     h, w = int(h), int(w)
-
-    #     #     left, top, right, bottom = self.calc_padding(w, h)
-    #     # else:
-    #     #     return kwargs
-
-    #     # if 'image' in kwargs.keys():
-    #     #     kwargs['image'] = unpad_image(kwargs['image'], (left, top, right, bottom))
-
-    #     # if 'mask' in kwargs.keys():
-    #     #     kwargs['mask'] = unpad_mask(kwargs['mask'], (left, top, right, bottom))
-
-    #     # if 'bbox' in kwargs.keys():
-    #     #     kwargs['bbox'] = unpad_bbox(kwargs['bbox'], left, top)
-
-    #     #     boxes = clip_bbox(kwargs['bbox'], (w, h))
-    #     #     keep = filter_bbox(boxes)
-    #     #     kwargs['bbox'] = boxes[keep]
-
-    #     #     if 'bbox_meta' in kwargs.keys():
-    #     #         kwargs['bbox_meta'].filter(keep)
-
-    #     # if 'poly' in kwargs.keys():
-    #     #     kwargs['poly'] = unpad_poly(kwargs['poly'], left, top)
-
-    #     #     kwargs['poly'], keep = clip_poly(kwargs['poly'], (w, h))
-    #     #     if 'poly_meta' in kwargs.keys():
-    #     #         kwargs['poly_meta'].filter(keep)
-
-    #     # if 'point' in kwargs.keys():
-    #     #     n = len(kwargs['point'])
-    #     #     points = kwargs['point'].reshape(-1, 2)
-    #     #     points = unpad_point(points, left, top)
-
-    #     #     discard = filter_point(points, (w, h))
-
-    #     #     if 'point_meta' in kwargs.keys():
-    #     #         visible = kwargs['point_meta']['visible'].reshape(-1)
-    #     #         visible[discard] = False
-    #     #         kwargs['point_meta']['visible'] = visible.reshape(n, -1)
-    #     #     else:
-    #     #         points[discard] = -1
-
-    #     #     kwargs['point'] = points.reshape(n, -1, 2)
-    #     kwargs = self.calc_intl_param_backward(kwargs)
-    #     kwargs = self.backward(kwargs)
-    #     kwargs = self.erase_intl_param_backward(kwargs)
-    #     return kwargs
 
     def __repr__(self):
         return 'PaddingBySize(size={}, fill={}, padding_mode={}, center={})'.format(self.size, self.fill, self.padding_mode, self.center)

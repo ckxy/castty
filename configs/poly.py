@@ -71,22 +71,22 @@ test_data = dict(
         serial_batches=True,
         num_threads=0,
         pin_memory=False,
-        sampler=dict(type='CustomWeightedRandomSampler', weights=(1, 2), num_samples=100),
+        # sampler=dict(type='CustomWeightedRandomSampler', weights=(1, 2), num_samples=100),
         # batch_sampler=dict(type='StepsBatchSampler', steps=100),
         collator=[
             dict(type='ListCollateFN', names=('poly', 'poly_meta')),
         ]
     ),
     dataset=dict(
-        # reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015', use_pil=False),
-        reader=dict(
-            type='CatReader', 
-            internodes=(
-                dict(type='ICDARDetReader', root='../datasets/ICDAR2015'),
-                dict(type='ICDARDetReader', root='../datasets/ICDAR2015', train=False),
-            ),
-            use_pil=False,
-        ),
+        reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015', use_pil=False),
+        # reader=dict(
+        #     type='CatReader', 
+        #     internodes=(
+        #         dict(type='ICDARDetReader', root='../datasets/ICDAR2015'),
+        #         dict(type='ICDARDetReader', root='../datasets/ICDAR2015', train=False),
+        #     ),
+        #     use_pil=False,
+        # ),
         internodes=[
             # dict(type='ChooseOne', branchs=[
             #     dict(type='Mosaic', internodes=[
@@ -109,12 +109,13 @@ test_data = dict(
             #     dict(type='Rot90', k=[1, 2, 3], p=0.5),
             # ]),
             dict(type='DataSource'),
+            dict(type='EastRandomCrop'),
             # dict(type='Rot90', k=[1, 2, 3]),
             # dict(type='WarpRotate', angle=(-30, 0), expand=True),
             # dict(type='Resize', size=(1280, 1280), keep_ratio=True, short=False),
             # dict(type='PaddingBySize', size=(1280, 1280), fill=(0, 0, 0), padding_mode='constant', center=False),
             dict(type='ToPILImage'),
-            dict(type='DBEncode'),
+            # dict(type='DBEncode'),
             dict(type='ToTensor'),
             # dict(type='DBMCEncode', num_classes=2),
         ],

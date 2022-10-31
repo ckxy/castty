@@ -51,9 +51,7 @@ def hm(data_dict, rc, index=0):
         plt.axis('off')
 
 
-def hm2(data_dict, rc, index=0):
-    center_heatmaps = data_dict['center_heatmap'][index]
-    kpt_heatmaps = data_dict['kpt_heatmap'][index]
+def hm2(data_dict, classes, rc, index=0):
     points = data_dict['point'][index]
     bboxes = data_dict['bbox'][index]
 
@@ -66,23 +64,25 @@ def hm2(data_dict, rc, index=0):
     bboxes = res['bbox']
 
     pt_img = draw_point(img.copy(), points, data_dict['point_meta'][index].get('visible', None))
-    pt_img = draw_bbox(pt_img, bboxes, data_dict['bbox_meta'][index].get('class_id', None), ['p'], None)
+    pt_img = draw_bbox(pt_img, bboxes, data_dict['bbox_meta'][index].get('class_id', None), classes, None)
 
-    center_heatmaps = interpolate(center_heatmaps.unsqueeze(0), scale_factor=4, mode='bilinear', align_corners=False)[0]
-
-    tmp = draw_heatmap(center_heatmaps[0])
-    tmp = rc(image=to_tensor(tmp), ori_size=data_dict['ori_size'][index])['image']
-
-    cen_img = Image.blend(img, tmp, 0.5)
-
-    plt.subplot(1, 2, 1)
+    # plt.subplot(1, 2, 1)
     plt.imshow(pt_img)
     plt.axis('off')
 
-    plt.subplot(1, 2, 2)
-    plt.imshow(cen_img)
-    plt.axis('off')
+    # center_heatmaps = data_dict['center_heatmap'][index]
+    # center_heatmaps = interpolate(center_heatmaps.unsqueeze(0), scale_factor=4, mode='bilinear', align_corners=False)[0]
 
+    # tmp = draw_heatmap(center_heatmaps[0])
+    # tmp = rc(image=to_tensor(tmp), ori_size=data_dict['ori_size'][index])['image']
+
+    # cen_img = Image.blend(img, tmp, 0.5)
+
+    # plt.subplot(1, 2, 2)
+    # plt.imshow(cen_img)
+    # plt.axis('off')
+
+    # kpt_heatmaps = data_dict['kpt_heatmap'][index]
     # kpt_heatmaps = interpolate(kpt_heatmaps.unsqueeze(0), scale_factor=4, mode='bilinear', align_corners=False)[0]
 
     # for i in range(16):
@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
     for data in tqdm(dataloader):
         # kp(data, rc, 0)
-        hm2(data, rc, 0)
+        hm2(data, info['bbox_classes'], rc, 0)
         plt.show()
         break
 

@@ -38,13 +38,13 @@ def po(data_dict, rc, index=0):
 
     # print(data_dict['ocrdet_kernel'].shape, data_dict['ocrdet_train_mask'].shape)
 
-    # plt.figure()
-    # # plt.subplot(121)
-    # plt.imshow(img)
-    # plt.axis('off')
+    plt.figure()
+    # plt.subplot(121)
+    plt.imshow(img)
+    plt.axis('off')
 
-    # plt.show()
-    # exit()
+    plt.show()
+    exit()
 
     # plt.subplot(122)
     # plt.imshow(data_dict['ocrdet_train_mask'][index].numpy(), cmap='gray')

@@ -21,7 +21,7 @@ visualizer = dict(
 
 test_data = dict(
     data_loader=dict(
-        batch_size=2,
+        batch_size=1,
         serial_batches=True,
         num_threads=0,
         pin_memory=False,
@@ -37,7 +37,7 @@ test_data = dict(
         # reader=dict(type='LVISAPIReader', set_path='../datasets/coco/annotations/lvis_v1_val.json', img_root='../datasets/coco'),
         # reader=dict(type='COCOAPIReader', set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017'),
         # reader=dict(type='COCOAPIReader', use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
-        reader=dict(type='VOCReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        reader=dict(type='VOCReader', use_pil=True, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
         # reader=dict(
         #     type='CatReader', 
         #     internodes=(
@@ -87,24 +87,24 @@ test_data = dict(
             # dict(type='Padding', padding=(20, 30, 40, 50), fill=(50, 50, 50), padding_mode='reflect'),
             # dict(type='PaddingBySize', size=(416, 416), fill=(50, 50, 50), padding_mode='constant', center=False),
             # dict(type='PaddingByStride', stride=100, fill=(50, 50, 50), padding_mode='constant', center=False),
-            dict(type='ResizeAndPadding', 
-                resize=dict(
-                    type='WarpResize',
-                    size=(512, 512),
-                    keep_ratio=True,
-                    short=False,
-                ),
-                padding=dict(
-                    type='PaddingBySize',
-                    size=(600, 600),
-                    # type='PaddingByStride',
-                    # stride=100,
-                    fill=(0, 0, 0), 
-                    padding_mode='constant',
-                    center=True
-                ),
-                one_way='forward'
-            ),
+            # dict(type='ResizeAndPadding', 
+            #     resize=dict(
+            #         type='WarpResize',
+            #         size=(512, 512),
+            #         keep_ratio=True,
+            #         short=False,
+            #     ),
+            #     padding=dict(
+            #         type='PaddingBySize',
+            #         size=(600, 600),
+            #         # type='PaddingByStride',
+            #         # stride=100,
+            #         fill=(0, 0, 0), 
+            #         padding_mode='constant',
+            #         center=True
+            #     ),
+            #     one_way='forward'
+            # ),
             # dict(type='Warp', expand=True, ccs=True, internodes=[
             #     dict(type='WarpPerspective'),
             #     dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5)),
@@ -154,7 +154,8 @@ test_data = dict(
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
             # dict(type='SwapChannels', swap=(2, 1, 0)),
             # dict(type='RandomSwapChannels'),
-            dict(type='ToPILImage'),
+            dict(type='WestRandomCrop', min_crop_side_ratio=0.1),
+            # dict(type='ToPILImage'),
             dict(type='ToTensor'),
             # dict(type='CalcCenterNetGrids', ratio=0.25, num_classes=1),
             # dict(type='CalcNanoGrids', scale=5, top_k=9, strides=(8, 16, 32), num_classes=len(classes), analysis=True),

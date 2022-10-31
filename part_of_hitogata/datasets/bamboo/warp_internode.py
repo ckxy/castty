@@ -32,7 +32,30 @@ class WarpInternode(BaseInternode):
             data_dict['image'] = warp_image(data_dict['image'], M, dst_size, self.ccs)
 
         if 'bbox' in data_dict.keys():
-            boxes = warp_bbox(data_dict['bbox'], M)
+            data_dict['bbox'] = warp_bbox(data_dict['bbox'], M)
+
+        if 'poly' in data_dict.keys():
+            data_dict['poly'] = [warp_point(p, M) for p in data_dict['poly']]
+
+        if 'point' in data_dict.keys():
+            n = len(data_dict['point'])
+            if n > 0:
+                points = data_dict['point'].reshape(-1, 2)
+                points = warp_point(points, M)
+                data_dict['point'] = points.reshape(n, -1, 2)
+
+        if 'mask' in data_dict.keys():
+            data_dict['mask'] = warp_mask(data_dict['mask'], M, dst_size, self.ccs)
+        return data_dict
+
+    def clip_and_filter(self, data_dict):
+        if 'intl_warp_matrix' in data_dict.keys():
+            return data_dict
+
+        dst_size = data_dict['intl_warp_tmp_size']
+
+        if 'bbox' in data_dict.keys():
+            boxes = data_dict['bbox'].copy()
             boxes = clip_bbox(boxes, dst_size)
             keep = filter_bbox(boxes)
             data_dict['bbox'] = boxes[keep]
@@ -40,32 +63,25 @@ class WarpInternode(BaseInternode):
             if 'bbox_meta' in data_dict.keys():
                 data_dict['bbox_meta'].filter(keep)
 
+        if 'point' in data_dict.keys():
+            n = len(data_dict['point'])
+            if n > 0:
+                points = data_dict['point'].reshape(-1, 2)
+
+                discard = filter_point(points, dst_size)
+
+                visible = data_dict['point_meta']['visible'].reshape(-1)
+                visible[discard] = False
+                data_dict['point_meta']['visible'] = visible.reshape(n, -1)
+
+                data_dict['point'] = points.reshape(n, -1, 2)
+
         if 'poly' in data_dict.keys():
-            data_dict['poly'] = [warp_point(p, M) for p in data_dict['poly']]
             data_dict['poly'], keep = clip_poly(data_dict['poly'], dst_size)
 
             if 'poly_meta' in data_dict.keys():
                 data_dict['poly_meta'].filter(keep)
 
-        if 'point' in data_dict.keys():
-            n = len(data_dict['point'])
-            if n > 0:
-                points = data_dict['point'].reshape(-1, 2)
-                points = warp_point(points, M)
-
-                discard = filter_point(points, dst_size)
-
-                if 'point_meta' in data_dict.keys():
-                    visible = data_dict['point_meta']['visible'].reshape(-1)
-                    visible[discard] = False
-                    data_dict['point_meta']['visible'] = visible.reshape(n, -1)
-                else:
-                    points[discard] = -1
-
-                data_dict['point'] = points.reshape(n, -1, 2)
-
-        if 'mask' in data_dict.keys():
-            data_dict['mask'] = warp_mask(data_dict['mask'], M, dst_size, self.ccs)
         return data_dict
 
     def erase_intl_param_forward(self, data_dict):
@@ -81,4 +97,3 @@ class WarpInternode(BaseInternode):
 
     def __repr__(self):
         return 'expand={}, ccs={}'.format(self.expand, self.ccs)
-

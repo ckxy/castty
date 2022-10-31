@@ -6,12 +6,6 @@ __all__ = ['BaseInternode']
 
 @INTERNODE.register_module()
 class BaseInternode(object):
-    # def __call__(self, data_dict):
-    #     return data_dict
-
-    # def reverse(self, **kwargs):
-    #     return kwargs
-
     def calc_intl_param_forward(self, data_dict):
         return data_dict
 

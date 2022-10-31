@@ -132,31 +132,31 @@ test_data = dict(
         ]
     ),
     dataset=dict(
-        reader=dict(type='WTWReader', root='../datasets/wtw_test'),
-        # reader=dict(type='COCOAPIReader', use_pil=True, use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
+        # reader=dict(type='WTWReader', root='../datasets/wtw_test'),
+        reader=dict(type='COCOAPIReader', use_pil=True, use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
         internodes=[
             dict(type='DataSource'),
-            # dict(type='RandomCenterCropPad', size=(512, 512), ratios=(0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3)),
-            dict(type='ResizeAndPadding', 
-                resize=dict(
-                    type='WarpResize',
-                    size=(512, 512),
-                    keep_ratio=True,
-                    short=False,
-                ),
-                padding=dict(
-                    type='PaddingBySize',
-                    size=(512, 512),
-                    fill=(0, 0, 0), 
-                    padding_mode='constant',
-                    center=False
-                ),
-                # one_way='forward'
-            ),
+            dict(type='RandomCenterCropPad', size=(512, 512), ratios=(0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3)),
+            # dict(type='ResizeAndPadding', 
+            #     resize=dict(
+            #         type='WarpResize',
+            #         size=(512, 512),
+            #         keep_ratio=True,
+            #         short=False,
+            #     ),
+            #     padding=dict(
+            #         type='PaddingBySize',
+            #         size=(512, 512),
+            #         fill=(0, 0, 0), 
+            #         padding_mode='constant',
+            #         center=False
+            #     ),
+            #     # one_way='forward'
+            # ),
             # dict(type='ToPILImage'),
             dict(type='ToTensor'),
             # dict(type='CalcCenterNetGrids', ratio=0.25, num_classes=1, use_point=True),
-            dict(type='CalcPTSGrids', ratio=0.25),
+            # dict(type='CalcPTSGrids', ratio=0.25),
         ],
     ),
 )

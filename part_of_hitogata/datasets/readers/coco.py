@@ -37,6 +37,9 @@ class COCOAPIReader(Reader):
         self.use_instance_mask = False
         self.use_keypoint = use_keypoint
 
+        if self.use_keypoint:
+            self.classes = ['person']
+
         assert os.path.exists(self.set)
         assert os.path.exists(self.img_root)
 
