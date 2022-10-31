@@ -614,6 +614,7 @@ class WestRandomCrop(Crop):
             regions[-1].append(max_axis)
         else:
             regions.append([max_axis])
+
         regions = [[r[0], r[-1]] for r in regions]
         return regions
 
@@ -636,7 +637,10 @@ class WestRandomCrop(Crop):
         left_region = regions[i_min]
         right_region = regions[i_max]
 
-        minv = random.randint(left_region[0], left_region[1])
+        if left_region[1] <= right_region[1] - length:
+            minv = random.randint(left_region[0], left_region[1])
+        else:
+            minv = random.randint(left_region[0], right_region[1] - length)
 
         if right_region[0] >= left_region[1] + length:
             maxv = random.randint(right_region[0], right_region[1])
@@ -650,11 +654,14 @@ class WestRandomCrop(Crop):
         w_array = np.zeros(w, dtype=np.int32)
         for points in polys:
             points = np.ceil(points).astype(np.int32).reshape(-1, 2)
+
             min_x = np.min(points[:, 0])
             max_x = np.max(points[:, 0])
-            w_array[min_x:max_x] = 1
+
             min_y = np.min(points[:, 1])
             max_y = np.max(points[:, 1])
+
+            w_array[min_x:max_x] = 1
             h_array[min_y:max_y] = 1
 
         # ensure the cropped area not across a text
