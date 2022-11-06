@@ -176,24 +176,35 @@ class PaddingBySize(Padding):
             if 'bbox' in data_dict.keys():
                 data_dict['bbox'] = unpad_bbox(data_dict['bbox'], left, top)
 
-                boxes = clip_bbox(data_dict['bbox'], (w, h))
-                keep = filter_bbox(boxes)
-                data_dict['bbox'] = boxes[keep]
-
-                if 'bbox_meta' in data_dict.keys():
-                    data_dict['bbox_meta'].filter(keep)
-
             if 'poly' in data_dict.keys():
                 data_dict['poly'] = unpad_poly(data_dict['poly'], left, top)
-
-                data_dict['poly'], keep = clip_poly(data_dict['poly'], (w, h))
-                if 'poly_meta' in data_dict.keys():
-                    data_dict['poly_meta'].filter(keep)
 
             if 'point' in data_dict.keys():
                 n = len(data_dict['point'])
                 points = data_dict['point'].reshape(-1, 2)
                 points = unpad_point(points, left, top)
+                data_dict['point'] = points.reshape(n, -1, 2)
+
+            data_dict = self.clip_and_filter(data_dict)
+        return data_dict
+
+    def clip_and_filter(self, data_dict):
+        h, w = data_dict['ori_size']
+        h, w = int(h), int(w)
+
+        if 'bbox' in data_dict.keys():
+            boxes = data_dict['bbox'].copy()
+            boxes = clip_bbox(boxes, (w, h))
+            keep = filter_bbox(boxes)
+            data_dict['bbox'] = boxes[keep]
+
+            if 'bbox_meta' in data_dict.keys():
+                data_dict['bbox_meta'].filter(keep)
+
+        if 'point' in data_dict.keys():
+            n = len(data_dict['point'])
+            if n > 0:
+                points = data_dict['point'].reshape(-1, 2)
 
                 discard = filter_point(points, (w, h))
 
@@ -205,41 +216,14 @@ class PaddingBySize(Padding):
                     points[discard] = -1
 
                 data_dict['point'] = points.reshape(n, -1, 2)
+
+        if 'poly' in data_dict.keys():
+            data_dict['poly'], keep = clip_poly(data_dict['poly'], (w, h))
+
+            if 'poly_meta' in data_dict.keys():
+                data_dict['poly_meta'].filter(keep)
+
         return data_dict
-
-    # def clip_and_filter(self, data_dict):
-    #     xmin, ymin, xmax, ymax = data_dict['intl_cropping']
-    #     dst_size = (xmax - xmin, ymax - ymin)
-
-    #     if 'bbox' in data_dict.keys():
-    #         boxes = data_dict['bbox'].copy()
-    #         boxes = clip_bbox(boxes, dst_size)
-    #         keep = filter_bbox(boxes)
-    #         data_dict['bbox'] = boxes[keep]
-
-    #         if 'bbox_meta' in data_dict.keys():
-    #             data_dict['bbox_meta'].filter(keep)
-
-    #     if 'point' in data_dict.keys():
-    #         n = len(data_dict['point'])
-    #         if n > 0:
-    #             points = data_dict['point'].reshape(-1, 2)
-
-    #             discard = filter_point(points, dst_size)
-
-    #             visible = data_dict['point_meta']['visible'].reshape(-1)
-    #             visible[discard] = False
-    #             data_dict['point_meta']['visible'] = visible.reshape(n, -1)
-
-    #             data_dict['point'] = points.reshape(n, -1, 2)
-
-    #     if 'poly' in data_dict.keys():
-    #         data_dict['poly'], keep = clip_poly(data_dict['poly'], dst_size)
-
-    #         if 'poly_meta' in data_dict.keys():
-    #             data_dict['poly_meta'].filter(keep)
-
-    #     return data_dict
 
     def erase_intl_param_backward(self, data_dict):
         if 'intl_padding' in data_dict.keys():

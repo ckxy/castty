@@ -31,9 +31,9 @@ def draw_polygon(img, polygons, ignore_flags=None, class_ids=None, classes=None)
 
 	for polygon, ignore_flag, cid in zip(polygons, ignore_flags, class_ids):
 		if ignore_flag:
-			draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=(40, 40, 40), width=2)
+			draw.polygon(polygon.astype(np.int32).flatten().tolist(), outline=(40, 40, 40), width=2)
 		else:
-			draw.polygon(polygon.astype(np.int).flatten().tolist(), outline=colors[cid], width=2)
+			draw.polygon(polygon.astype(np.int32).flatten().tolist(), outline=colors[cid], width=2)
 
 	if is_np:
 		img = np.asarray(img)

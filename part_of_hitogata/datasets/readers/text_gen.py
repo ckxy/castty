@@ -22,9 +22,12 @@ class TextGenReader(Reader):
 
         self.path = path
 
-        generator_cfg = get_cfg(path)[0]
-        self.render = Render(generator_cfg.render_cfg)
-        self.num_images = generator_cfg.num_image
+        generator_cfgs = get_cfg(path)
+        self.renders = []
+        self.num_images = 0
+        for generator_cfg in generator_cfgs:
+            self.renders.append(Render(generator_cfg.render_cfg))
+            self.num_images += generator_cfg.num_image
 
         self._info = dict(
             forcat=dict(
@@ -33,7 +36,7 @@ class TextGenReader(Reader):
         )
 
     def __call__(self, index):
-        data = self.render()
+        data = self.renders[index % len(self.renders)]()
 
         img = Image.fromarray(data[0]).convert('RGB')
         if not self.use_pil:

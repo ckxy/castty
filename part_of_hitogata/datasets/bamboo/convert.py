@@ -12,21 +12,21 @@ __all__ = ['ToTensor', 'ToPILImage', 'ToCV2Image']
 
 @INTERNODE.register_module()
 class ToTensor(BaseInternode):
-    def __call__(self, data_dict):
-        assert is_pil(data_dict['image'])
-
-        data_dict['image'] = to_tensor(data_dict['image'])
+    def forward(self, data_dict):
+        if 'image' in data_dict.keys():
+            assert is_pil(data_dict['image'])
+            data_dict['image'] = to_tensor(data_dict['image'])
         
         if 'mask' in data_dict.keys():
             data_dict['mask'] = torch.from_numpy(data_dict['mask'])
         return data_dict
 
-    def reverse(self, **kwargs):
-        if 'image' in kwargs.keys():
-            kwargs['image'] = to_pil_image(kwargs['image'])
-        if 'mask' in kwargs.keys():
-            kwargs['mask'] = kwargs['mask'].detach().cpu().numpy().astype(np.int32)
-        return kwargs
+    def backward(self, data_dict):
+        if 'image' in data_dict.keys():
+            data_dict['image'] = to_pil_image(data_dict['image'])
+        if 'mask' in data_dict.keys():
+            data_dict['mask'] = data_dict['mask'].detach().cpu().numpy().astype(np.int32)
+        return data_dict
 
     def rper(self):
         return 'ToPILImage()'
@@ -34,16 +34,17 @@ class ToTensor(BaseInternode):
 
 @INTERNODE.register_module()
 class ToPILImage(BaseInternode):
-    def __call__(self, data_dict):
-        assert not is_pil(data_dict['image'])
-        data_dict['image'] = Image.fromarray(data_dict['image'])
+    def forward(self, data_dict):
+        if 'image' in data_dict.keys():
+            assert not is_pil(data_dict['image'])
+            data_dict['image'] = Image.fromarray(data_dict['image'])
         return data_dict
 
-    def reverse(self, **kwargs):
-        if 'image' in kwargs.keys():
-            assert is_pil(kwargs['image'])
-            kwargs['image'] = np.array(kwargs['image'])
-        return kwargs
+    def backward(self, data_dict):
+        if 'image' in data_dict.keys():
+            assert is_pil(data_dict['image'])
+            data_dict['image'] = np.array(data_dict['image'])
+        return data_dict
 
     def rper(self):
         return 'ToCV2Image()'
@@ -51,16 +52,17 @@ class ToPILImage(BaseInternode):
 
 @INTERNODE.register_module()
 class ToCV2Image(BaseInternode):
-    def __call__(self, data_dict):
-        assert is_pil(data_dict['image'])
-        data_dict['image'] = np.array(data_dict['image'])
+    def forward(self, data_dict):
+        if 'image' in data_dict.keys():
+            assert is_pil(data_dict['image'])
+            data_dict['image'] = np.array(data_dict['image'])
         return data_dict
 
-    def reverse(self, **kwargs):
-        if 'image' in kwargs.keys():
-            assert not is_pil(kwargs['image'])
-            kwargs['image'] = Image.fromarray(kwargs['image'])
-        return kwargs
+    def backward(self, data_dict):
+        if 'image' in data_dict.keys():
+            assert not is_pil(data_dict['image'])
+            data_dict['image'] = Image.fromarray(data_dict['image'])
+        return data_dict
 
     def rper(self):
         return 'ToPILImage()'

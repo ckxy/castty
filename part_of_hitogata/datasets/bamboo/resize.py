@@ -67,27 +67,12 @@ class Resize(BaseInternode):
             if self.short:
                 r = max(rh, rw)
                 scale = (r, r)
-
-                if h < w:
-                    nh = th
-                    nw = int(r * w)
-                else:
-                    nh = int(r * h)
-                    nw = tw
-
-                new_size = (nw, nh)
             else:
                 r = min(rh, rw)
                 scale = (r, r)
 
-                if h > w:
-                    nh = th
-                    nw = int(r * w)
-                else:
-                    nh = int(r * h)
-                    nw = tw
-
-                new_size = (nw, nh)
+            # new_size = (int(r * w), int(r * h))
+            new_size = int(round(r * w)), int(round(r * h))
         else:
             scale = (rw, rh)
             new_size = (tw, th)

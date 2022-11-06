@@ -41,7 +41,7 @@ class WTWReader(Reader):
         self._info = dict(
             forcat=dict(
                 type='kpt-det',
-                classes=['grid']
+                bbox_classes=['grid']
             ),
         )
 

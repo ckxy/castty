@@ -23,7 +23,7 @@ def sq(data_dict, rc, index=0):
     res = rc(image=img, ori_size=data_dict['ori_size'][index])
     img = res['image']
 
-    img = draw_seq(img, seq)
+    # img = draw_seq(img, seq)
 
     plt.imshow(img)
     plt.axis('off')

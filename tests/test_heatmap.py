@@ -66,7 +66,7 @@ def hm2(data_dict, classes, rc, index=0):
     pt_img = draw_point(img.copy(), points, data_dict['point_meta'][index].get('visible', None))
     pt_img = draw_bbox(pt_img, bboxes, data_dict['bbox_meta'][index].get('class_id', None), classes, None)
 
-    # plt.subplot(1, 2, 1)
+    # plt.subplot(1, 3, 1)
     plt.imshow(pt_img)
     plt.axis('off')
 
@@ -78,22 +78,21 @@ def hm2(data_dict, classes, rc, index=0):
 
     # cen_img = Image.blend(img, tmp, 0.5)
 
-    # plt.subplot(1, 2, 2)
+    # plt.subplot(1, 3, 2)
     # plt.imshow(cen_img)
     # plt.axis('off')
 
     # kpt_heatmaps = data_dict['kpt_heatmap'][index]
     # kpt_heatmaps = interpolate(kpt_heatmaps.unsqueeze(0), scale_factor=4, mode='bilinear', align_corners=False)[0]
 
-    # for i in range(16):
-    #     tmp = draw_heatmap(kpt_heatmaps[i])
-    #     tmp = rc(image=to_tensor(tmp), ori_size=data_dict['ori_size'][index])['image']
+    # tmp = draw_heatmap(kpt_heatmaps[0])
+    # tmp = rc(image=to_tensor(tmp), ori_size=data_dict['ori_size'][index])['image']
 
-    #     kpt_img = Image.blend(img, tmp, 0.5)
+    # kpt_img = Image.blend(img, tmp, 0.5)
 
-    #     plt.subplot(4, 4, i + 1)
-    #     plt.imshow(kpt_img)
-    #     plt.axis('off')
+    # plt.subplot(1, 3, 3)
+    # plt.imshow(kpt_img)
+    # plt.axis('off')
 
 
 if __name__ == '__main__':

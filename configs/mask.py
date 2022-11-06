@@ -29,7 +29,7 @@ test_data = dict(
         # ]
     ),
     dataset=dict(
-        reader=dict(type='VOCSegReader', use_pil=True, root='../datasets/voc/VOCdevkit/VOC2012', split='val', classes=classes),
+        reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='val', classes=classes),
         # reader=dict(type='SBDReader', use_pil=False, root='../datasets/voc/benchmark_RELEASE/dataset', split='train', classes=classes),
         # reader=dict(type='MHPV1Reader', use_pil=False, root='../datasets/LV-MHP-v1', split='train'),
         internodes=[
@@ -116,14 +116,14 @@ test_data = dict(
             # dict(type='Crop', size=(200, 200)),
             # dict(type='CenterCrop', size=(200, 200)),
             # dict(type='RandomErasing', offset=False, value=(0, 0, 0)),
-            # dict(type='GridMask', offset=True),
+            dict(type='GridMask', offset=True),
             # dict(type='AdaptiveCrop'),
             # dict(type='AdaptiveTranslate'),
-            dict(type='RandomAreaCrop'),
+            # dict(type='RandomAreaCrop'),
             # dict(type='Padding', padding=(100, 200, 300, 400)),
             # dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
-            # dict(type='ToPILImage'),
+            dict(type='ToPILImage'),
             dict(type='ToTensor'),
             # dict(type='EraseContour', one_way='forward'),
         ],

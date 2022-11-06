@@ -244,4 +244,3 @@ class CalcCenterNetGrids(BaseInternode):
 
     def __repr__(self):
         return 'CalcCenterNetGrids(ratio={}, num_classes={}, use_bbox={}, use_point={})'.format(self.ratio, self.num_classes, self.use_bbox, self.use_point)
-
