@@ -30,6 +30,12 @@ def po(data_dict, rc, index=0):
     img = res['image']
     poly = res['poly']
 
+    from part_of_hitogata.utils.mask_tools import draw_mask
+    mask = data_dict['mask'][index]
+    res = rc(ori_size=data_dict['ori_size'][index], mask=mask)
+    mask = res['mask']
+    img, bar = draw_mask(img, mask, ['bgd', 'fgd'])
+
     print(data_dict['ori_size'][index])
     # print(poly, 'a')
 
@@ -43,8 +49,7 @@ def po(data_dict, rc, index=0):
     plt.imshow(img)
     plt.axis('off')
 
-    plt.show()
-    exit()
+    return
 
     # plt.subplot(122)
     # plt.imshow(data_dict['ocrdet_train_mask'][index].numpy(), cmap='gray')

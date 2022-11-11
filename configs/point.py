@@ -132,7 +132,7 @@ test_data = dict(
         ]
     ),
     dataset=dict(
-        reader=dict(type='WTWReader', root='../datasets/wtw_test'),
+        reader=dict(type='WTWLineReader', root='../datasets/wtw_test'),
         # reader=dict(type='COCOAPIReader', use_pil=True, use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
         internodes=[
             dict(type='DataSource'),
