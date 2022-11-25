@@ -15,15 +15,15 @@ class Bamboo(BaseInternode):
         for cfg in internodes:
             self.internodes.append(build_internode(cfg))
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         for t in self.internodes:
             data_dict = t(data_dict)
         return data_dict
 
-    def reverse(self, **kwargs):
+    def backward(self, data_dict):
         for t in self.internodes[::-1]:
-            kwargs = t.reverse(**kwargs)
-        return kwargs
+            data_dict = t.reverse(**data_dict)
+        return data_dict
 
     def __repr__(self):
         split_str = [i.__repr__() for i in self.internodes]

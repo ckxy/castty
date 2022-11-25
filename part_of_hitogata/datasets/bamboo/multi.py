@@ -21,60 +21,68 @@ __all__ = ['MixUp', 'CutMix', 'Mosaic']
 
 @INTERNODE.register_module()
 class MixUp(Bamboo):
-    def __call__(self, data_dict):
+    def calc_intl_param_forward(self, data_dict):
         index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
+        while index_mix == data_dict['index']:
+            index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
+        data_dict['intl_index_mix'] = index_mix
+        data_dict['intl_lam'] = np.random.beta(1.5, 1.5)
+        return data_dict
 
-        if index_mix == data_dict['index']:
-            return super(MixUp, self).__call__(data_dict)
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_index_mix')
+        data_dict.pop('intl_lam')
+        return data_dict
+
+    def forward(self, data_dict):
+        index_mix = data_dict['intl_index_mix']
+
+        reader = data_dict['reader']
+        len_data_lines = data_dict['len_data_lines']
+
+        a = super(MixUp, self).forward(data_dict)
+
+        k = a.keys()
+        assert 'mask' not in k and 'point' not in  k
+
+        data_dict['index'] = index_mix
+        data_dict['len_data_lines'] = len_data_lines
+        data_dict['reader'] = reader
+        b = super(MixUp, self).forward(data_dict)
+
+        w_a, h_a = get_image_size(a['image'])
+        w_b, h_b = get_image_size(b['image'])
+        max_w = max(w_a, w_b)
+        max_h = max(h_a, h_b)
+
+        a['image'] = pad_image(a['image'], (0, 0, max(max_w - w_a, 0), max(max_h - h_a, 0)))
+        b['image'] = pad_image(b['image'], (0, 0, max(max_w - w_b, 0), max(max_h - h_b, 0)))
+
+        a['ori_size'] = np.array([max_h, max_w]).astype(np.float32)
+
+        lam = data_dict['intl_lam']
+
+        if is_pil(a['image']):
+            a['image'] = Image.blend(a['image'], b['image'], 1 - lam)
         else:
-            reader = data_dict['reader']
-            len_data_lines = data_dict['len_data_lines']
+            a['image'] = cv2.addWeighted(a['image'], lam, b['image'], 1 - lam, 0)
 
-            a = super(MixUp, self).__call__(data_dict)
+        if 'bbox' in k:
+            a['bbox'] = np.concatenate([a['bbox'], b['bbox']])
 
-            k = a.keys()
-            assert 'mask' not in k and 'point' not in  k
+            if 'bbox_meta' in k:
+                a['bbox_meta']['score'] *= lam
+                b['bbox_meta']['score'] *= 1 - lam
+                a['bbox_meta'] += b['bbox_meta']
 
-            data_dict['index'] = index_mix
-            data_dict['len_data_lines'] = len_data_lines
-            data_dict['reader'] = reader
-            b = super(MixUp, self).__call__(data_dict)
+        if 'label' in k:
+            for i in range(len(a['label'])):
+                a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
 
-            w_a, h_a = get_image_size(a['image'])
-            w_b, h_b = get_image_size(b['image'])
-            max_w = max(w_a, w_b)
-            max_h = max(h_a, h_b)
+        if 'path' in k:
+            a['path'] = '[mixup]({}, {}, {})'.format(a['path'], b['path'], lam)
 
-            a['image'] = pad_image(a['image'], (0, 0, max(max_w - w_a, 0), max(max_h - h_a, 0)))
-            b['image'] = pad_image(b['image'], (0, 0, max(max_w - w_b, 0), max(max_h - h_b, 0)))
-
-            a['ori_size'] = np.array([max_h, max_w]).astype(np.float32)
-
-            lam = np.random.beta(1.5, 1.5)
-
-            if is_pil(a['image']):
-                a['image'] = Image.blend(a['image'], b['image'], 1 - lam)
-            else:
-                a['image'] = cv2.addWeighted(a['image'], lam, b['image'], 1 - lam, 0)
-
-            if 'bbox' in k:
-                a['bbox'] = np.concatenate([a['bbox'], b['bbox']])
-
-                if 'bbox_meta' in k:
-                    a['bbox_meta']['score'] *= lam
-                    b['bbox_meta']['score'] *= 1 - lam
-                    a['bbox_meta'] += b['bbox_meta']
-
-            if 'label' in k:
-                for i in range(len(a['label'])):
-                    a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
-                # print(a['label'], b['label'])
-                # exit()
-
-            if 'path' in k:
-                a['path'] = '[mixup]({}, {}, {})'.format(a['path'], b['path'], lam)
-
-            return a
+        return a
 
     def rper(self):
         return type(self).__name__ + '(not available)'
@@ -82,89 +90,78 @@ class MixUp(Bamboo):
 
 @INTERNODE.register_module()
 class CutMix(Bamboo):
-    def __call__(self, data_dict):
+    def calc_intl_param_forward(self, data_dict):
         index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
-        # index_mix = 93
-        # print(index_mix)
+        while index_mix == data_dict['index']:
+            index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
+        data_dict['intl_index_mix'] = index_mix
+        data_dict['intl_lam'] = np.random.beta(1.5, 1.5)
+        return data_dict
 
-        if index_mix == data_dict['index']:
-            return super(CutMix, self).__call__(data_dict)
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_index_mix')
+        data_dict.pop('intl_lam')
+        return data_dict
+
+    def forward(self, data_dict):
+        index_mix = data_dict['intl_index_mix']
+
+        reader = data_dict['reader']
+        len_data_lines = data_dict['len_data_lines']
+
+        a = super(CutMix, self).forward(data_dict)
+
+        k = a.keys()
+        assert 'bbox' not in k and 'point' not in k and 'poly' not in k
+
+        data_dict['index'] = index_mix
+        data_dict['len_data_lines'] = len_data_lines
+        data_dict['reader'] = reader
+        b = super(CutMix, self).forward(data_dict)
+
+        wa, ha = get_image_size(a['image'])
+        wb, hb = get_image_size(b['image'])
+
+        lam = data_dict['intl_lam']
+
+        xa1, ya1, xa2, ya2 = self.rand_boxa(get_image_size(a['image']), lam)
+
+        w_bcut = int((xa2 - xa1) * wa / wb)
+        h_bcut = int((ya2 - ya1) * ha / hb)
+
+        if w_bcut > wb or h_bcut > hb:
+            r = min(wb / w_bcut, hb / h_bcut)
+
+            w_bcut = int(w_bcut * r)
+            h_bcut = int(h_bcut * r)
+
+        xb1 = random.randint(0, wb - w_bcut)
+        yb1 = random.randint(0, hb - h_bcut)
+        xb2 = xb1 + w_bcut
+        yb2 = yb1 + h_bcut
+
+        b_cut = crop_image(b['image'], xb1, yb1, xb2, yb2)
+        b_cut = resize_image(b_cut, (xa2 - xa1, ya2 - ya1))
+
+        if is_pil(b['image']):
+            a['image'].paste(b_cut, (xa1, ya1, xa2, ya2))
         else:
-            reader = data_dict['reader']
-            len_data_lines = data_dict['len_data_lines']
+            a['image'][ya1:ya2, xa1:xa2] = b_cut
 
-            a = super(CutMix, self).__call__(data_dict)
+        # adjust lambda to exactly match pixel ratio
+        lam = 1 - ((xa2 - xa1) * (ya2 - ya1) / (wa * ha))
 
-            k = a.keys()
-            assert 'bbox' not in k and 'point' not in k and 'poly' not in k
+        if 'path' in k:
+            a['path'] = '[cutmix]({}, {}, {})'.format(a['path'], b['path'], lam)
 
-            data_dict['index'] = index_mix
-            data_dict['len_data_lines'] = len_data_lines
-            data_dict['reader'] = reader
-            b = super(CutMix, self).__call__(data_dict)
+        if 'label' in k:
+            for i in range(len(a['label'])):
+                a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
 
-            wa, ha = get_image_size(a['image'])
-            wb, hb = get_image_size(b['image'])
-
-            lam = np.random.beta(1.5, 1.5)
-
-            xa1, ya1, xa2, ya2 = self.rand_boxa(get_image_size(a['image']), lam)
-            # xa1, ya1, xa2, ya2 = 0, 0, 703, 565
-
-            w_bcut = int((xa2 - xa1) * wa / wb)
-            h_bcut = int((ya2 - ya1) * ha / hb)
-
-            # print(xa1, ya1, xa2, ya2)
-            # print(wa, wb)
-            # print(ha, hb)
-            # print(w_bcut, h_bcut)
-
-            if w_bcut > wb or h_bcut > hb:
-                # print(wb / w_bcut, hb / h_bcut)
-                r = min(wb / w_bcut, hb / h_bcut)
-
-                w_bcut = int(w_bcut * r)
-                h_bcut = int(h_bcut * r)
-
-                # print(w_bcut, h_bcut)
-                # exit()
-
-            xb1 = random.randint(0, wb - w_bcut)
-            yb1 = random.randint(0, hb - h_bcut)
-            xb2 = xb1 + w_bcut
-            yb2 = yb1 + h_bcut
-
-            # print(xb1, yb1, xb2, yb2)
-            # exit()
-
-            b_cut = crop_image(b['image'], xb1, yb1, xb2, yb2)
-            b_cut = resize_image(b_cut, (xa2 - xa1, ya2 - ya1))
-
-            if is_pil(b['image']):
-                # b_cut = b['image'].crop((xb1, yb1, xb2, yb2))
-                # b_cut = b_cut.resize((xa2 - xa1, ya2 - ya1), Image.BILINEAR)
-                a['image'].paste(b_cut, (xa1, ya1, xa2, ya2))
-            else:
-                # b_cut = b['image'][yb1:yb2, xb1:xb2]
-                # b_cut = cv2.resize(b_cut, (xa2 - xa1, ya2 - ya1))
-                a['image'][ya1:ya2, xa1:xa2] = b_cut
-
-            # adjust lambda to exactly match pixel ratio
-            lam = 1 - ((xa2 - xa1) * (ya2 - ya1) / (wa * ha))
-
-            if 'path' in k:
-                a['path'] = '[cutmix]({}, {}, {})'.format(a['path'], b['path'], lam)
-
-            if 'label' in k:
-                for i in range(len(a['label'])):
-                    a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
-
-            if 'mask' in k:
-                # bmask_cut = b['mask'][yb1:yb2, xb1:xb2]
-                # bmask_cut = cv2.resize(bmask_cut, (xa2 - xa1, ya2 - ya1), interpolation=cv2.INTER_NEAREST)
-                bmask_cut = crop_mask(b['mask'], xb1, yb1, xb2, yb2)
-                bmask_cut = resize_mask(bmask_cut, (xa2 - xa1, ya2 - ya1))
-                a['mask'][ya1:ya2, xa1:xa2] = bmask_cut
+        if 'mask' in k:
+            bmask_cut = crop_mask(b['mask'], xb1, yb1, xb2, yb2)
+            bmask_cut = resize_mask(bmask_cut, (xa2 - xa1, ya2 - ya1))
+            a['mask'][ya1:ya2, xa1:xa2] = bmask_cut
 
             return a
 
@@ -192,13 +189,21 @@ class CutMix(Bamboo):
 
 @INTERNODE.register_module()
 class Mosaic(Bamboo):
-    def __call__(self, data_dict):
-        indices = [random.randint(0, data_dict['len_data_lines'] - 1) for _ in range(3)]
+    def calc_intl_param_forward(self, data_dict):
+        data_dict['intl_mosaic_ids'] = [random.randint(0, data_dict['len_data_lines'] - 1) for _ in range(3)]
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_mosaic_ids')
+        return data_dict
+
+    def forward(self, data_dict):
+        indices = data_dict['intl_mosaic_ids']
         
         reader = data_dict['reader']
         len_data_lines = data_dict['len_data_lines']
 
-        d1 = super(Mosaic, self).__call__(data_dict)
+        d1 = super(Mosaic, self).forward(data_dict)
 
         k = d1.keys()
         assert 'label' not in k
@@ -206,17 +211,17 @@ class Mosaic(Bamboo):
         data_dict['index'] = indices[0]
         data_dict['len_data_lines'] = len_data_lines
         data_dict['reader'] = reader
-        d2 = super(Mosaic, self).__call__(data_dict)
+        d2 = super(Mosaic, self).forward(data_dict)
 
         data_dict['index'] = indices[1]
         data_dict['len_data_lines'] = len_data_lines
         data_dict['reader'] = reader
-        d3 = super(Mosaic, self).__call__(data_dict)
+        d3 = super(Mosaic, self).forward(data_dict)
 
         data_dict['index'] = indices[2]
         data_dict['len_data_lines'] = len_data_lines
         data_dict['reader'] = reader
-        d4 = super(Mosaic, self).__call__(data_dict)
+        d4 = super(Mosaic, self).forward(data_dict)
 
         # 1 2
         # 3 4

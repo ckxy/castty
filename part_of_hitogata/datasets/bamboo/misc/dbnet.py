@@ -168,7 +168,7 @@ class DBEncode(BaseInternode):
                    canvas[y_min_valid:y_max_valid + 1,
                           x_min_valid:x_max_valid + 1])
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         w, h = get_image_size(data_dict['image'])
 
         if 'poly_meta' in data_dict.keys():
@@ -219,7 +219,7 @@ class DBMCEncode(DBEncode):
         self.thr_max = thr_max
         self.min_short_size = min_short_size
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         assert 'class_id' in data_dict['poly_meta'].keys()
         labels = data_dict['poly_meta']['class_id']
 

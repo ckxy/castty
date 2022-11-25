@@ -73,7 +73,7 @@ class PSEEncode(BaseInternode):
         self.shrink_ratio = shrink_ratio
         self.max_shrink = max_shrink
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         w, h = get_image_size(data_dict['image'])
 
         if 'poly_meta' in data_dict.keys():
@@ -113,7 +113,7 @@ class PSEMCEncode(BaseInternode):
         self.shrink_ratio = shrink_ratio
         self.max_shrink = max_shrink
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         assert 'class_id' in data_dict['poly_meta'].keys()
         labels = data_dict['poly_meta']['class_id']
 

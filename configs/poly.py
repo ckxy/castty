@@ -78,8 +78,8 @@ test_data = dict(
         ]
     ),
     dataset=dict(
-        # reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015', use_pil=True),
-        reader=dict(type='WTWLineReader', root='../datasets/wtw/test'),
+        reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015', use_pil=True),
+        # reader=dict(type='WTWLineReader', root='../datasets/wtw/test'),
         # reader=dict(
         #     type='CatReader', 
         #     internodes=(
@@ -116,9 +116,11 @@ test_data = dict(
             # dict(type='Resize', size=(1280, 1280), keep_ratio=True, short=False),
             # dict(type='PaddingBySize', size=(1280, 1280), fill=(0, 0, 0), padding_mode='constant', center=False),
             # dict(type='ToPILImage'),
-            dict(type='CalcLinkMap'),
+            # dict(type='CalcLinkMap'),
             # dict(type='DBEncode'),
             # dict(type='EraseTags', tags=['poly', 'poly_meta']),
+            dict(type='PSEEncode'),
+            dict(type='PSECrop', size=(640, 640), positive_sample_ratio=5.0 / 8.0),
             dict(type='ToTensor'),
             # dict(type='DBMCEncode', num_classes=2),
         ],

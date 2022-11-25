@@ -127,7 +127,7 @@ test_data = dict(
             #     ]),
             #     dict(type='WarpRotate', angle=(-30, 0)),
             # ]),
-            # dict(type='ChooseSome', num=4,branchs=[
+            # dict(type='ChooseSome', num=2,branchs=[
             #     dict(type='Bamboo', internodes=[
             #         dict(type='WarpStretch', rw=(0.5, 1.5), rh=(1, 1))
             #     ]),
@@ -154,7 +154,7 @@ test_data = dict(
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
             # dict(type='SwapChannels', swap=(2, 1, 0)),
             # dict(type='RandomSwapChannels'),
-            dict(type='WestRandomCrop', min_crop_side_ratio=0.1),
+            # dict(type='WestRandomCrop', min_crop_side_ratio=0.1),
             # dict(type='ToPILImage'),
             dict(type='ToTensor'),
             # dict(type='CalcCenterNetGrids', ratio=0.25, num_classes=1),

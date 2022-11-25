@@ -30,11 +30,11 @@ def po(data_dict, rc, index=0):
     img = res['image']
     poly = res['poly']
 
-    from part_of_hitogata.utils.mask_tools import draw_mask
-    mask = data_dict['mask'][index]
-    res = rc(ori_size=data_dict['ori_size'][index], mask=mask)
-    mask = res['mask']
-    img, bar = draw_mask(img, mask, ['bgd', 'fgd'])
+    # from part_of_hitogata.utils.mask_tools import draw_mask
+    # mask = data_dict['mask'][index]
+    # res = rc(ori_size=data_dict['ori_size'][index], mask=mask)
+    # mask = res['mask']
+    # img, bar = draw_mask(img, mask, ['bgd', 'fgd'])
 
     print(data_dict['ori_size'][index])
     # print(poly, 'a')

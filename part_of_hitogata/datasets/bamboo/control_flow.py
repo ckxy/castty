@@ -17,8 +17,17 @@ class ChooseOne(BaseInternode):
 		for branch in branchs:
 			self.branchs.append(build_internode(branch))
 
-	def __call__(self, data_dict):
-		i = random.choice(self.branchs)
+	def calc_intl_param_forward(self, data_dict):
+		data_dict['intl_co_branch_id'] = random.randint(0, len(self.branchs) - 1)
+		return data_dict
+
+	def erase_intl_param_forward(self, data_dict):
+		data_dict.pop('intl_co_branch_id')
+		return data_dict
+
+	def forward(self, data_dict):
+		# i = random.choice(self.branchs)
+		i = self.branchs[data_dict['intl_co_branch_id']]
 		return i(data_dict)
 
 	def __repr__(self):
@@ -38,10 +47,17 @@ class ChooseSome(ChooseOne):
 		self.num = num
 		super(ChooseSome, self).__init__(branchs, **kwargs)
 
-	def __call__(self, data_dict):
-		branchs = random.sample(self.branchs, self.num)
-		for branch in branchs:
-			data_dict = branch(data_dict)
+	def calc_intl_param_forward(self, data_dict):
+		data_dict['intl_co_branch_ids'] = random.sample(list(range(len(self.branchs))), self.num)
+		return data_dict
+
+	def erase_intl_param_forward(self, data_dict):
+		data_dict.pop('intl_co_branch_ids')
+		return data_dict
+
+	def forward(self, data_dict):
+		for i in data_dict['intl_co_branch_ids']:
+			data_dict = self.branchs[i](data_dict)
 		return data_dict
 
 	def __repr__(self):
@@ -60,7 +76,7 @@ class ChooseABranchByID(ChooseOne):
 		super(ChooseABranchByID, self).__init__(branchs, **kwargs)
 		self.tag = 'intl_' + tag
 
-	def __call__(self, data_dict):
+	def forward(self, data_dict):
 		data_dict = self.branchs[data_dict[self.tag]](data_dict)
 		return data_dict
 
@@ -89,8 +105,16 @@ class RandomWarpper(InternodeWarpper):
 		# self.internode = build_internode(internode)
 		super(RandomWarpper, self).__init__(internode, **kwargs)
 
-	def __call__(self, data_dict):
-		if random.random() < self.p:
+	def calc_intl_param_forward(self, data_dict):
+		data_dict['intl_random_flag'] = random.random() < self.p
+		return data_dict
+
+	def erase_intl_param_forward(self, data_dict):
+		data_dict.pop('intl_random_flag')
+		return data_dict
+
+	def forward(self, data_dict):
+		if data_dict['intl_random_flag']:
 			data_dict = self.internode(data_dict)
 		return data_dict
 
@@ -108,7 +132,7 @@ class ForwardOnly(InternodeWarpper):
 		# self.internode = build_internode(internode)
 		super(ForwardOnly, self).__init__(internode, **kwargs)
 
-	def __call__(self, data_dict):
+	def forward(self, data_dict):
 		return self.internode(data_dict)
 
 	def __repr__(self):
@@ -125,7 +149,7 @@ class BackwardOnly(InternodeWarpper):
 		# self.internode = build_internode(internode)
 		super(BackwardOnly, self).__init__(internode, **kwargs)
 
-	def reverse(self, **kwargs):
+	def backward(self, **kwargs):
 		return self.internode.reverse(**kwargs)
 		
 	def __repr__(self):

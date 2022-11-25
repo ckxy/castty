@@ -12,7 +12,7 @@ from torch.nn.functional import affine_grid, grid_sample, pad, interpolate
 __all__ = ['CalcHeatmapByPoint', 'CalcCenterNetGrids']
 
 
-@INTERNODE.register_module()
+# @INTERNODE.register_module()
 class CalcHeatmapByPoint(BaseInternode):
     def __init__(self, ratio=1, sigma=1, resample=False):
         self.ratio = ratio
@@ -148,7 +148,7 @@ class CalcCenterNetGrids(BaseInternode):
         self.use_bbox = use_bbox
         self.use_point = use_point
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         w, h = get_image_size(data_dict['image'])
 
         center_heatmap_target = torch.zeros(self.num_classes, int(h * self.ratio), int(w * self.ratio)).type(torch.float32)

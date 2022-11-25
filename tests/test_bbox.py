@@ -63,6 +63,9 @@ if __name__ == '__main__':
     print(data_manager.dataset.bamboo.rper())
     # exit()
 
+    # data_manager.dataset[0]
+    # exit()
+
     for data in tqdm(dataloader):
         ga(data, info['bbox_classes'], rc, 0)
         plt.show()
