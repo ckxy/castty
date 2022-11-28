@@ -7,7 +7,7 @@ import numpy as np
 from ..builder import INTERNODE
 from ..base_internode import BaseInternode
 from ...utils.common import get_image_size, is_pil, clip_poly
-
+from ..crop import Crop
 try:
     import pyclipper
     from shapely.geometry import Polygon as plg
@@ -153,7 +153,7 @@ class PSEMCEncode(BaseInternode):
 
 
 @INTERNODE.register_module()
-class PSECrop(BaseInternode):
+class PSECrop(Crop):
     def __init__(self, size, positive_sample_ratio=5.0 / 8.0, **kwargs):
         assert 0 <= positive_sample_ratio <= 1
 
@@ -191,7 +191,7 @@ class PSECrop(BaseInternode):
 
         return (h, w)
 
-    def __call__(self, data_dict):
+    def calc_cropping(self, data_dict):
         w, h = get_image_size(data_dict['image'])
 
         img_gt = data_dict['ocrdet_kernel']
@@ -204,26 +204,7 @@ class PSECrop(BaseInternode):
         right = left + self.size[0]
         bottom = top + self.size[1]
 
-        # print(left, right, w, top, bottom, h)
-
-        if is_pil(data_dict['image']):
-            data_dict['image'] = data_dict['image'].crop((left, top, right, bottom))
-        else:
-            data_dict['image'] = data_dict['image'][top:bottom, left:right]
-
-        data_dict['ocrdet_kernel'] = data_dict['ocrdet_kernel'][:, top:bottom, left:right]
-        data_dict['ocrdet_train_mask'] = data_dict['ocrdet_train_mask'][top:bottom, left:right]
-
-        if 'poly' in data_dict.keys():
-            for i in range(len(data_dict['poly'])):
-                data_dict['poly'][i][..., 0] -= left
-                data_dict['poly'][i][..., 1] -= top
-
-            data_dict['poly'], keep = clip_poly(data_dict['poly'], (w, h))
-            if 'poly_meta' in data_dict.keys():
-                data_dict['poly_meta'].filter(keep)
-
-        return data_dict
+        return left, top, right, bottom
 
     def __repr__(self):
         return 'PSECrop(size={}, positive_sample_ratio={})'.format(self.size, self.positive_sample_ratio)
