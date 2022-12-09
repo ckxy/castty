@@ -21,16 +21,54 @@ def draw_point(img, landmarks, visible=None):
 
     font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
     font = ImageFont.truetype(font_path, int(l * 1e-3 * 25))
+    draw = ImageDraw.Draw(img)
+    r = max(2, int(l / 200))
     
     for k, landmark in enumerate(landmarks):
         for idx, point in enumerate(landmark):
             if not visible[k, idx]:
                 continue
-            x, y = np.around(point).astype(np.int)
-            draw = ImageDraw.Draw(img)
-            r = max(2, int(l / 200))
+            x, y = np.around(point).astype(np.int32)
             draw.ellipse((x - r, y - r, x + r, y + r), fill=(255, 0, 0))
             draw.text((x, y), str(idx), fill=(0, 0, 255), font=font)
+
+    if is_np:
+        img = np.asarray(img)
+
+    return img
+
+
+def draw_point_without_label(img, landmarks, visible=None, color=(255, 0, 0)):
+    if not isinstance(img, Image.Image):
+        is_np = True
+        img = Image.fromarray(img)
+    else:
+        is_np = False
+
+    if visible is None:
+        visible = np.ones(landmarks.shape[:2]).astype(np.bool)
+
+    w, h = img.size
+    l = math.sqrt(h * h + w * w)
+
+    draw = ImageDraw.Draw(img)
+    r = max(2, int(l / 200))
+    
+    for k, landmark in enumerate(landmarks):
+        for idx, point in enumerate(landmark):
+            if not visible[k, idx]:
+                continue
+            x, y = np.around(point).astype(np.int32)
+            draw.ellipse((x - r, y - r, x + r, y + r), fill=color)
+
+        for i in range(len(landmark)):
+            start = i % len(landmark)
+            end = (i + 1) % len(landmark)
+            if not visible[k, start] or not visible[k, end]:
+                continue
+            x1, y1 = np.around(landmark[start]).astype(np.int32)
+            x2, y2 = np.around(landmark[end]).astype(np.int32)
+            draw.line((x1, y1, x2, y2), width=r // 2, fill=color)
 
     if is_np:
         img = np.asarray(img)

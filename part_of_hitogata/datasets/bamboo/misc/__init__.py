@@ -5,4 +5,5 @@ from .dbnet import *
 from .nano import *
 from .psenet import *
 from .pts import *
+from .tsr import *
 from .wflw import *

@@ -119,7 +119,7 @@ test_data = dict(
             # dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5), expand=True),
             # dict(type='WarpRotate', angle=(-30, -30), expand=True),
             # dict(type='WarpShear', ax=(-30, -30), ay=(15, 15), expand=True),
-            # dict(type='WarpTranslate', rw=(-0.2, -0.2), rh=(0.2, 0.2), expand=True),
+            dict(type='WarpTranslate', rw=(-0.2, -0.2), rh=(0.2, 0.2)),
             # dict(type='WarpResize', size=(416, 416), expand=False, keep_ratio=True),
             # dict(type='ChooseOne', branchs=[
             #     dict(type='Bamboo', internodes=[

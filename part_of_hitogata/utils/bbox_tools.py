@@ -140,6 +140,28 @@ def draw_bbox(img, bboxes, class_ids=None, classes=None, scores=None):
     return img
 
 
+def draw_bbox_without_label(img, bboxes):
+    if not isinstance(img, Image.Image):
+        is_np = True
+        img = Image.fromarray(img)
+    else:
+        is_np = False
+
+    w, h = img.size
+    l = math.sqrt(h * h + w * w)
+
+    draw = ImageDraw.Draw(img)
+
+    for i, bbox in enumerate(bboxes):
+        coor = np.array(bbox, dtype=np.int32)
+        draw.rectangle(tuple(coor), outline=(255, 0, 0), width=max(1, int(l / 600)))
+
+    if is_np:
+        img = np.asarray(img)
+
+    return img
+
+
 def calc_diou(boxes1, boxes2):
     """
     :param boxes1: boxes1和boxes2的shape可以不相同，但是需要满足广播机制，且需要是Tensor
