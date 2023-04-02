@@ -137,27 +137,28 @@ test_data = dict(
         internodes=[
             dict(type='DataSource'),
             # dict(type='RandomCenterCropPad', size=(512, 512), ratios=(0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3)),
-            dict(type='ResizeAndPadding', 
-                resize=dict(
-                    type='WarpResize',
-                    size=(504, 504),
-                    keep_ratio=True,
-                    short=False,
-                ),
-                padding=dict(
-                    type='PaddingBySize',
-                    size=(512, 512),
-                    fill=(0, 0, 0), 
-                    padding_mode='constant',
-                    center=True
-                ),
-                # one_way='forward'
-            ),
+            # dict(type='ResizeAndPadding', 
+            #     resize=dict(
+            #         type='WarpResize',
+            #         size=(504, 504),
+            #         keep_ratio=True,
+            #         short=False,
+            #     ),
+            #     padding=dict(
+            #         type='PaddingBySize',
+            #         size=(512, 512),
+            #         fill=(0, 0, 0), 
+            #         padding_mode='constant',
+            #         center=True
+            #     ),
+            #     # one_way='forward'
+            # ),
             # dict(type='ToPILImage'),
+            dict(type='CalcTSRGT'),
             dict(type='ToTensor'),
             # dict(type='CalcCenterNetGrids', ratio=0.25, num_classes=1, use_point=True),
             # dict(type='CalcPTSGrids', ratio=0.25),
-            dict(type='CalcTSRGT'),
+            # dict(type='CalcTSRGT'),
         ],
     ),
 )

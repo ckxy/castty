@@ -126,16 +126,16 @@ class WTWSTReader(WTWReader):
         super(WTWSTReader, self).__init__(root, **kwargs)
 
         from tqdm import tqdm
-        import torch
 
-        # self.data_lines = []
-        # for i in tqdm(range(len(self.xml_paths))):
-        #     table_ids = self.read_table_ids(os.path.join(self.root, 'xml', self.xml_paths[i]))
-        #     for j in range(len(np.unique(table_ids))):
-        #         self.data_lines.append((self.xml_paths[i], j))
+        self.data_lines = []
+        for i in tqdm(range(len(self.xml_paths))):
+            table_ids = self.read_table_ids(os.path.join(self.root, 'xml', self.xml_paths[i]))
+            for j in range(len(np.unique(table_ids))):
+                self.data_lines.append((self.xml_paths[i], j))
 
+        # import torch
         # torch.save(self.data_lines, 'wtwst.pth')
-        self.data_lines = torch.load('wtwst.pth')
+        # self.data_lines = torch.load('wtwst.pth')
 
     def read_table_ids(self, xml_path):
         root = ET.parse(xml_path).getroot()
@@ -202,7 +202,7 @@ class WTWSTReader(WTWReader):
         return left, top, right, bottom
 
     def __call__(self, index):
-        index = 1
+        # index = 170
         xml_path, table_id = self.data_lines[index]
 
         path = os.path.join(self.root, 'images', os.path.splitext(xml_path)[0] + '.jpg')
@@ -237,7 +237,7 @@ class WTWSTReader(WTWReader):
             endrow=endrows
         )
 
-        point_meta = Meta(visible=np.ones(points.shape[:2]).astype(np.bool))
+        point_meta = Meta(visible=np.ones(points.shape[:2]).astype(np.bool_))
 
         return dict(
             image=img,
@@ -279,7 +279,7 @@ class WTWLineReader(WTWReader):
         for i in range(len(points)):
             polys.append(points[i])
 
-        meta = Meta(ignore_flag=np.zeros(len(polys)).astype(np.bool))
+        meta = Meta(ignore_flag=np.zeros(len(polys)).astype(np.bool_))
 
         return dict(
             image=img,

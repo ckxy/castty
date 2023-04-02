@@ -28,11 +28,11 @@ class Warp(Bamboo):
             cfg['expand'] = False
             self.internodes.append(build_internode(cfg))
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         data_dict['intl_warp_matrix'] = np.eye(3)
         # data_dict['warp_size'] = get_image_size(data_dict['image'])
 
-        data_dict = super(Warp, self).__call__(data_dict)
+        data_dict = super(Warp, self).forward(data_dict)
 
         data_dict['intl_warp_tmp_matrix'] = data_dict.pop('intl_warp_matrix')
         data_dict['intl_warp_tmp_size'] = get_image_size(data_dict['image'])
@@ -45,7 +45,7 @@ class Warp(Bamboo):
 
         return data_dict
 
-    def reverse(self, **kwargs):
+    def backward(self, **kwargs):
         return kwargs
 
     def __repr__(self):
@@ -205,27 +205,12 @@ class WarpResize(WarpInternode):
             if self.short:
                 r = max(rh, rw)
                 scale = (r, r)
-
-                if h < w:
-                    nh = th
-                    nw = int(r * w)
-                else:
-                    nh = int(r * h)
-                    nw = tw
-
-                new_size = (nw, nh)
             else:
                 r = min(rh, rw)
                 scale = (r, r)
 
-                if h > w:
-                    nh = th
-                    nw = int(r * w)
-                else:
-                    nh = int(r * h)
-                    nw = tw
-
-                new_size = (nw, nh)
+            # new_size = (int(r * w), int(r * h))
+            new_size = int(round(r * w)), int(round(r * h))
         else:
             scale = (rw, rh)
             new_size = (tw, th)
@@ -271,11 +256,11 @@ class WarpResize(WarpInternode):
             data_dict = self.erase_intl_param_forward(data_dict)
         return data_dict
 
-    def reverse(self, **kwargs):
-        kwargs = self.calc_intl_param_backward(kwargs)
-        kwargs = self.backward(kwargs)
-        kwargs = self.erase_intl_param_backward(kwargs)
-        return kwargs
+    # def reverse(self, **kwargs):
+    #     kwargs = self.calc_intl_param_backward(kwargs)
+    #     kwargs = self.backward(kwargs)
+    #     kwargs = self.erase_intl_param_backward(kwargs)
+    #     return kwargs
 
     def __repr__(self):
         return 'WarpResize(size={}, keep_ratio={}, short={}, {})'.format(self.size, self.keep_ratio, self.short, super(WarpResize, self).__repr__())

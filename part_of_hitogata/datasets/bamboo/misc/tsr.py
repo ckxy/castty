@@ -1,10 +1,11 @@
+import os
 import math
 import torch
 import numpy as np
+from PIL import Image
 from ..builder import INTERNODE
 from ..base_internode import BaseInternode
 from ...utils.common import get_image_size
-from PIL import Image, ImageDraw
 
 
 __all__ = ['CalcTSRGT']
@@ -45,7 +46,7 @@ class CalcTSRGT(BaseInternode):
             points.append(np.array([w + 1, points[-1][1]]).astype(np.float32))
             ind[-1] = False
             ind.append(False)
-        return np.array(points).astype(np.float32), np.array(ind).astype(np.bool)
+        return np.array(points).astype(np.float32), np.array(ind).astype(np.bool_)
 
     def calc_points_on_y(self, input_points, h):
         points = []
@@ -70,7 +71,7 @@ class CalcTSRGT(BaseInternode):
         if points[-1][1] < h - 1:
             points.append(np.array([points[-1][0], h + 1]).astype(np.float32))
             ind.append(False)
-        return np.array(points).astype(np.float32), np.array(ind).astype(np.bool)
+        return np.array(points).astype(np.float32), np.array(ind).astype(np.bool_)
 
     def calc_x(self, col, y, ind=None):
         i = np.nonzero(col[:, 1] <= y)[0][-1]
@@ -162,11 +163,35 @@ class CalcTSRGT(BaseInternode):
             row_separators[2].append(bt)
 
         # from part_of_hitogata.utils.point_tools import draw_point, draw_point_without_label
+        # from PIL import ImageDraw, ImageFont
         # img = data_dict['image'].copy()
-        # for row_separator in row_separators:
-        #     for row in row_separator:
-        #         img = draw_point_without_label(img, row[np.newaxis, ...])
+
+        # w, h = img.size
+        # l = math.sqrt(h * h + w * w)
+        # draw = ImageDraw.Draw(img)
+        # r = max(2, int(l / 200))
+        # font = ImageFont.truetype('/Users/liaya/Documents/part-of-hitogata/part_of_hitogata/fonts/arial.ttf', 30)
+
+        # # for row_separator in row_separators:
+        # for i in range(len(rows_ind)):
+        #     row, row_ind = row_separators[1][i], rows_ind[i]
+        #     for j, point in enumerate(row):
+        #         x, y = np.around(point).astype(np.int32)
+        #         if row_ind[j]:
+        #             draw.ellipse((x - r, y - r, x + r, y + r), fill=(255, 0, 0))
+        #         else:
+        #             draw.ellipse((x - r, y - r, x + r, y + r), fill=(0, 0, 255))
+        #         draw.text((x, y), str(j), fill=(100, 255, 100), font=font)
+
+        #     for j in range(len(row) - 1):
+        #         x1, y1 = np.around(row[j]).astype(np.int32)
+        #         x2, y2 = np.around(row[j + 1]).astype(np.int32)
+        #         if row_ind[j] and row_ind[j + 1]:
+        #             draw.line((x1, y1, x2, y2), width=r // 2, fill=(255, 0, 0))
+        #         else:
+        #             draw.line((x1, y1, x2, y2), width=r // 2, fill=(0, 0, 255))
         # img.show()
+        # exit()
 
         x_tau = self.tau * w
         row_refpt = torch.zeros(h).type(torch.float32)
@@ -181,7 +206,7 @@ class CalcTSRGT(BaseInternode):
             radius = int(radius) if int(radius) > 0 else 1
 
             ys = torch.arange(h).type(torch.float32)
-            sigma = math.sqrt(2 * radius ** 2 / math.log(10))
+            sigma = math.sqrt(0.5 * radius ** 2 / math.log(10))
             r = -(ys - y2_tau) ** 2 / (2 * sigma ** 2)
             heat = r.exp()
             heat[heat < 0.1] = 0
@@ -206,7 +231,7 @@ class CalcTSRGT(BaseInternode):
             gt_c_row.append(c)
 
         gt_l_row = np.array(gt_l_row).astype(np.float32)
-        gt_c_row = np.array(gt_c_row).astype(np.bool)
+        gt_c_row = np.array(gt_c_row).astype(np.bool_)
         # print(gt_l_row, gt_l_row.shape)
         # print(gt_c_row, gt_c_row.shape)
         # exit()
@@ -285,7 +310,7 @@ class CalcTSRGT(BaseInternode):
             # print(x2_tau, radius)
 
             xs = torch.arange(w).type(torch.float32)
-            sigma = math.sqrt(2 * radius ** 2 / math.log(10))
+            sigma = math.sqrt(0.5 * radius ** 2 / math.log(10))
             r = -(xs - x2_tau) ** 2 / (2 * sigma ** 2)
             heat = r.exp()
             heat[heat < 0.1] = 0
@@ -310,7 +335,7 @@ class CalcTSRGT(BaseInternode):
             gt_c_col.append(c)
 
         gt_l_col = np.array(gt_l_col).astype(np.float32)
-        gt_c_col = np.array(gt_c_col).astype(np.bool)
+        gt_c_col = np.array(gt_c_col).astype(np.bool_)
 
         # print(gt_l_col, gt_l_col.shape)
         # print(gt_c_col, gt_c_col.shape)

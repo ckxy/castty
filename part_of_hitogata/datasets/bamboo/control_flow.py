@@ -1,5 +1,6 @@
 import random
 from .builder import INTERNODE
+from ..utils.common import make_tid
 from .builder import build_internode
 from .base_internode import BaseInternode
 
@@ -13,21 +14,21 @@ class ChooseOne(BaseInternode):
 		assert len(branchs) > 1
 
 		self.branchs = []
-
 		for branch in branchs:
 			self.branchs.append(build_internode(branch))
+		self.tag = 'intl_co_branch_id' + make_tid()
 
 	def calc_intl_param_forward(self, data_dict):
-		data_dict['intl_co_branch_id'] = random.randint(0, len(self.branchs) - 1)
+		data_dict[self.tag] = random.randint(0, len(self.branchs) - 1)
 		return data_dict
 
 	def erase_intl_param_forward(self, data_dict):
-		data_dict.pop('intl_co_branch_id')
+		data_dict.pop(self.tag)
 		return data_dict
 
 	def forward(self, data_dict):
 		# i = random.choice(self.branchs)
-		i = self.branchs[data_dict['intl_co_branch_id']]
+		i = self.branchs[data_dict[self.tag]]
 		return i(data_dict)
 
 	def __repr__(self):
@@ -46,17 +47,18 @@ class ChooseSome(ChooseOne):
 		assert num > 1 and num <= len(branchs)
 		self.num = num
 		super(ChooseSome, self).__init__(branchs, **kwargs)
+		self.tag = 'intl_co_branch_ids' + make_tid()
 
 	def calc_intl_param_forward(self, data_dict):
-		data_dict['intl_co_branch_ids'] = random.sample(list(range(len(self.branchs))), self.num)
+		data_dict[self.tag] = random.sample(list(range(len(self.branchs))), self.num)
 		return data_dict
 
 	def erase_intl_param_forward(self, data_dict):
-		data_dict.pop('intl_co_branch_ids')
+		data_dict.pop(self.tag)
 		return data_dict
 
 	def forward(self, data_dict):
-		for i in data_dict['intl_co_branch_ids']:
+		for i in data_dict[self.tag]:
 			data_dict = self.branchs[i](data_dict)
 		return data_dict
 
@@ -102,19 +104,19 @@ class RandomWarpper(InternodeWarpper):
 		internode.pop('p')
 
 		self.p = p
-		# self.internode = build_internode(internode)
+		self.tag = 'intl_random_flag_' + make_tid()
 		super(RandomWarpper, self).__init__(internode, **kwargs)
 
 	def calc_intl_param_forward(self, data_dict):
-		data_dict['intl_random_flag'] = random.random() < self.p
+		data_dict[self.tag] = random.random() < self.p
 		return data_dict
 
 	def erase_intl_param_forward(self, data_dict):
-		data_dict.pop('intl_random_flag')
+		data_dict.pop(self.tag)
 		return data_dict
 
 	def forward(self, data_dict):
-		if data_dict['intl_random_flag']:
+		if data_dict[self.tag]:
 			data_dict = self.internode(data_dict)
 		return data_dict
 
@@ -129,7 +131,6 @@ class RandomWarpper(InternodeWarpper):
 class ForwardOnly(InternodeWarpper):
 	def __init__(self, internode, **kwargs):
 		internode.pop('one_way')
-		# self.internode = build_internode(internode)
 		super(ForwardOnly, self).__init__(internode, **kwargs)
 
 	def forward(self, data_dict):
@@ -146,7 +147,6 @@ class ForwardOnly(InternodeWarpper):
 class BackwardOnly(InternodeWarpper):
 	def __init__(self, internode, **kwargs):
 		internode.pop('one_way')
-		# self.internode = build_internode(internode)
 		super(BackwardOnly, self).__init__(internode, **kwargs)
 
 	def backward(self, **kwargs):

@@ -9,7 +9,7 @@ from ...utils.bbox_tools import calc_iou1, xyxy2xywh
 from ..utils.common import get_image_size, is_pil, filter_bbox_by_center, clip_bbox, clip_poly, filter_bbox, filter_point
 
 
-__all__ = ['Crop', 'AdaptiveCrop', 'AdaptiveTranslate', 'MinIOUCrop', 'MinIOGCrop', 'CenterCrop', 'RandomAreaCrop', 'EastRandomCrop', 'RandomCenterCropPad']
+__all__ = ['Crop', 'AdaptiveCrop', 'AdaptiveTranslate', 'MinIOUCrop', 'MinIOGCrop', 'CenterCrop', 'RandomAreaCrop', 'EastRandomCrop', 'WestRandomCrop', 'RandomCenterCropPad']
 
 
 def crop_image(image, x1, y1, x2, y2):

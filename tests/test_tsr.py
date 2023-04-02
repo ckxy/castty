@@ -116,8 +116,9 @@ def tsr(data_dict, classes, rc, index=0):
     l_col = data_dict['tsr_l_col'][index]
     c_col = data_dict['tsr_c_col'][index]
 
-    print(bboxes, 'bbb')
-    print(data_dict['bbox_meta'][index])
+    # print(bboxes, 'bbb')
+    # print(points, 'ppp')
+    # print(data_dict['bbox_meta'][index])
 
     res = rc(image=data_dict['image'][index], ori_size=data_dict['ori_size'][index], point=points, bbox=bboxes, mask=row_mask)
     img = res['image']
@@ -154,6 +155,18 @@ def tsr(data_dict, classes, rc, index=0):
     plt.subplot(2, 3, 6)
     plt.imshow(col_vis)
     plt.axis('off')
+
+    # plt.subplot(2, 2, 1)
+    # plt.imshow(pt_img)
+    # plt.axis('off')
+
+    # plt.subplot(2, 2, 2)
+    # plt.imshow(row_mask)
+    # plt.axis('off')
+
+    # plt.subplot(2, 2, 4)
+    # plt.imshow(row_vis)
+    # plt.axis('off')
 
 
 if __name__ == '__main__':
