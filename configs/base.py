@@ -1,0 +1,128 @@
+general = dict(
+    experiment_name='test',
+    checkpoints_dir='./',
+)
+
+visualizer = dict(
+    visdom=dict(
+        server='http://localhost',
+        port=8097,
+        username='',
+        password=''
+    ),
+)
+
+bbox = [306, 308, 696, 870]
+
+label = [0, 0, 1, 0, 0, 0]
+
+point = [[307.17, 508.886 ],
+ [584.075, 506.654 ],
+ [365.906, 687.265 ],
+ [451.5053, 684.0441],
+ [431.5594, 870.5972]]
+
+poly = [[321.906, 570.918 ],
+ [323.7967, 556.6462],
+ [334.5908, 548.2142],
+ [360.3877, 551.5268],
+ [379.9596, 568.8308],
+ [358.4041, 575.5783],
+ [335.571, 578.0543],
+ [328.2922, 575.4066]]
+
+mask = [[459.847, 566.848 ],
+ [472.9587, 552.1189],
+ [491.2339, 545.2528],
+ [516.5079, 549.7994],
+ [540.8568, 558.6542],
+ [518.6608, 569.9822],
+ [494.3823, 574.3677],
+ [477.0045, 571.1513]]
+
+
+mode = [
+    'label',
+    'bbox',
+    'mask',
+    'point',
+    'poly'
+]
+
+test_data = dict(
+    data_loader=dict(
+        batch_size=1,
+        serial_batches=True,
+        num_threads=0,
+        pin_memory=False,
+        collator=[
+            dict(type='LabelCollateFN', names=('label',)),
+            dict(type='BboxCollateFN', names=('bbox',)),
+            dict(type='ListCollateFN', names=('bbox_meta',)),
+            dict(type='ListCollateFN', names=('point_meta',)),
+            dict(type='ListCollateFN', names=('poly', 'poly_meta')),
+        ]
+    ),
+    dataset=dict(
+        reader=dict(type='FondReader', mode=mode, image='images/test.jpg', label=label, bbox=bbox, mask=mask, point=point, poly=poly, use_pil=True),
+        internodes=[
+            dict(type='DataSource'),
+            # dict(type='Crop', size=(50, 50)),
+            # dict(type='AdaptiveCrop'),
+            # dict(type='MinIOUCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
+            # dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
+            # dict(type='CenterCrop', size=(480, 480), use_base_filter=False),
+            # dict(type='RandomAreaCrop'),
+            # dict(type='EastRandomCrop', min_crop_side_ratio=0.4),
+            # dict(type='WestRandomCrop', min_crop_side_ratio=0.4),
+            # dict(type='RandomCenterCropPad', size=(512, 512), ratios=(0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3)),
+            # dict(type='Padding', padding=(20, 30, 40, 50), fill=(50, 50, 50), padding_mode='reflect'),
+            # dict(type='RandomExpand', ratio=2),
+            # dict(type='ResizeAndPadding', 
+            #     resize=dict(
+            #         type='Resize',
+            #         size=(512, 512),
+            #         keep_ratio=True,
+            #         short=False,
+            #     ),
+            #     padding=dict(
+            #         # type='PaddingBySize',
+            #         # size=(600, 600),
+            #         type='PaddingByStride',
+            #         stride=100,
+            #         fill=(0, 0, 0), 
+            #         padding_mode='constant',
+            #         center=True,
+            #         use_base_filter=False
+            #     ),
+            #     # one_way='forward'
+            # ),
+            # dict(type='Rescale', ratio_range=(0.5, 3), mode='range'),
+            # dict(type='RescaleLimitedByBound', long_size_bound=1280, short_size_bound=640, ratio_range=(0.5, 3), mode='range'),
+            # dict(type='Flip', horizontal=True),
+            # dict(type='Rot90', k=[1, 2, 3]),
+            # dict(type='Warp', expand=True, ccs=True, internodes=[
+            #     dict(type='WarpPerspective'),
+            #     dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5)),
+            #     dict(type='WarpScale', r=(2, 2)),
+            #     dict(type='WarpShear', ax=(-45, -45), ay=(15, 15), p=0.5),
+            #     dict(type='WarpRotate', angle=(-30, -30)),
+            #     # dict(type='WarpTranslate', rw=(-0.2, -0.2), rh=(0.2, 0.2)),
+            #     # dict(type='WarpResize', size=(416, 416), keep_ratio=True),
+            # ]),
+            # dict(type='Warp', expand=True, ccs=True, p=0.5, internodes=[
+            #     dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5), p=0.5),
+            #     dict(type='WarpScale', r=(2, 2)),
+            # ]),
+            # dict(type='WarpPerspective', expand=True, ccs=True),
+            # dict(type='WarpScale', r=(0.5, 2), expand=True),
+            # dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5), expand=True),
+            # dict(type='WarpRotate', angle=(-30, -30), expand=True),
+            # dict(type='WarpShear', ax=(-30, -30), ay=(15, 15), expand=True),
+            # dict(type='WarpTranslate', rw=(-0.2, -0.2), rh=(0.2, 0.2)),
+            # dict(type='WarpResize', size=(416, 416), expand=False, keep_ratio=True),
+            dict(type='ToTensor'),
+        ],
+    ),
+)
+

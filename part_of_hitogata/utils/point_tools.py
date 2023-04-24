@@ -14,7 +14,7 @@ def draw_point(img, landmarks, visible=None):
         is_np = False
 
     if visible is None:
-        visible = np.ones(landmarks.shape[:2]).astype(np.bool)
+        visible = np.ones(landmarks.shape[:2]).astype(np.bool_)
 
     w, h = img.size
     l = math.sqrt(h * h + w * w)
@@ -33,7 +33,7 @@ def draw_point(img, landmarks, visible=None):
             draw.text((x, y), str(idx), fill=(0, 0, 255), font=font)
 
     if is_np:
-        img = np.asarray(img)
+        img = np.array(img)
 
     return img
 
@@ -46,7 +46,7 @@ def draw_point_without_label(img, landmarks, visible=None, color=(255, 0, 0)):
         is_np = False
 
     if visible is None:
-        visible = np.ones(landmarks.shape[:2]).astype(np.bool)
+        visible = np.ones(landmarks.shape[:2]).astype(np.bool_)
 
     w, h = img.size
     l = math.sqrt(h * h + w * w)
@@ -71,7 +71,7 @@ def draw_point_without_label(img, landmarks, visible=None, color=(255, 0, 0)):
             draw.line((x1, y1, x2, y2), width=r // 2, fill=color)
 
     if is_np:
-        img = np.asarray(img)
+        img = np.array(img)
 
     return img
 
@@ -115,7 +115,7 @@ def calc_pitch_yaw_roll(landmarks_2D, landmarks_3D, cam_w=256, cam_h=256):
     #     [0.000000, -3.116408, 6.097667],  # LOWER_LIP,
     #     [0.000000, -7.415691, 4.070434],  # CHIN
     # ])
-    landmarks_2D = np.asarray(landmarks_2D, dtype=np.float32).reshape(-1, 2)
+    landmarks_2D = np.array(landmarks_2D, dtype=np.float32).reshape(-1, 2)
 
     # Applying the PnP solver to find the 3D pose of the head from the 2D position of the landmarks.
     # retval - bool

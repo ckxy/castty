@@ -163,7 +163,7 @@ class WTWSTReader(WTWReader):
             if tid != table_id:
                 draw.rectangle(tuple(bbox.astype(np.int32).tolist()), fill=1)
         
-        mask = np.asarray(mask)
+        mask = np.array(mask)
 
         w_array = mask[y1: y2, :]
         w_array = w_array.sum(axis=0)

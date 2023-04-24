@@ -57,7 +57,7 @@ if __name__ == '__main__':
     # exit()
 
     for data in tqdm(dataloader):
-        ss(data, info['mask_classes'], rc, 0)
+        ss(data, info['mask']['classes'], rc, 0)
         plt.show()
         break
 

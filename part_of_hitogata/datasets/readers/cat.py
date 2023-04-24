@@ -54,7 +54,6 @@ class CatReader(Reader):
         res = 'CatReader(\n'
         for t in self.internodes:
             res += '  ' + t.__repr__() + '\n'
-        # res = res[:-1]
         res += '  output_gid={}'.format(self.output_gid)
         res += '\n  )'
         return res

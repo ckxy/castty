@@ -41,6 +41,10 @@ class Flip(BaseInternode):
             else:
                 data_dict['bbox'][:, 1], data_dict['bbox'][:, 3] = h - data_dict['bbox'][:, 3], h - data_dict['bbox'][:, 1]
 
+        if 'mask' in data_dict.keys():
+            mode = 1 if self.horizontal else 0
+            data_dict['mask'] = cv2.flip(data_dict['mask'], mode)
+
         if 'point' in data_dict.keys():
             if self.horizontal:
                 data_dict['point'][..., 0] = w - data_dict['point'][..., 0]
@@ -57,10 +61,6 @@ class Flip(BaseInternode):
             else:
                 for i in range(len(data_dict['poly'])):
                     data_dict['poly'][i][:, 1] = h - data_dict['poly'][i][:, 1]
-
-        if 'mask' in data_dict.keys():
-            mode = 1 if self.horizontal else 0
-            data_dict['mask'] = cv2.flip(data_dict['mask'], mode)
 
         return data_dict
 

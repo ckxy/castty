@@ -32,8 +32,8 @@ class ICDARDetReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='ocrdet',
-            )
+                poly=dict()
+            ),
         )
 
     def __call__(self, index):

@@ -115,9 +115,10 @@ class DukeMTMCAttritubesReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='cls',
-                classes=self.grouped_classes
-            )
+                label=dict(
+                    classes=self.grouped_classes
+                ),
+            ),
         )
 
     def __call__(self, index):
@@ -125,7 +126,7 @@ class DukeMTMCAttritubesReader(Reader):
         w, h = img.size
         path = self.img_paths[index]
 
-        pid = self.pids.index(os.path.splitext(ntpath.basename(path))[0].split('_')[0])
+        pid = self.pids.index(os.path.splitext(os.path.basename(path))[0].split('_')[0])
         # pid = self.pids.index('0370')
 
         labels = []
@@ -164,6 +165,10 @@ class DukeMTMCAttritubesReader(Reader):
                 gl = np.zeros(len(gc)).astype(np.int32)
                 gl[labels[i]] = 1
             grouped_labels.append(gl)
+
+        print(self.grouped_classes)
+        print(grouped_labels)
+        exit()
 
         return dict(
             image=img,

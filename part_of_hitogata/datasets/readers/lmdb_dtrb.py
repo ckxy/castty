@@ -76,7 +76,7 @@ class LmdbDTRBReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='seq',
+                seq=dict(),
             )
         )
 
@@ -94,7 +94,7 @@ class LmdbDTRBReader(Reader):
             buf.seek(0)
             img = Image.open(buf).convert('RGB')  # for color image
             if not self.use_pil:
-                img = np.asarray(img)
+                img = np.array(img)
 
             if not self.sensitive:
                 label = label.lower()

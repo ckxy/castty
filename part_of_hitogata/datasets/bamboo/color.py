@@ -30,7 +30,7 @@ class BrightnessEnhancement(BaseInternode):
         else:
             data_dict['image'] = Image.fromarray(data_dict['image'])
             data_dict['image'] = adjust_brightness(data_dict['image'], data_dict['intl_factor'])
-            data_dict['image'] = np.asarray(data_dict['image'])
+            data_dict['image'] = np.array(data_dict['image'])
 
         return data_dict
 
@@ -61,7 +61,7 @@ class ContrastEnhancement(BaseInternode):
         else:
             data_dict['image'] = Image.fromarray(data_dict['image'])
             data_dict['image'] = adjust_contrast(data_dict['image'], data_dict['intl_factor'])
-            data_dict['image'] = np.asarray(data_dict['image'])
+            data_dict['image'] = np.array(data_dict['image'])
 
         return data_dict
 
@@ -92,7 +92,7 @@ class SaturationEnhancement(BaseInternode):
         else:
             data_dict['image'] = Image.fromarray(data_dict['image'])
             data_dict['image'] = adjust_saturation(data_dict['image'], data_dict['intl_factor'])
-            data_dict['image'] = np.asarray(data_dict['image'])
+            data_dict['image'] = np.array(data_dict['image'])
 
         return data_dict
 
@@ -123,7 +123,7 @@ class HueEnhancement(BaseInternode):
         else:
             data_dict['image'] = Image.fromarray(data_dict['image'])
             data_dict['image'] = adjust_hue(data_dict['image'], data_dict['intl_factor'])
-            data_dict['image'] = np.asarray(data_dict['image'])
+            data_dict['image'] = np.array(data_dict['image'])
 
         return data_dict
 
@@ -141,9 +141,7 @@ class ToGrayscale(BaseInternode):
         if is_pil(data_dict['image']):
             data_dict['image'] = to_grayscale(data_dict['image'], num_output_channels=3)
         else:
-            # print(data_dict['image'].shape, 'a')
             data_dict['image'] = cv2.cvtColor(data_dict['image'], cv2.COLOR_BGR2GRAY)
             data_dict['image'] = data_dict['image'][..., np.newaxis]
             data_dict['image'] = np.repeat(data_dict['image'], 3, axis=-1)
-            # print(data_dict['image'].shape, 'b')
         return data_dict

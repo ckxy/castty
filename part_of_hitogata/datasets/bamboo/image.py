@@ -55,7 +55,7 @@ class SwapChannels(BaseInternode):
     @staticmethod
     def swap_channels(image, swap):
         if is_pil(image):
-            image = np.asarray(image)
+            image = np.array(image)
             is_np = False
         else:
             is_np = True

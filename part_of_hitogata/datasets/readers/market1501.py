@@ -51,7 +51,7 @@ class Market1501AttritubesReader(Reader):
         self.mode = mode
 
         if self.mode == 'b':
-            self.grouped_labels = (
+            self.grouped_classes = (
                 ('young', 'teenager', 'adult', 'old'),
                 ('carrying backpack',),
                 ('carrying bag',),
@@ -66,7 +66,7 @@ class Market1501AttritubesReader(Reader):
                 ('gender',),
             )
         elif self.mode == 'c':
-            self.grouped_labels = (
+            self.grouped_classes = (
                 ('young', 'teenager', 'adult', 'old'),
                 ('without backpack', 'with backpack'),
                 ('without bag', 'with bag'),
@@ -81,11 +81,11 @@ class Market1501AttritubesReader(Reader):
                 ('male', 'female'),
             )
         elif self.mode == 'ab':
-            # self.grouped_labels = []
+            # self.grouped_classes = []
             # for l in labels:
-            #     self.grouped_labels.append((l,))
-            # self.grouped_labels = tuple(self.grouped_labels)
-            self.grouped_labels = (
+            #     self.grouped_classes.append((l,))
+            # self.grouped_classes = tuple(self.grouped_classes)
+            self.grouped_classes = (
                 ('young',), 
                 ('teenager',), 
                 ('adult',),
@@ -143,26 +143,20 @@ class Market1501AttritubesReader(Reader):
 
         assert len(self.img_paths) > 0
 
-    def get_dataset_info(self):
-        return range(len(self.img_paths)), Dict({'classes': self.grouped_labels})
-
-    def get_data_info(self, index):
-        img = Image.open(self.img_paths[index][0])
-        w, h = img.size
-        return dict(h=h, w=w)
+        self._info = dict(
+            forcat=dict(
+                label=dict(
+                    classes=self.grouped_classes
+                ),
+            ),
+        )
 
     def __call__(self, index):
-        # index = data_dict
-        # index = 5605
-        # img = Image.open(self.img_paths[index]).convert('RGB')
         img = self.read_image(self.img_paths[index])
         w, h = img.size
         path = self.img_paths[index]
 
         pid = self.pids.index(os.path.splitext(ntpath.basename(path))[0].split('_')[0])
-
-        # from tqdm import tqdm
-        # tqdm.write('{} {}'.format(index, path))
 
         labels = []
         tmp = []
@@ -199,17 +193,25 @@ class Market1501AttritubesReader(Reader):
                     labels.append(self.f[self.mapping[i]][0][pid] - 1)
                 # labels.append(self.f[self.mapping[i]][0][pid] - 1)
 
-        labels = np.array(labels).astype(np.long)
-        # print(labels, len(labels))
-        # exit()
+        grouped_labels = []
+        for i, gc in enumerate(self.grouped_classes):
+            # print(gc)
+            if len(gc) == 1:
+                gl = np.array(labels[i]).astype(np.int32)
+            else:
+                gl = np.zeros(len(gc)).astype(np.int32)
+                gl[labels[i]] = 1
+            grouped_labels.append(gl)
 
-        # return {'image': img, 'ori_size': np.array([h, w]).astype(np.float32), 'path': path, 'label': labels}
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
             path=path,
-            label=labels
+            label=grouped_labels
         )
+
+    def __len__(self):
+        return len(self.img_paths)
 
     def __repr__(self):
         return 'Market1501AttritubesReader(root={}, group={}, mode={}, {})'.format(self.root, self.group, self.mode, super(Market1501AttritubesReader, self).__repr__())

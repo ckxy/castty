@@ -1,6 +1,4 @@
 import os
-import cv2
-import ntpath
 import numpy as np
 from PIL import Image
 from .reader import Reader
@@ -41,7 +39,7 @@ class VOCReader(Reader):
             self.image_paths = read_image_paths(img_root)
 
         assert len(self.image_paths) > 0
-        self.label_paths = [os.path.join(xml_root, ntpath.basename(id_).split('.')[0] + '.xml') for id_ in self.image_paths]
+        self.label_paths = [os.path.join(xml_root, os.path.basename(id_).split('.')[0] + '.xml') for id_ in self.image_paths]
 
         self.filter_difficult = filter_difficult
 
@@ -52,8 +50,9 @@ class VOCReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='det',
-                bbox_classes=self.classes
+                bbox=dict(
+                    classes=self.classes
+                )
             )
         )
 
@@ -104,7 +103,7 @@ class VOCReader(Reader):
         w, h = get_image_size(img)
         bbox, cla, difficult = self.read_bbox_voc(self.label_paths[index], self.classes, self.filter_difficult, self.to_remove)
         path = self.image_paths[index]
-        # bbox_meta = Meta(['class_id', 'score', 'difficult'], [cla, np.ones(len(bbox)).astype(np.float32), difficult])
+
         bbox_meta = Meta(
             class_id=cla,
             score=np.ones(len(bbox)).astype(np.float32),
@@ -158,12 +157,13 @@ class VOCSegReader(Reader):
             self.image_paths = [os.path.join(img_root, id_.strip() + '.jpg') for id_ in open(id_list_file)]
 
         assert len(self.image_paths) > 0
-        self.mask_paths = [os.path.join(mask_root, ntpath.basename(id_).split('.')[0] + '.png') for id_ in self.image_paths]
+        self.mask_paths = [os.path.join(mask_root, os.path.basename(id_).split('.')[0] + '.png') for id_ in self.image_paths]
 
         self._info = dict(
             forcat=dict(
-                type='seg',
-                mask_classes=self.classes
+                mask=dict(
+                    classes=self.classes
+                )
             )
         )
 
@@ -218,8 +218,9 @@ class SBDReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='seg',
-                mask_classes=self.classes
+                mask=dict(
+                    classes=self.classes
+                )
             )
         )
 

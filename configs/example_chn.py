@@ -58,8 +58,7 @@ def get_char_corpus():
 def get_enum_corpus():
     return EnumCorpus(
         EnumCorpusCfg(
-            # text_paths=[TEXT_DIR / "Chinese_Names_Corpus（120W）.txt"],
-            text_paths=[TEXT_DIR / "Medical-Org-Names-Corpus（260W）.txt"],
+            text_paths=[TEXT_DIR / "chn_text.txt"],
             filter_by_chars=True,
             chars_file=CHAR_DIR / "chn.txt",
             char_spacing=(-0.3, 1.3),

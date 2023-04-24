@@ -23,14 +23,14 @@ test_data = dict(
         # ]
     ),
     dataset=dict(
-        # reader=dict(type='LmdbDTRBReader', use_pil=True, root='../datasets/deep-text/evaluation/IC15_1811', char_path='../datasets/deep-text/character.txt'),
-        reader=dict(type='TextGenReader', path='configs/example_chn.py'),
+        reader=dict(type='LmdbDTRBReader', use_pil=True, root='../datasets/deep-text/evaluation/IC15_1811', char_path='../datasets/deep-text/character.txt'),
+        # reader=dict(type='TextGenReader', path='configs/example_chn.py'),
         internodes=[
             dict(type='DataSource'),
             # dict(type='TPSStretch', segment=2),
             # dict(type='TPSDistort', segment=4, resize=True),
-            dict(type='Resize', size=(320, 32), keep_ratio=True),
-            dict(type='PaddingBySize', size=(320, 32), fill=(0, 0, 0), padding_mode='constant', center=False),
+            # dict(type='Resize', size=(320, 32), keep_ratio=True),
+            # dict(type='PaddingBySize', size=(320, 32), fill=(0, 0, 0), padding_mode='constant', center=False),
             # dict(type='ToGrayscale'),
             # dict(type='ToPILImage'),
             # dict(type='BrightnessEnhancement', brightness=(0.5, 0.5)),

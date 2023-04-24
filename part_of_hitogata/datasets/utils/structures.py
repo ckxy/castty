@@ -36,8 +36,10 @@ class Meta(dict):
         super(Meta, self).__setitem__(key, value)
 
     def filter(self, keep):
-        if not isinstance(keep, list) or (len(keep) > 0 and not isinstance(keep[0], int)):
-            raise ValueError('illegal list')
+        # if not isinstance(keep, list) or (len(keep) > 0 and not isinstance(keep[0], int)):
+        #     raise ValueError('illegal list')
+        if not isinstance(keep, np.ndarray) or keep.dtype != bool:
+            raise ValueError('illegal bool ndarray')
 
         self.filter_flag = True
         for key in self.keys():

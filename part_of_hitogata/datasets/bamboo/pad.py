@@ -5,9 +5,10 @@ import numbers
 import numpy as np
 from .builder import INTERNODE
 from .base_internode import BaseInternode
+from .filter_mixin import BaseFilterMixin
 from torchvision.transforms.functional import pad
 from .crop import crop_image, crop_bbox, crop_poly, crop_point, crop_mask
-from ..utils.common import clip_bbox, filter_bbox, is_pil, get_image_size, clip_poly, filter_point
+from ..utils.common import is_pil, get_image_size, clip_bbox, clip_point, clip_poly
 
 
 __all__ = ['Padding', 'PaddingBySize', 'PaddingByStride', 'RandomExpand']
@@ -129,8 +130,8 @@ class Padding(BaseInternode):
 
 
 @INTERNODE.register_module()
-class PaddingBySize(Padding):
-    def __init__(self, size, fill=(0, 0, 0), padding_mode='constant', center=False, **kwargs):
+class PaddingBySize(Padding, BaseFilterMixin):
+    def __init__(self, size, fill=(0, 0, 0), padding_mode='constant', center=False, use_base_filter=True, **kwargs):
         assert isinstance(size, tuple) and len(size) == 2
         assert isinstance(fill, tuple) and len(fill) == 3
         assert padding_mode in CV2_PADDING_MODES.keys()
@@ -139,6 +140,8 @@ class PaddingBySize(Padding):
         self.fill = fill
         self.padding_mode = padding_mode
         self.center = center
+
+        self.use_base_filter = use_base_filter
 
     def calc_padding(self, w, h):
         if self.center:
@@ -170,59 +173,22 @@ class PaddingBySize(Padding):
             if 'image' in data_dict.keys():
                 data_dict['image'] = unpad_image(data_dict['image'], (left, top, right, bottom))
 
+            if 'bbox' in data_dict.keys():
+                data_dict['bbox'] = unpad_bbox(data_dict['bbox'], left, top)
+                data_dict['bbox'] = clip_bbox(data_dict['bbox'], (w, h))
+
             if 'mask' in data_dict.keys():
                 data_dict['mask'] = unpad_mask(data_dict['mask'], (left, top, right, bottom))
 
-            if 'bbox' in data_dict.keys():
-                data_dict['bbox'] = unpad_bbox(data_dict['bbox'], left, top)
+            if 'point' in data_dict.keys():
+                data_dict['point'] = unpad_point(data_dict['point'], left, top)
+                data_dict['point'] = clip_point(data_dict['point'], (w, h))
 
             if 'poly' in data_dict.keys():
                 data_dict['poly'] = unpad_poly(data_dict['poly'], left, top)
+                data_dict['poly'] = clip_poly(data_dict['poly'], (w, h))
 
-            if 'point' in data_dict.keys():
-                n = len(data_dict['point'])
-                points = data_dict['point'].reshape(-1, 2)
-                points = unpad_point(points, left, top)
-                data_dict['point'] = points.reshape(n, -1, 2)
-
-            data_dict = self.clip_and_filter(data_dict)
-        return data_dict
-
-    def clip_and_filter(self, data_dict):
-        h, w = data_dict['ori_size']
-        h, w = int(h), int(w)
-
-        if 'bbox' in data_dict.keys():
-            boxes = data_dict['bbox'].copy()
-            boxes = clip_bbox(boxes, (w, h))
-            keep = filter_bbox(boxes)
-            data_dict['bbox'] = boxes[keep]
-
-            if 'bbox_meta' in data_dict.keys():
-                data_dict['bbox_meta'].filter(keep)
-
-        if 'point' in data_dict.keys():
-            n = len(data_dict['point'])
-            if n > 0:
-                points = data_dict['point'].reshape(-1, 2)
-
-                discard = filter_point(points, (w, h))
-
-                if 'point_meta' in data_dict.keys():
-                    visible = data_dict['point_meta']['visible'].reshape(-1)
-                    visible[discard] = False
-                    data_dict['point_meta']['visible'] = visible.reshape(n, -1)
-                else:
-                    points[discard] = -1
-
-                data_dict['point'] = points.reshape(n, -1, 2)
-
-        if 'poly' in data_dict.keys():
-            data_dict['poly'], keep = clip_poly(data_dict['poly'], (w, h))
-
-            if 'poly_meta' in data_dict.keys():
-                data_dict['poly_meta'].filter(keep)
-
+            data_dict = self.base_filter(data_dict)
         return data_dict
 
     def erase_intl_param_backward(self, data_dict):
@@ -236,7 +202,7 @@ class PaddingBySize(Padding):
 
 @INTERNODE.register_module()
 class PaddingByStride(PaddingBySize):
-    def __init__(self, stride, fill=(0, 0, 0), padding_mode='constant', center=False, **kwargs):
+    def __init__(self, stride, fill=(0, 0, 0), padding_mode='constant', center=False, use_base_filter=True, **kwargs):
         assert isinstance(stride, int) and stride > 0
         assert isinstance(fill, tuple) and len(fill) == 3
         assert padding_mode in CV2_PADDING_MODES.keys()
@@ -245,6 +211,8 @@ class PaddingByStride(PaddingBySize):
         self.fill = fill
         self.padding_mode = padding_mode
         self.center = center
+
+        self.use_base_filter = use_base_filter
 
     def calc_padding(self, w, h):
         nw = math.ceil(w / self.stride) * self.stride
@@ -268,12 +236,14 @@ class PaddingByStride(PaddingBySize):
 
 @INTERNODE.register_module()
 class RandomExpand(Padding):
-    def __init__(self, ratio, fill=0, **kwargs):
+    def __init__(self, ratio, fill=(0, 0, 0), padding_mode='constant', **kwargs):
         assert ratio > 1
         assert isinstance(fill, tuple) and len(fill) == 3
+        assert padding_mode in CV2_PADDING_MODES.keys()
 
         self.ratio = ratio
         self.fill = fill
+        self.padding_mode = padding_mode
 
     def calc_padding(self, w, h):
         r = random.random() * (self.ratio - 1) + 1
@@ -286,4 +256,4 @@ class RandomExpand(Padding):
         return left, top, right, bottom
 
     def __repr__(self):
-        return 'RandomExpand(ratio={}, fill={})'.format(self.ratio, self.fill)
+        return 'RandomExpand(ratio={}, fill={}, padding_mode={})'.format(self.ratio, self.fill, self.padding_mode)

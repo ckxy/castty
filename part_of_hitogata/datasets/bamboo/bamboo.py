@@ -30,7 +30,6 @@ class Bamboo(BaseInternode):
         bamboo_str = type(self).__name__ + '('
         for i in range(len(split_str)):
             bamboo_str += '\n  ' + split_str[i].replace('\n', '\n  ')
-        # bamboo_str = '{}\n)'.format(bamboo_str)
         bamboo_str += '\n)'
 
         return bamboo_str
@@ -45,13 +44,7 @@ class Bamboo(BaseInternode):
 
         for i in range(len(split_str)):
             res += '\n  ' + split_str[i].replace('\n', '\n  ')
-        # res = '{}\n)'.format(res)
         res += '\n)'
-
-        # for t in self.internodes[::-1]:
-        #     res += '  ' + t.rper() + '\n'
-        # res = res[:-1]
-        # res += '\n)'
         return res
 
     def have_internode(self, name):

@@ -5,8 +5,9 @@ from PIL import Image
 from .builder import INTERNODE
 from .base_internode import BaseInternode
 from .warp_internode import WarpInternode
+from .filter_mixin import BaseFilterMixin
 from ...utils.bbox_tools import calc_iou1, xyxy2xywh
-from ..utils.common import get_image_size, is_pil, filter_bbox_by_center, clip_bbox, clip_poly, filter_bbox, filter_point
+from ..utils.common import get_image_size, is_pil, filter_bbox_by_center, filter_bbox_by_length, clip_bbox, clip_point, clip_poly
 
 
 __all__ = ['Crop', 'AdaptiveCrop', 'AdaptiveTranslate', 'MinIOUCrop', 'MinIOGCrop', 'CenterCrop', 'RandomAreaCrop', 'EastRandomCrop', 'WestRandomCrop', 'RandomCenterCropPad']
@@ -19,7 +20,7 @@ def crop_image(image, x1, y1, x2, y2):
         # image = image[y1:y2, x1:x2]
         image = Image.fromarray(image)
         image = image.crop((x1, y1, x2, y2))
-        image = np.asarray(image)
+        image = np.array(image)
     return image
 
 
@@ -45,15 +46,19 @@ def crop_point(points, x1, y1):
 
 
 def crop_mask(mask, x1, y1, x2, y2):
-    mask = mask[y1:y2, x1:x2]
+    mask = Image.fromarray(mask)
+    mask = mask.crop((x1, y1, x2, y2))
+    mask = np.array(mask)
     return mask
 
 
 @INTERNODE.register_module()
-class Crop(BaseInternode):
-    def __init__(self, size, **kwargs):
+class Crop(BaseInternode, BaseFilterMixin):
+    def __init__(self, size, use_base_filter=True, **kwargs):
         assert len(size) == 2 and size[0] > 0 and size[1] > 0
         self.size = size
+
+        self.use_base_filter = use_base_filter
 
     def calc_cropping(self, data_dict):
         assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys() and 'poly' not in data_dict.keys()
@@ -64,6 +69,7 @@ class Crop(BaseInternode):
         ymin = random.randint(0, h - self.size[1])
         xmax = xmin + self.size[0]
         ymax = ymin + self.size[1]
+        # xmin, ymin, xmax, ymax = 0, 0, 50, 50
         return xmin, ymin, xmax, ymax
 
     def calc_intl_param_forward(self, data_dict):
@@ -72,58 +78,27 @@ class Crop(BaseInternode):
 
     def forward(self, data_dict):
         xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+        dst_size = (xmax - xmin, ymax - ymin)
 
         if 'image' in data_dict.keys():
             data_dict['image'] = crop_image(data_dict['image'], xmin, ymin, xmax, ymax)
 
         if 'bbox' in data_dict.keys():
             data_dict['bbox'] = crop_bbox(data_dict['bbox'], xmin, ymin)
-
-        if 'point' in data_dict.keys():
-            data_dict['point'] = crop_point(data_dict['point'], xmin, ymin)
-
-        if 'poly' in data_dict.keys():
-            data_dict['poly'] = crop_poly(data_dict['poly'], xmin, ymin)
+            data_dict['bbox'] = clip_bbox(data_dict['bbox'], dst_size)
 
         if 'mask' in data_dict.keys():
             data_dict['mask'] = crop_mask(data_dict['mask'], xmin, ymin, xmax, ymax)
 
-        data_dict = self.clip_and_filter(data_dict)
-
-        return data_dict
-
-    def clip_and_filter(self, data_dict):
-        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
-        dst_size = (xmax - xmin, ymax - ymin)
-
-        if 'bbox' in data_dict.keys():
-            boxes = data_dict['bbox'].copy()
-            boxes = clip_bbox(boxes, dst_size)
-            keep = filter_bbox(boxes)
-            data_dict['bbox'] = boxes[keep]
-
-            if 'bbox_meta' in data_dict.keys():
-                data_dict['bbox_meta'].filter(keep)
-
         if 'point' in data_dict.keys():
-            n = len(data_dict['point'])
-            if n > 0:
-                points = data_dict['point'].reshape(-1, 2)
-
-                discard = filter_point(points, dst_size)
-
-                visible = data_dict['point_meta']['visible'].reshape(-1)
-                visible[discard] = False
-                data_dict['point_meta']['visible'] = visible.reshape(n, -1)
-
-                data_dict['point'] = points.reshape(n, -1, 2)
+            data_dict['point'] = crop_point(data_dict['point'], xmin, ymin)
+            data_dict['point'] = clip_point(data_dict['point'], dst_size)
 
         if 'poly' in data_dict.keys():
-            data_dict['poly'], keep = clip_poly(data_dict['poly'], dst_size)
+            data_dict['poly'] = crop_poly(data_dict['poly'], xmin, ymin)
+            data_dict['poly'] = clip_poly(data_dict['poly'], dst_size)
 
-            if 'poly_meta' in data_dict.keys():
-                data_dict['poly_meta'].filter(keep)
-
+        data_dict = self.base_filter(data_dict)
         return data_dict
 
     def erase_intl_param_forward(self, data_dict):
@@ -147,19 +122,16 @@ class AdaptiveCrop(Crop):
         box = []
         if 'bbox' in data_dict.keys():
             bboxes = data_dict['bbox']
-            box.append(np.array([np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]).astype(np.int))
+            box.append(np.array([np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]).astype(np.int32))
 
         if 'point' in data_dict.keys():
-            if 'point_meta' in data_dict.keys():
-                points = data_dict['point'][data_dict['point_meta']['visible']]
-                points = points.reshape(-1, 2)
-            else:
-                points = data_dict['point'].reshape(-1, 2)
-            box.append(np.concatenate((np.min(points, axis=0), np.max(points, axis=0))).astype(np.int))
+            points = data_dict['point'][data_dict['point_meta']['keep']]
+            points = points.reshape(-1, 2)
+            box.append(np.concatenate((np.min(points, axis=0), np.max(points, axis=0))).astype(np.int32))
 
         if 'poly' in data_dict.keys():
             polys = np.array(data_dict['poly']).reshape(-1, 2)
-            box.append(np.concatenate((np.min(polys, axis=0), np.max(polys, axis=0))).astype(np.int))
+            box.append(np.concatenate((np.min(polys, axis=0), np.max(polys, axis=0))).astype(np.int32))
 
         box = np.array(box)
 
@@ -168,9 +140,6 @@ class AdaptiveCrop(Crop):
         xmax = random.randint(np.max(box[:, 2]), w)
         ymax = random.randint(np.max(box[:, 3]), h)
         return xmin, ymin, xmax, ymax
-
-    def clip_and_filter(self, data_dict):
-        return data_dict
 
     def __repr__(self):
         return 'AdaptiveCrop()'
@@ -186,7 +155,7 @@ class AdaptiveTranslate(WarpInternode):
         box = []
         if 'bbox' in data_dict.keys():
             bboxes = data_dict['bbox']
-            box.append(np.array([np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]).astype(np.int))
+            box.append(np.array([np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]).astype(np.int32))
 
         if 'point' in data_dict.keys():
             if 'point_meta' in data_dict.keys():
@@ -194,11 +163,11 @@ class AdaptiveTranslate(WarpInternode):
                 points = points.reshape(-1, 2)
             else:
                 points = data_dict['point'].reshape(-1, 2)
-            box.append(np.concatenate((np.min(points, axis=0), np.max(points, axis=0))).astype(np.int))
+            box.append(np.concatenate((np.min(points, axis=0), np.max(points, axis=0))).astype(np.int32))
 
         if 'poly' in data_dict.keys():
             polys = np.array(data_dict['poly']).reshape(-1, 2)
-            box.append(np.concatenate((np.min(polys, axis=0), np.max(polys, axis=0))).astype(np.int))
+            box.append(np.concatenate((np.min(polys, axis=0), np.max(polys, axis=0))).astype(np.int32))
 
         box = np.array(box)
 
@@ -270,23 +239,10 @@ class MinIOUCrop(Crop):
                 if len(keep) == 0:
                     continue
 
+                # rect = [363, 171, 745, 872]
+                # print(rect)
+
                 return rect[0], rect[1], rect[2], rect[3]
-
-    def clip_and_filter(self, data_dict):
-        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
-        dst_size = (xmax - xmin, ymax - ymin)
-
-        if 'bbox' in data_dict.keys():
-            boxes = data_dict['bbox'].copy()
-            keep = filter_bbox_by_center(boxes, dst_size)
-            boxes = boxes[keep]
-            boxes = clip_bbox(boxes, dst_size)
-            data_dict['bbox'] = boxes
-
-            if 'bbox_meta' in data_dict.keys():
-                data_dict['bbox_meta'].filter(keep)
-
-        return data_dict
 
     def __repr__(self):
         return 'MinIOUCrop(iou_threshs={}, aspect_ratio={}, attempts={})'.format(self.threshs, self.aspect_ratio, self.attempts)
@@ -298,7 +254,8 @@ class MinIOGCrop(MinIOUCrop):
         super(MinIOGCrop, self).__init__(threshs, aspect_ratio, attempts, **kwargs)
         self.ul = (3 / 10 / self.aspect_ratio, 10 * self.aspect_ratio / 3)
 
-    def iog_calc(self, boxes1, boxes2):
+    @staticmethod
+    def iog_calc(boxes1, boxes2):
         boxes1_area = (boxes1[..., 2] - boxes1[..., 0]) * (boxes1[..., 3] - boxes1[..., 1])
         boxes2_area = (boxes2[..., 2] - boxes2[..., 0]) * (boxes2[..., 3] - boxes2[..., 1])
 
@@ -354,7 +311,7 @@ class MinIOGCrop(MinIOUCrop):
         while True:
             mode = random.choice(self.threshs)
             if mode is None:
-                return 0, 0, width, height
+                return 0, 0, ulw, ulh
 
             min_iou = mode
 
@@ -364,13 +321,13 @@ class MinIOGCrop(MinIOUCrop):
             r = r / rs
             xp = np.broadcast_to(x[np.newaxis, ...], r.shape) * r
             yp = np.broadcast_to(y[np.newaxis, ...], r.shape) * r
-            w = np.sum(xp, axis=1).astype(np.int)[0]
-            h = np.sum(yp, axis=1).astype(np.int)[0]
+            w = np.sum(xp, axis=1).astype(np.int32)[0]
+            h = np.sum(yp, axis=1).astype(np.int32)[0]
 
             for _ in range(self.attempts):
                 left = random.uniform(0, ulw - w)
                 top = random.uniform(0, ulh - h)
-                rect = np.array([left, top, left + w, top + h]).astype(np.int)
+                rect = np.array([left, top, left + w, top + h]).astype(np.int32)
 
                 overlap = self.iog_calc(data_dict['bbox'][:, :4], rect[np.newaxis, ...])
 
@@ -382,6 +339,9 @@ class MinIOGCrop(MinIOUCrop):
 
                 if len(keep) == 0:
                     continue
+
+                # rect = [363, 171, 745, 872]
+                # print(rect)
 
                 return rect[0], rect[1], rect[2], rect[3]
 
@@ -451,9 +411,6 @@ class RandomAreaCrop(Crop):
 
     def __repr__(self):
         return 'RandomAreaCrop(scale={}, ratio={}, attempts={})'.format(self.scale, self.ratio, self.attempts)
-
-    def rper(self):
-        return 'RandomAreaCrop(not available)'
 
 
 @INTERNODE.register_module()
@@ -728,9 +685,10 @@ class RandomCenterCropPad(Crop):
                 boxes = data_dict['bbox'].copy()
                 boxes = crop_bbox(boxes, xmin, ymin)
                 boxes = clip_bbox(boxes, (new_w, new_h))
-                keep = filter_bbox(boxes)
+                keep = filter_bbox_by_length(boxes)
 
                 if len(keep) > 0:
+                    # print(xmin, ymin, xmax, ymax)
                     return xmin, ymin, xmax, ymax
 
     def __repr__(self):

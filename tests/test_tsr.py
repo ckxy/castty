@@ -97,8 +97,8 @@ def draw_tsr(img, l_row, c_row, l_col, c_col):
                 draw.ellipse((x3 - r, y - r, x3 + r, y + r), fill=(100, 100, 255))
 
     if is_np:
-        row_vis = np.asarray(row_vis)
-        col_vis = np.asarray(col_vis)
+        row_vis = np.array(row_vis)
+        col_vis = np.array(col_vis)
 
     return row_vis, col_vis
 

@@ -71,7 +71,7 @@ class RandomErasing(BaseInternode):
             bgd = data_dict['intl_erase_bgd']
             data_dict['image'] = Image.fromarray(data_dict['image'])
             data_dict['image'] = Image.composite(data_dict['image'], bgd, mask)
-            data_dict['image'] = np.asarray(data_dict['image'])
+            data_dict['image'] = np.array(data_dict['image'])
 
         if 'mask' in data_dict.keys():
             mask = (np.asarray(mask) > 0).astype(np.int32)

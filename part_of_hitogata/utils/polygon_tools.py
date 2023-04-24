@@ -5,9 +5,9 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 
-def draw_polygon(img, polygons, ignore_flags=None, class_ids=None, classes=None):
-	if ignore_flags is None:
-		ignore_flags = [False] * len(polygons)
+def draw_polygon(img, polygons, keep_flags=None, class_ids=None, classes=None):
+	if keep_flags is None:
+		keep_flags = [True] * len(polygons)
 
 	if class_ids is None:
 		class_ids = [0] * len(polygons)
@@ -29,14 +29,14 @@ def draw_polygon(img, polygons, ignore_flags=None, class_ids=None, classes=None)
 	l = math.sqrt(h * h + w * w)
 	draw = ImageDraw.Draw(img)
 
-	for polygon, ignore_flag, cid in zip(polygons, ignore_flags, class_ids):
-		if ignore_flag:
-			draw.polygon(polygon.astype(np.int32).flatten().tolist(), outline=(40, 40, 40), width=2)
-		else:
+	for polygon, keep_flag, cid in zip(polygons, keep_flags, class_ids):
+		if keep_flag:
 			draw.polygon(polygon.astype(np.int32).flatten().tolist(), outline=colors[cid], width=2)
+		else:
+			draw.polygon(polygon.astype(np.int32).flatten().tolist(), outline=(40, 40, 40), width=2)
 
 	if is_np:
-		img = np.asarray(img)
+		img = np.array(img)
 
 	return img
 

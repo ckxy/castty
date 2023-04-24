@@ -29,9 +29,10 @@ test_data = dict(
         # ]
     ),
     dataset=dict(
-        reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='val', classes=classes),
-        # reader=dict(type='SBDReader', use_pil=False, root='../datasets/voc/benchmark_RELEASE/dataset', split='train', classes=classes),
+        # reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='val', classes=classes),
+        reader=dict(type='SBDReader', use_pil=False, root='../datasets/voc/benchmark_RELEASE/dataset', split='train', classes=classes),
         # reader=dict(type='MHPV1Reader', use_pil=False, root='../datasets/LV-MHP-v1', split='train'),
+        # reader=dict(type='LabelmeMaskReader', use_pil=False, root='../datasets/waterleveld', classes=['__background__', 'wlr']),
         internodes=[
             dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
@@ -116,7 +117,7 @@ test_data = dict(
             # dict(type='Crop', size=(200, 200)),
             # dict(type='CenterCrop', size=(200, 200)),
             # dict(type='RandomErasing', offset=False, value=(0, 0, 0)),
-            dict(type='GridMask', offset=True),
+            # dict(type='GridMask', offset=True),
             # dict(type='AdaptiveCrop'),
             # dict(type='AdaptiveTranslate'),
             # dict(type='RandomAreaCrop'),

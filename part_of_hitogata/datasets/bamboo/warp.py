@@ -5,8 +5,8 @@ from .bamboo import Bamboo
 from .builder import INTERNODE
 from .builder import build_internode
 from .warp_internode import WarpInternode
-from ..utils.common import get_image_size, clip_bbox, filter_bbox
-from ..utils.warp_tools import calc_expand_size_and_matrix, warp_bbox, warp_point, warp_image, warp_mask
+from ..utils.common import get_image_size
+from ..utils.warp_tools import calc_expand_size_and_matrix
 
 
 __all__ = ['Warp', 'WarpPerspective', 'WarpResize', 'WarpScale', 'WarpStretch', 'WarpRotate', 'WarpShear', 'WarpTranslate']
@@ -45,8 +45,8 @@ class Warp(Bamboo):
 
         return data_dict
 
-    def backward(self, **kwargs):
-        return kwargs
+    def backward(self, data_dict):
+        return data_dict
 
     def __repr__(self):
         split_str = [i.__repr__() for i in self.internodes]
@@ -113,9 +113,6 @@ class WarpPerspective(WarpInternode):
         return np.array(c)
 
     def calc_intl_param_forward(self, data_dict):
-        # if 'warp_size' in data_dict.keys():
-        #     size = data_dict['warp_size']
-        # else:
         size = get_image_size(data_dict['image'])
 
         width, height = size
@@ -123,20 +120,7 @@ class WarpPerspective(WarpInternode):
         M = self.build_matrix(startpoints, endpoints)
 
         if self.expand:
-            # xx = [int(e[0]) for e in endpoints]
-            # yy = [int(e[1]) for e in endpoints]
-            # nw = max(xx) - min(xx)
-            # nh = max(yy) - min(yy)
-            # E = np.eye(3)
-            # E[0, 2] = -min(xx)
-            # E[1, 2] = -min(yy)
-
-            # M = E @ M
-            # size = (nw, nh)
-            # print(E, (nw, nh), 'aaa')
-
             E, new_size = calc_expand_size_and_matrix(M, size)
-            # print(E, size)
             M = E @ M
             size = new_size
 
@@ -188,10 +172,6 @@ class WarpResize(WarpInternode):
 
         CI = np.eye(3)
 
-        # if self.center:
-        #     CI[0, 2] = self.size[0] / 2
-        #     CI[1, 2] = self.size[1] / 2
-        # else:
         CI[0, 2] = self.size[0] / 2 - ow
         CI[1, 2] = self.size[1] / 2 - oh
 
@@ -256,12 +236,6 @@ class WarpResize(WarpInternode):
             data_dict = self.erase_intl_param_forward(data_dict)
         return data_dict
 
-    # def reverse(self, **kwargs):
-    #     kwargs = self.calc_intl_param_backward(kwargs)
-    #     kwargs = self.backward(kwargs)
-    #     kwargs = self.erase_intl_param_backward(kwargs)
-    #     return kwargs
-
     def __repr__(self):
         return 'WarpResize(size={}, keep_ratio={}, short={}, {})'.format(self.size, self.keep_ratio, self.short, super(WarpResize, self).__repr__())
 
@@ -294,9 +268,6 @@ class WarpScale(WarpInternode):
         return CI @ R @ C
 
     def calc_intl_param_forward(self, data_dict):
-        # if 'warp_size' in data_dict.keys():
-        #     size = data_dict['warp_size']
-        # else:
         size = get_image_size(data_dict['image'])
 
         r = random.uniform(*self.r)
@@ -347,9 +318,6 @@ class WarpStretch(WarpInternode):
         return CI @ R @ C
 
     def calc_intl_param_forward(self, data_dict):
-        # if 'warp_size' in data_dict.keys():
-        #     size = data_dict['warp_size']
-        # else:
         size = get_image_size(data_dict['image'])
 
         rw = random.uniform(*self.rw)
@@ -406,9 +374,6 @@ class WarpRotate(WarpInternode):
         angle = random.uniform(self.angle[0], self.angle[1])
 
         if angle != 0:
-            # if 'warp_size' in data_dict.keys():
-            #     size = data_dict['warp_size']
-            # else:
             size = get_image_size(data_dict['image'])
 
             M = self.build_matrix(angle, size)
@@ -459,9 +424,6 @@ class WarpShear(WarpInternode):
         return CI @ S @ C
 
     def calc_intl_param_forward(self, data_dict):
-        # if 'warp_size' in data_dict.keys():
-        #     size = data_dict['warp_size']
-        # else:
         size = get_image_size(data_dict['image'])
 
         shear = (random.uniform(*self.ax), random.uniform(*self.ay))
@@ -502,9 +464,6 @@ class WarpTranslate(WarpInternode):
         return T
 
     def calc_intl_param_forward(self, data_dict):
-        # if 'warp_size' in data_dict.keys():
-        #     size = data_dict['warp_size']
-        # else:
         size = get_image_size(data_dict['image'])
 
         min_dx = self.rw[0] * size[0]

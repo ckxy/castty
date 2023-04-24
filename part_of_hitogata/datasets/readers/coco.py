@@ -54,15 +54,16 @@ class COCOAPIReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='det',
-                bbox_classes=self.classes
+                bbox=dict(
+                    classes=self.classes
+                ),
             ),
             api=self.coco_api,
             ids=self.cat_ids
         )
 
         if self.use_keypoint:
-            self._info['forcat']['type'] = 'kpt-det'
+            self._info['forcat']['point'] = dict()
             # self._info['forcat']['point']
 
     def read_annotations(self, idx):
@@ -124,7 +125,6 @@ class COCOAPIReader(Reader):
         return annotation
 
     def __call__(self, index):
-        # index = 10
         img_info = self.data_info[index]
 
         path = os.path.join(self.img_root, img_info['file_name'])
@@ -152,29 +152,6 @@ class COCOAPIReader(Reader):
         if self.use_keypoint:
             res['point'] = anno['keypoints'][..., :2]
             res['point_meta'] = Meta(visible=anno['keypoints'][..., 2] > 0)
-
-            # if len(bbox) > 0:
-            #     for i in range(len(bbox)):
-            #         point = anno['keypoints'][i]
-            #         ind = point[..., 2] > 0
-            #         point = point[ind][..., :2]
-            #         # print(bbox[i], point)
-            #         if len(point) > 0:
-            #             left = point[..., 0] >= bbox[i, 0]
-            #             right = point[..., 0] <= bbox[i, 2]
-            #             top = point[..., 1] >= bbox[i, 1]
-            #             bottom = point[..., 1] <= bbox[i, 3]
-            #             a = np.logical_and(left, right)
-            #             b = np.logical_and(top, bottom)
-            #             c = np.logical_and(a, b).all()
-            #             # print(left)
-            #             # print(right)
-            #             # print(top)
-            #             # print(bottom)
-            #             # print(c)
-            #             if not c:
-            #                 print(index, path)
-            #     # exit()
 
         return res
 

@@ -83,11 +83,11 @@ def grid_analysis(img, grid_sizes, bboxes_groups, indices_groups, bboxes_num, as
         # exit()
         # return np.hstack(img_tmps[:-1]).astype(np.uint8)
         if is_np:
-            dst = np.asarray(dst)
+            dst = np.array(dst)
         return dst
     else:
         if is_np:
-            dst = [np.asarray(img) for img in img_tmps]
+            dst = [np.array(img) for img in img_tmps]
         else:
             return [img for img in img_tmps]
 
@@ -135,7 +135,7 @@ def draw_bbox(img, bboxes, class_ids=None, classes=None, scores=None):
             draw.text(text_box[:2], bbox_text, fill=(0, 0, 0), font=font)
 
     if is_np:
-        img = np.asarray(img)
+        img = np.array(img)
 
     return img
 
@@ -157,7 +157,7 @@ def draw_bbox_without_label(img, bboxes):
         draw.rectangle(tuple(coor), outline=(255, 0, 0), width=max(1, int(l / 600)))
 
     if is_np:
-        img = np.asarray(img)
+        img = np.array(img)
 
     return img
 

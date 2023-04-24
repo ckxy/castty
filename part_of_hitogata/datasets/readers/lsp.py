@@ -35,7 +35,9 @@ class LSPReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='kpt',
+                point=dict(
+                    type='lsp',
+                )
             )
         )
 
@@ -46,9 +48,7 @@ class LSPReader(Reader):
         img = self.read_image(img_path)
         w, h = get_image_size(img)
 
-        meta = Meta(visible=np.array(a['joint_self'])[..., 2][np.newaxis, ...].astype(np.bool))
-        # print(np.array(a['joint_self']))
-        # exit()
+        meta = Meta(visible=np.array(a['joint_self'])[..., 2][np.newaxis, ...].astype(np.bool_))
 
         return dict(
             image=img,

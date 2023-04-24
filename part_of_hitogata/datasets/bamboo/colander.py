@@ -17,20 +17,6 @@ class Colander(BaseInternode):
         raise NotImplementedError
 
 
-@INTERNODE.register_module()
-class BboxClipper(BaseInternode):
-    def forward(self, data_dict):
-        if 'bbox' in data_dict.keys():
-            data_dict['bbox'] = clip_bbox(data_dict['bbox'], data_dict['clip_size'])
-        return data_dict
-
-    def backward(self, data_dict):
-        return self.forward(data_dict)
-
-    def __repr__(self):
-        return 'BboxClipper()'
-
-
 class BBoxColander(Colander):
     def forward(self, data_dict):
         if 'bbox' in data_dict.keys():

@@ -163,14 +163,14 @@ class CutMix(Bamboo):
             bmask_cut = resize_mask(bmask_cut, (xa2 - xa1, ya2 - ya1))
             a['mask'][ya1:ya2, xa1:xa2] = bmask_cut
 
-            return a
+        return a
 
     @staticmethod
     def rand_boxa(size, lam):
         W, H = size
         cut_rat = np.sqrt(1.0 - lam)
-        cut_w = np.int(W * cut_rat)
-        cut_h = np.int(H * cut_rat)
+        cut_w = np.int32(W * cut_rat)
+        cut_h = np.int32(H * cut_rat)
 
         # uniform
         cx = np.random.randint(W)

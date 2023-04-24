@@ -128,7 +128,7 @@ class TPS(BaseInternode):
         data_dict['image'] = to_pil_image(img[0])
         
         if is_np:
-            data_dict['image'] = np.asarray(data_dict['image'])
+            data_dict['image'] = np.array(data_dict['image'])
         return data_dict
 
     def erase_intl_param_forward(self, data_dict):

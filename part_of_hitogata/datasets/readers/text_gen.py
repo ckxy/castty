@@ -31,7 +31,7 @@ class TextGenReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='seq',
+                seq=dict(),
             )
         )
 
@@ -40,7 +40,7 @@ class TextGenReader(Reader):
 
         img = Image.fromarray(data[0]).convert('RGB')
         if not self.use_pil:
-            img = np.asarray(img)
+            img = np.array(img)
 
         w, h = get_image_size(img)
 

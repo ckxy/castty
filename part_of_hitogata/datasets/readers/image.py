@@ -1,7 +1,6 @@
 import os
 import numpy as np
 from addict import Dict
-from PIL import Image
 from .reader import Reader
 from .utils import read_image_paths
 from .builder import READER
@@ -27,16 +26,13 @@ class ImageReader(Reader):
         return
 
     def __call__(self, index):
-        # index = data_dict
-        # img = Image.open(self.image_paths[index]).convert('RGB')
         img = self.read_image(self.image_paths[index])
         w, h = img.size
-        path = self.image_paths[index]
-        # return {'image': img, 'ori_size': np.array([h, w]).astype(np.float32), 'path': path}
+
         return dict(
             image=img,
             ori_size=np.array([h, w]).astype(np.float32),
-            path=path
+            path=self.image_paths[index]
         )
 
     def __repr__(self):

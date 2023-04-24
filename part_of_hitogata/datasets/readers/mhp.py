@@ -44,8 +44,9 @@ class MHPV1Reader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='seg',
-                mask_classes=CLASSES
+                mask=dict(
+                    classes=CLASSES
+                )
             )
         )
 

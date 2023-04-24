@@ -36,9 +36,10 @@ class ImageFolderReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='cls',
-                classes=self.classes
-            )
+                label=dict(
+                    classes=self.classes
+                ),
+            ),
         )
 
     def __call__(self, index):
@@ -56,7 +57,6 @@ class ImageFolderReader(Reader):
             ori_size=np.array([h, w]).astype(np.float32),
             path=path,
             label=[label],
-            # label_meta=meta
         )
 
     def __len__(self):

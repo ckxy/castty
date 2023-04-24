@@ -66,12 +66,12 @@ def draw_mask(img, mask, classes, colorbar=True, have_background=True):
             draw.text((0, 0), 'no_label', fill=(0, 0, 0), font=font)
 
         if is_np:
-            img = np.asarray(img)
+            img = np.array(img)
             bar = np.array(bar).astype(np.uint8)
         return img, bar
     else:
         if is_np:
-            img = np.asarray(img)
+            img = np.array(img)
         return img, None
 
 

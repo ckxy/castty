@@ -54,7 +54,7 @@ class CalcLinkMap(BaseInternode):
             ImageDraw.Draw(mask).polygon(pts, fill=1)
 
         # data_dict['poly'] = res_polys
-        data_dict['mask'] = np.asarray(mask)
+        data_dict['mask'] = np.array(mask)
 
         return data_dict
 

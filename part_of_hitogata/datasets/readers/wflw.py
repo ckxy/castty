@@ -32,15 +32,15 @@ class WFLWReader(Reader):
 
     def __call__(self, index):
         line = self.data_lines[index].strip().split()
-        landmark = np.asarray(list(map(float, line[:196])), dtype=np.float32).reshape(1, -1, 2)
-        box = np.asarray(list(map(int, line[196:200])))
-        attribute = np.asarray(list(map(int, line[200:206])), dtype=np.int)
+        landmark = np.array(list(map(float, line[:196])), dtype=np.float32).reshape(1, -1, 2)
+        box = np.array(list(map(int, line[196:200])))
+        attribute = np.array(list(map(int, line[200:206])), dtype=np.int32)
         name = line[206]
 
         img = self.read_image(os.path.join(self.img_root, name))
         w, h = get_image_size(img)
 
-        point_meta = Meta(visible=np.ones(landmark.shape[:2]).astype(np.bool))
+        point_meta = Meta(visible=np.ones(landmark.shape[:2]).astype(np.bool_))
         bbox_meta = Meta(box2point=np.zeros(1, dtype=np.int32))
         
         return dict(
@@ -105,14 +105,14 @@ class WFLWSIReader(Reader):
 
         for line in lines:
             line = line.split()
-            landmark = np.asarray(list(map(float, line[:196])), dtype=np.float32).reshape(-1, 2)
-            box = np.asarray(list(map(int, line[196:200]))).astype(np.float32)
+            landmark = np.array(list(map(float, line[:196])), dtype=np.float32).reshape(-1, 2)
+            box = np.array(list(map(int, line[196:200]))).astype(np.float32)
 
             landmarks.append(landmark)
             boxes.append(box)
 
-        landmarks = np.asarray(landmarks)
-        boxes = np.asarray(boxes)
+        landmarks = np.array(landmarks)
+        boxes = np.array(boxes)
 
         img = self.read_image(os.path.join(self.img_root, name))
         w, h = get_image_size(img)

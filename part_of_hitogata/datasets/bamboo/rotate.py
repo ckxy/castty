@@ -74,15 +74,7 @@ class Rot90(BaseInternode):
                     data_dict['image'] = cv2.rotate(data_dict['image'], cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         if 'bbox' in data_dict.keys():
-            boxes = warp_bbox(data_dict['bbox'], data_dict['intl_rot90_matrix'])
-
-        if 'poly' in data_dict.keys():
-            data_dict['poly'] = [warp_point(p, data_dict['intl_rot90_matrix']) for p in data_dict['poly']]
-
-        if 'point' in data_dict.keys():
-            n = len(data_dict['point'])
-            points = data_dict['point'].reshape(-1, 2)
-            points = warp_point(points, data_dict['intl_rot90_matrix'])
+            data_dict['bbox'] = warp_bbox(data_dict['bbox'], data_dict['intl_rot90_matrix'])
 
         if 'mask' in data_dict.keys():
             if data_dict['intl_rot90_angle'] == 90:
@@ -92,54 +84,21 @@ class Rot90(BaseInternode):
             else:
                 data_dict['mask'] = cv2.rotate(data_dict['mask'], cv2.ROTATE_90_COUNTERCLOCKWISE)
 
+        if 'point' in data_dict.keys():
+            n = len(data_dict['point'])
+            if n > 0:
+                points = data_dict['point'].reshape(-1, 2)
+                points = warp_point(points, data_dict['intl_rot90_matrix'])
+                data_dict['point'] = points.reshape(n, -1, 2)
+
+        if 'poly' in data_dict.keys():
+            data_dict['poly'] = [warp_point(p, data_dict['intl_rot90_matrix']) for p in data_dict['poly']]
+
         return data_dict
 
     def erase_intl_param_forward(self, data_dict):
         data_dict.pop('intl_rot90_angle')
         data_dict.pop('intl_rot90_matrix')
-        return data_dict
-
-    def __call__(self, data_dict):
-        # angle = random.choice(self.k) * 90
-
-        # if angle != 0:
-        #     size = get_image_size(data_dict['image'])
-        #     M = self.build_matrix(angle, size)
-
-        #     E, size = calc_expand_size_and_matrix(M, size)
-        #     M = E @ M
-
-        #     if is_pil(data_dict['image']):
-        #         if angle == 90:
-        #             data_dict['image'] = data_dict['image'].transpose(Image.Transpose.ROTATE_270)
-        #         elif angle == 180:
-        #             data_dict['image'] = data_dict['image'].transpose(Image.Transpose.ROTATE_180)
-        #         else:
-        #             data_dict['image'] = data_dict['image'].transpose(Image.Transpose.ROTATE_90)
-        #     else:
-        #         if angle == 90:
-        #             data_dict['image'] = cv2.rotate(data_dict['image'], cv2.ROTATE_90_CLOCKWISE)
-        #         elif angle == 180:
-        #             data_dict['image'] = cv2.rotate(data_dict['image'], cv2.ROTATE_180)
-        #         else:
-        #             data_dict['image'] = cv2.rotate(data_dict['image'], cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-        #     if 'bbox' in data_dict.keys():
-        #         boxes = warp_bbox(data_dict['bbox'], M)
-
-        #     if 'poly' in data_dict.keys():
-        #         data_dict['poly'] = [warp_point(p, M) for p in data_dict['poly']]
-
-        #     if 'point' in data_dict.keys():
-        #         n = len(data_dict['point'])
-        #         points = data_dict['point'].reshape(-1, 2)
-        #         points = warp_point(points, M)
-
-        #     if 'mask' in data_dict.keys():
-        #         data_dict['mask'] = warp_mask(data_dict['mask'], M, dst_size, True)
-        data_dict = self.calc_intl_param_forward(data_dict)
-        data_dict = self.forward(data_dict)
-        data_dict = self.erase_intl_param_forward(data_dict)
         return data_dict
 
     def __repr__(self):

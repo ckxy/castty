@@ -35,7 +35,7 @@ def draw_label(img, labels, classes):
     draw.multiline_text((0, 0), text, fill=(0, 0, 0), font=font)
 
     if is_np:
-        img = np.asarray(img)
+        img = np.array(img)
 
     return img
 

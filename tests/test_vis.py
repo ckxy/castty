@@ -200,7 +200,7 @@ if __name__ == '__main__':
     vis_dict = dict(
         wafer=dict(
             w=dict(
-                x=np.asarray([19, 26, 55]),
+                x=np.array([19, 26, 55]),
                 save=True,
                 opts=dict(title='w', legend=['Residential', 'Non-Residential', 'Utility']),
             ),

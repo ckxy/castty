@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # exit()
 
     for data in tqdm(dataloader):
-        mcl(data, info['classes'], rc, 0)
+        mcl(data, info['label']['classes'], rc, 0)
         plt.show()
         break
 

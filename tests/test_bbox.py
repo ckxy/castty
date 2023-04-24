@@ -67,7 +67,7 @@ if __name__ == '__main__':
     # exit()
 
     for data in tqdm(dataloader):
-        ga(data, info['bbox_classes'], rc, 0)
+        ga(data, info['bbox']['classes'], rc, 0)
         plt.show()
         break
 
