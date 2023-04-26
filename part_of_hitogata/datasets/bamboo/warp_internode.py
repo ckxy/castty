@@ -16,43 +16,80 @@ class WarpInternode(BaseInternode, BaseFilterMixin):
         self.expand = expand
         self.ccs = ccs
 
+        super(WarpInternode, self).__init__(**kwargs)
+
     def calc_intl_param_forward(self, data_dict):
         if 'intl_warp_matrix' in data_dict.keys():
             M = data_dict['intl_warp_tmp_matrix']
             data_dict['intl_warp_matrix'] = M @ data_dict['intl_warp_matrix']
         return data_dict
 
-    def forward(self, data_dict):
+    def forward_image(self, data_dict):
         if 'intl_warp_matrix' in data_dict.keys():
             return data_dict
+        target_tag = data_dict['intl_base_target_tag']
 
         M = data_dict['intl_warp_tmp_matrix']
         dst_size = data_dict['intl_warp_tmp_size']
 
-        if 'image' in data_dict.keys():
-            data_dict['image'] = warp_image(data_dict['image'], M, dst_size, self.ccs)
+        data_dict[target_tag] = warp_image(data_dict[target_tag], M, dst_size, self.ccs)
+        return data_dict
 
-        if 'bbox' in data_dict.keys():
-            data_dict['bbox'] = warp_bbox(data_dict['bbox'], M)
-            data_dict['bbox'] = clip_bbox(data_dict['bbox'], dst_size)
+    def forward_bbox(self, data_dict):
+        if 'intl_warp_matrix' in data_dict.keys():
+            return data_dict
+        target_tag = data_dict['intl_base_target_tag']
+        
+        M = data_dict['intl_warp_tmp_matrix']
+        dst_size = data_dict['intl_warp_tmp_size']
 
-        if 'mask' in data_dict.keys():
-            data_dict['mask'] = warp_mask(data_dict['mask'], M, dst_size, self.ccs)
+        data_dict[target_tag] = warp_bbox(data_dict[target_tag], M)
+        data_dict[target_tag] = clip_bbox(data_dict[target_tag], dst_size)
 
-        if 'point' in data_dict.keys():
-            n = len(data_dict['point'])
-            if n > 0:
-                points = data_dict['point'].reshape(-1, 2)
-                points = warp_point(points, M)
-                data_dict['point'] = points.reshape(n, -1, 2)
-                data_dict['point'] = clip_point(data_dict['point'], dst_size)
+        data_dict = self.base_filter_bbox(data_dict)
+        return data_dict
 
-        if 'poly' in data_dict.keys():
-            data_dict['poly'] = [warp_point(p, M) for p in data_dict['poly']]
-            data_dict['poly'] = clip_poly(data_dict['poly'], dst_size)
+    def forward_mask(self, data_dict):
+        if 'intl_warp_matrix' in data_dict.keys():
+            return data_dict
+        target_tag = data_dict['intl_base_target_tag']
 
-        data_dict = self.base_filter(data_dict)
+        M = data_dict['intl_warp_tmp_matrix']
+        dst_size = data_dict['intl_warp_tmp_size']
 
+        data_dict[target_tag] = warp_mask(data_dict[target_tag], M, dst_size, self.ccs)
+        return data_dict
+
+    def forward_point(self, data_dict):
+        if 'intl_warp_matrix' in data_dict.keys():
+            return data_dict
+        target_tag = data_dict['intl_base_target_tag']
+
+        M = data_dict['intl_warp_tmp_matrix']
+        dst_size = data_dict['intl_warp_tmp_size']
+
+        n = len(data_dict[target_tag])
+        if n > 0:
+            points = data_dict[target_tag].reshape(-1, 2)
+            points = warp_point(points, M)
+            data_dict[target_tag] = points.reshape(n, -1, 2)
+            data_dict[target_tag] = clip_point(data_dict[target_tag], dst_size)
+
+        data_dict = self.base_filter_point(data_dict)
+        return data_dict
+
+    def forward_poly(self, data_dict):
+        if 'intl_warp_matrix' in data_dict.keys():
+            return data_dict
+        target_tag = data_dict['intl_base_target_tag']
+
+        M = data_dict['intl_warp_tmp_matrix']
+        dst_size = data_dict['intl_warp_tmp_size']
+
+        data_dict[target_tag] = [warp_point(p, M) for p in data_dict[target_tag]]
+        data_dict[target_tag] = clip_poly(data_dict[target_tag], dst_size)
+
+        data_dict = self.base_filter_poly(data_dict)
         return data_dict
 
     def erase_intl_param_forward(self, data_dict):

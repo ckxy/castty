@@ -15,6 +15,8 @@ class Bamboo(BaseInternode):
         for cfg in internodes:
             self.internodes.append(build_internode(cfg))
 
+        super(Bamboo, self).__init__(**kwargs)
+
     def forward(self, data_dict):
         for t in self.internodes:
             data_dict = t(data_dict)

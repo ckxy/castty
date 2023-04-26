@@ -110,25 +110,29 @@ class TPS(BaseInternode):
         self.segment = segment
         self.resize = resize
 
+        super(TPS, self).__init__(**kwargs)
+
     def calc_intl_param_forward(self, data_dict):
         raise NotImplementedError
 
-    def forward(self, data_dict):
-        if not is_pil(data_dict['image']):
-            data_dict['image'] = Image.fromarray(data_dict['image'])
+    def forward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+        
+        if not is_pil(data_dict[target_tag]):
+            data_dict[target_tag] = Image.fromarray(data_dict[target_tag])
             is_np = True
         else:
             is_np = False
 
-        grids = gen_grid(get_image_size(data_dict['image']), data_dict['intl_tps_src_cps'], data_dict['intl_tps_tgt_cps'], resize=self.resize)
+        grids = gen_grid(get_image_size(data_dict[target_tag]), data_dict['intl_tps_src_cps'], data_dict['intl_tps_tgt_cps'], resize=self.resize)
 
-        img = to_tensor(data_dict['image'])
+        img = to_tensor(data_dict[target_tag])
         img = img.unsqueeze(0)
         img = F.grid_sample(img, torch.from_numpy(grids).unsqueeze(0), align_corners=True)
-        data_dict['image'] = to_pil_image(img[0])
+        data_dict[target_tag] = to_pil_image(img[0])
         
         if is_np:
-            data_dict['image'] = np.array(data_dict['image'])
+            data_dict[target_tag] = np.array(data_dict[target_tag])
         return data_dict
 
     def erase_intl_param_forward(self, data_dict):

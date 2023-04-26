@@ -23,8 +23,8 @@ __all__ = ['MixUp', 'CutMix', 'Mosaic']
 class MixUp(Bamboo):
     def calc_intl_param_forward(self, data_dict):
         index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
-        while index_mix == data_dict['index']:
-            index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
+        # while index_mix == data_dict['index']:
+        #     index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
         data_dict['intl_index_mix'] = index_mix
         data_dict['intl_lam'] = np.random.beta(1.5, 1.5)
         return data_dict
@@ -35,6 +35,7 @@ class MixUp(Bamboo):
         return data_dict
 
     def forward(self, data_dict):
+        index = data_dict['index']
         index_mix = data_dict['intl_index_mix']
 
         reader = data_dict['reader']
@@ -42,8 +43,11 @@ class MixUp(Bamboo):
 
         a = super(MixUp, self).forward(data_dict)
 
+        if index == index_mix:
+            return a
+
         k = a.keys()
-        assert 'mask' not in k and 'point' not in  k
+        assert 'mask' not in k and 'point' not in  k and 'poly' not in  k
 
         data_dict['index'] = index_mix
         data_dict['len_data_lines'] = len_data_lines
@@ -58,7 +62,7 @@ class MixUp(Bamboo):
         a['image'] = pad_image(a['image'], (0, 0, max(max_w - w_a, 0), max(max_h - h_a, 0)))
         b['image'] = pad_image(b['image'], (0, 0, max(max_w - w_b, 0), max(max_h - h_b, 0)))
 
-        a['ori_size'] = np.array([max_h, max_w]).astype(np.float32)
+        # a['ori_size'] = np.array([max_h, max_w]).astype(np.float32)
 
         lam = data_dict['intl_lam']
 
@@ -67,20 +71,19 @@ class MixUp(Bamboo):
         else:
             a['image'] = cv2.addWeighted(a['image'], lam, b['image'], 1 - lam, 0)
 
+        a['image_meta']['path'] = '[mixup]({}, {}, {})'.format(a['image_meta']['path'], b['image_meta']['path'], lam)
+        a['image_meta']['ori_size'] = (max_w, max_h)
+
         if 'bbox' in k:
             a['bbox'] = np.concatenate([a['bbox'], b['bbox']])
 
-            if 'bbox_meta' in k:
-                a['bbox_meta']['score'] *= lam
-                b['bbox_meta']['score'] *= 1 - lam
-                a['bbox_meta'] += b['bbox_meta']
+            a['bbox_meta']['score'] *= lam
+            b['bbox_meta']['score'] *= 1 - lam
+            a['bbox_meta'] += b['bbox_meta']
 
         if 'label' in k:
             for i in range(len(a['label'])):
                 a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
-
-        if 'path' in k:
-            a['path'] = '[mixup]({}, {}, {})'.format(a['path'], b['path'], lam)
 
         return a
 
@@ -92,8 +95,8 @@ class MixUp(Bamboo):
 class CutMix(Bamboo):
     def calc_intl_param_forward(self, data_dict):
         index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
-        while index_mix == data_dict['index']:
-            index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
+        # while index_mix == data_dict['index']:
+        #     index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
         data_dict['intl_index_mix'] = index_mix
         data_dict['intl_lam'] = np.random.beta(1.5, 1.5)
         return data_dict
@@ -148,15 +151,27 @@ class CutMix(Bamboo):
         else:
             a['image'][ya1:ya2, xa1:xa2] = b_cut
 
+        a['image_meta']['path'] = '[cutmix]({}, {}, {})'.format(a['image_meta']['path'], b['image_meta']['path'], lam)
+        # a['image_meta']['ori_size'] = (max_w, max_h)
+
         # adjust lambda to exactly match pixel ratio
         lam = 1 - ((xa2 - xa1) * (ya2 - ya1) / (wa * ha))
 
-        if 'path' in k:
-            a['path'] = '[cutmix]({}, {}, {})'.format(a['path'], b['path'], lam)
+        # if 'path' in k:
+        #     a['path'] = '[cutmix]({}, {}, {})'.format(a['path'], b['path'], lam)
+
+        # print(a['label'])
 
         if 'label' in k:
             for i in range(len(a['label'])):
+                # print(a['label'][i].shape)
                 a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
+                # a['label'][i] = a['label'][i].astype(np.float32)
+                # print(a['label'][i].shape)
+
+
+        # print(a['label'])
+        # exit()
 
         if 'mask' in k:
             bmask_cut = crop_mask(b['mask'], xb1, yb1, xb2, yb2)
@@ -253,8 +268,11 @@ class Mosaic(Bamboo):
             img4[yc:yc + h4, xc:xc + w4] = d4['image']
 
         d1['image'] = img4
-        d1['ori_size'] = np.array([new_h, new_w]).astype(np.float32)
-        d1['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['path'], d2['path'], d3['path'], d4['path'])
+        # d1['ori_size'] = np.array([new_h, new_w]).astype(np.float32)
+        # d1['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['path'], d2['path'], d3['path'], d4['path'])
+
+        d1['image_meta']['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['image_meta']['path'], d2['image_meta']['path'], d3['image_meta']['path'], d4['image_meta']['path'])
+        d1['image_meta']['ori_size'] = (new_w, new_h)
 
         if 'bbox' in k:
             b1 = pad_bbox(d1['bbox'], xc - w1, yc - h1)
@@ -263,16 +281,10 @@ class Mosaic(Bamboo):
             b4 = pad_bbox(d4['bbox'], xc, yc)
             d1['bbox'] = np.concatenate((b1, b2, b3, b4))
 
-            if 'bbox_meta' in k:
-                if 'box2point' in d1['bbox_meta'].keys():
-                    d2['bbox_meta']['box2point'] += len(d1['point'])
-                    d3['bbox_meta']['box2point'] += len(d1['point']) + len(d2['point'])
-                    d4['bbox_meta']['box2point'] += len(d1['point']) + len(d2['point']) + len(d3['point'])
-
-                d1['bbox_meta'] += d2['bbox_meta']
-                d1['bbox_meta'] += d3['bbox_meta']
-                d1['bbox_meta'] += d4['bbox_meta']
-                # res['bbox_meta'] = deepcopy(d1['bbox_meta'])
+            d1['bbox_meta'] += d2['bbox_meta']
+            d1['bbox_meta'] += d3['bbox_meta']
+            d1['bbox_meta'] += d4['bbox_meta']
+            # res['bbox_meta'] = deepcopy(d1['bbox_meta'])
 
         if 'point' in k:
             p1 = pad_point(d1['point'], xc - w1, yc - h1)
@@ -281,11 +293,10 @@ class Mosaic(Bamboo):
             p4 = pad_point(d4['point'], xc, yc)
             d1['point'] = np.concatenate((p1, p2, p3, p4))
 
-            if 'point_meta' in k:
-                d1['point_meta'] += d2['point_meta']
-                d1['point_meta'] += d3['point_meta']
-                d1['point_meta'] += d4['point_meta']
-                # res['point_meta'] = deepcopy(d1['point_meta'])
+            d1['point_meta'] += d2['point_meta']
+            d1['point_meta'] += d3['point_meta']
+            d1['point_meta'] += d4['point_meta']
+            # res['point_meta'] = deepcopy(d1['point_meta'])
 
         if 'mask' in k:
             mask4 = np.zeros((new_h, new_w)).astype(np.int32)
@@ -296,6 +307,7 @@ class Mosaic(Bamboo):
             mask4[yc:yc + h4, xc:xc + w4] = d4['mask']
 
             d1['mask'] = mask4
+            d1['mask_meta']['ori_size'] = (new_w, new_h)
 
         if 'poly' in k:
             p1 = pad_poly(d1['poly'], xc - w1, yc - h1)
@@ -304,11 +316,10 @@ class Mosaic(Bamboo):
             p4 = pad_poly(d4['poly'], xc, yc)
             d1['poly'] = p1 + p2 + p3 + p4
 
-            if 'poly_meta' in k:
-                d1['poly_meta'] += d2['poly_meta']
-                d1['poly_meta'] += d3['poly_meta']
-                d1['poly_meta'] += d4['poly_meta']
-                # res['poly_meta'] = deepcopy(d1['poly_meta'])
+            d1['poly_meta'] += d2['poly_meta']
+            d1['poly_meta'] += d3['poly_meta']
+            d1['poly_meta'] += d4['poly_meta']
+            # res['poly_meta'] = deepcopy(d1['poly_meta'])
 
         return d1
 

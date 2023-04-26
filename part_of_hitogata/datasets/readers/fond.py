@@ -49,7 +49,7 @@ class FondReader(Reader):
         image = self.read_image(self.image)
         w, h = get_image_size(image)
 
-        labels = [np.array(i, dtype=np.int32) for i in self.label]
+        labels = [np.array([i], dtype=np.float32) for i in self.label]
 
         bboxes = np.array(self.bbox).astype(np.float32).reshape(-1, 4)
         bbox_meta = Meta(
@@ -72,10 +72,11 @@ class FondReader(Reader):
             keep=np.ones(len(polys)).astype(np.bool_),
         )
 
-        res =  dict(
+        res = dict(
             image=image,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=self.image,
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=self.image,
+            image_meta=dict(ori_size=(w, h), path=self.image)
         )
 
         if 'label' in self.mode:
@@ -85,6 +86,7 @@ class FondReader(Reader):
             res['bbox_meta'] = bbox_meta
         if 'mask' in self.mode:
             res['mask'] = mask
+            res['mask_meta'] = dict(ori_size=(w, h))
         if 'point' in self.mode:
             res['point'] = points
             res['point_meta'] = point_meta

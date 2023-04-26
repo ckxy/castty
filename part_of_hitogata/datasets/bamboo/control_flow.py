@@ -31,6 +31,9 @@ class ChooseOne(BaseInternode):
 		i = self.branchs[data_dict[self.tag]]
 		return i(data_dict)
 
+	def backward(self, data_dict):
+		return data_dict
+
 	def __repr__(self):
 		split_str = [i.__repr__() for i in self.branchs]
 		bamboo_str = ''
@@ -96,6 +99,12 @@ class InternodeWarpper(BaseInternode):
 	def __init__(self, internode, **kwargs):
 		self.internode = build_internode(internode)
 
+	def forward(self, data_dict):
+		return data_dict
+
+	def backward(self, data_dict):
+		return data_dict
+
 
 @INTERNODE.register_module()
 class RandomWarpper(InternodeWarpper):
@@ -149,7 +158,7 @@ class BackwardOnly(InternodeWarpper):
 		internode.pop('one_way')
 		super(BackwardOnly, self).__init__(internode, **kwargs)
 
-	def backward(self, **kwargs):
+	def backward(self, kwargs):
 		return self.internode.reverse(**kwargs)
 		
 	def __repr__(self):

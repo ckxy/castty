@@ -52,13 +52,83 @@ def crop_mask(mask, x1, y1, x2, y2):
     return mask
 
 
+class CropInternode(BaseInternode, BaseFilterMixin):
+    def __init__(self, use_base_filter=True, **kwargs):
+        self.use_base_filter = use_base_filter
+
+        super(CropInternode, self).__init__(**kwargs)
+
+    def calc_cropping(self, data_dict):
+        raise NotImplementedError
+
+    def calc_intl_param_forward(self, data_dict):
+        data_dict['intl_cropping'] = self.calc_cropping(data_dict)
+        return data_dict
+
+    def forward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+
+        data_dict[target_tag] = crop_image(data_dict[target_tag], xmin, ymin, xmax, ymax)
+        return data_dict
+
+    def forward_bbox(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+        
+        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+        dst_size = (xmax - xmin, ymax - ymin)
+
+        data_dict[target_tag] = crop_bbox(data_dict[target_tag], xmin, ymin)
+        data_dict[target_tag] = clip_bbox(data_dict[target_tag], dst_size)
+
+        data_dict = self.base_filter_bbox(data_dict)
+        return data_dict
+
+    def forward_mask(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+
+        data_dict[target_tag] = crop_mask(data_dict[target_tag], xmin, ymin, xmax, ymax)
+        return data_dict
+
+    def forward_point(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+        
+        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+        dst_size = (xmax - xmin, ymax - ymin)
+
+        data_dict[target_tag] = crop_point(data_dict[target_tag], xmin, ymin)
+        data_dict[target_tag] = clip_point(data_dict[target_tag], dst_size)
+
+        data_dict = self.base_filter_point(data_dict)
+        return data_dict
+
+    def forward_poly(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+        
+        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+        dst_size = (xmax - xmin, ymax - ymin)
+
+        data_dict[target_tag] = crop_poly(data_dict[target_tag], xmin, ymin)
+        data_dict[target_tag] = clip_poly(data_dict[target_tag], dst_size)
+
+        data_dict = self.base_filter_poly(data_dict)
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_cropping')
+        return data_dict
+
+
 @INTERNODE.register_module()
-class Crop(BaseInternode, BaseFilterMixin):
+class Crop(CropInternode):
     def __init__(self, size, use_base_filter=True, **kwargs):
         assert len(size) == 2 and size[0] > 0 and size[1] > 0
         self.size = size
 
-        self.use_base_filter = use_base_filter
+        super(Crop, self).__init__(use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys() and 'poly' not in data_dict.keys()
@@ -72,48 +142,12 @@ class Crop(BaseInternode, BaseFilterMixin):
         # xmin, ymin, xmax, ymax = 0, 0, 50, 50
         return xmin, ymin, xmax, ymax
 
-    def calc_intl_param_forward(self, data_dict):
-        data_dict['intl_cropping'] = self.calc_cropping(data_dict)
-        return data_dict
-
-    def forward(self, data_dict):
-        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
-        dst_size = (xmax - xmin, ymax - ymin)
-
-        if 'image' in data_dict.keys():
-            data_dict['image'] = crop_image(data_dict['image'], xmin, ymin, xmax, ymax)
-
-        if 'bbox' in data_dict.keys():
-            data_dict['bbox'] = crop_bbox(data_dict['bbox'], xmin, ymin)
-            data_dict['bbox'] = clip_bbox(data_dict['bbox'], dst_size)
-
-        if 'mask' in data_dict.keys():
-            data_dict['mask'] = crop_mask(data_dict['mask'], xmin, ymin, xmax, ymax)
-
-        if 'point' in data_dict.keys():
-            data_dict['point'] = crop_point(data_dict['point'], xmin, ymin)
-            data_dict['point'] = clip_point(data_dict['point'], dst_size)
-
-        if 'poly' in data_dict.keys():
-            data_dict['poly'] = crop_poly(data_dict['poly'], xmin, ymin)
-            data_dict['poly'] = clip_poly(data_dict['poly'], dst_size)
-
-        data_dict = self.base_filter(data_dict)
-        return data_dict
-
-    def erase_intl_param_forward(self, data_dict):
-        data_dict.pop('intl_cropping')
-        return data_dict
-
     def __repr__(self):
-        return 'Crop(size={})'.format(self.size)
+        return 'CropBySize(size={})'.format(self.size)
 
 
 @INTERNODE.register_module()
-class AdaptiveCrop(Crop):
-    def __init__(self, **kwargs):
-        pass
-
+class AdaptiveCrop(CropInternode):
     def calc_cropping(self, data_dict):
         assert 'point' in data_dict.keys() or 'bbox' in data_dict.keys() or 'poly' in data_dict.keys()
 
@@ -158,11 +192,8 @@ class AdaptiveTranslate(WarpInternode):
             box.append(np.array([np.min(bboxes[:, 0]), np.min(bboxes[:, 1]), np.max(bboxes[:, 2]), np.max(bboxes[:, 3])]).astype(np.int32))
 
         if 'point' in data_dict.keys():
-            if 'point_meta' in data_dict.keys():
-                points = data_dict['point'][data_dict['point_meta']['visible']]
-                points = points.reshape(-1, 2)
-            else:
-                points = data_dict['point'].reshape(-1, 2)
+            points = data_dict['point'][data_dict['point_meta']['keep']]
+            points = points.reshape(-1, 2)
             box.append(np.concatenate((np.min(points, axis=0), np.max(points, axis=0))).astype(np.int32))
 
         if 'poly' in data_dict.keys():
@@ -189,13 +220,15 @@ class AdaptiveTranslate(WarpInternode):
 
 
 @INTERNODE.register_module()
-class MinIOUCrop(Crop):
-    def __init__(self, threshs, aspect_ratio=2, attempts=50, **kwargs):
+class MinIOUCrop(CropInternode):
+    def __init__(self, threshs, aspect_ratio=2, attempts=50, use_base_filter=True, **kwargs):
         assert aspect_ratio >= 1
 
         self.threshs = [None] + list(threshs)
         self.aspect_ratio = aspect_ratio
         self.attempts = attempts
+
+        super(MinIOUCrop, self).__init__(use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'bbox' in data_dict.keys()
@@ -250,8 +283,8 @@ class MinIOUCrop(Crop):
 
 @INTERNODE.register_module()
 class MinIOGCrop(MinIOUCrop):
-    def __init__(self, threshs, aspect_ratio=2, attempts=50, **kwargs):
-        super(MinIOGCrop, self).__init__(threshs, aspect_ratio, attempts, **kwargs)
+    def __init__(self, threshs, aspect_ratio=2, attempts=50, use_base_filter=True, **kwargs):
+        super(MinIOGCrop, self).__init__(threshs, aspect_ratio, attempts, use_base_filter, **kwargs)
         self.ul = (3 / 10 / self.aspect_ratio, 10 * self.aspect_ratio / 3)
 
     @staticmethod
@@ -365,8 +398,8 @@ class CenterCrop(Crop):
 
 
 @INTERNODE.register_module()
-class RandomAreaCrop(Crop):
-    def __init__(self, scale=(0.08, 1.0), ratio=(3 / 4, 4 / 3), attempts=10, **kwargs):
+class RandomAreaCrop(CropInternode):
+    def __init__(self, scale=(0.08, 1.0), ratio=(3 / 4, 4 / 3), attempts=10, use_base_filter=True, **kwargs):
         assert scale[0] < scale[1]
         assert scale[1] <= 1 and scale[0] > 0
         assert ratio[0] <= ratio[1]
@@ -374,6 +407,8 @@ class RandomAreaCrop(Crop):
         self.scale = scale
         self.ratio = ratio
         self.attempts = attempts
+
+        super(RandomAreaCrop, self).__init__(use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         width, height = get_image_size(data_dict['image'])
@@ -414,11 +449,13 @@ class RandomAreaCrop(Crop):
 
 
 @INTERNODE.register_module()
-class EastRandomCrop(Crop):
-    def __init__(self, max_tries=50, min_crop_side_ratio=0.1, **kwargs):
+class EastRandomCrop(CropInternode):
+    def __init__(self, max_tries=50, min_crop_side_ratio=0.1, use_base_filter=True, **kwargs):
         assert 0 < min_crop_side_ratio <= 1
         self.max_tries = max_tries
         self.min_crop_side_ratio = min_crop_side_ratio
+
+        super(EastRandomCrop, self).__init__(use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'poly' in data_dict.keys() or 'bbox' in data_dict.keys()
@@ -537,10 +574,12 @@ class EastRandomCrop(Crop):
 
 
 @INTERNODE.register_module()
-class WestRandomCrop(Crop):
-    def __init__(self, min_crop_side_ratio=0.1, **kwargs):
+class WestRandomCrop(CropInternode):
+    def __init__(self, min_crop_side_ratio=0.1, use_base_filter=True, **kwargs):
         assert 0 < min_crop_side_ratio <= 1
         self.min_crop_side_ratio = min_crop_side_ratio
+
+        super(WestRandomCrop, self).__init__(use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'poly' in data_dict.keys() or 'bbox' in data_dict.keys()
@@ -634,8 +673,8 @@ class WestRandomCrop(Crop):
         h_dis = self.calc_regions_distances(h_regions)
         w_dis = self.calc_regions_distances(w_regions)
 
-        ymin, ymax = self.region_wise_random_select(h_regions, h_dis, self.min_crop_side_ratio * h)
-        xmin, xmax = self.region_wise_random_select(w_regions, w_dis, self.min_crop_side_ratio * w)
+        ymin, ymax = self.region_wise_random_select(h_regions, h_dis, int(self.min_crop_side_ratio * h))
+        xmin, xmax = self.region_wise_random_select(w_regions, w_dis, int(self.min_crop_side_ratio * w))
 
         return xmin, ymin, xmax, ymax
 
@@ -644,12 +683,14 @@ class WestRandomCrop(Crop):
 
 
 @INTERNODE.register_module()
-class RandomCenterCropPad(Crop):
-    def __init__(self, size, ratios, border=128, **kwargs):
+class RandomCenterCropPad(CropInternode):
+    def __init__(self, size, ratios, border=128, use_base_filter=True, **kwargs):
         assert len(size) == 2 and size[0] > 0 and size[1] > 0
         self.size = size
         self.ratios = ratios
         self.border = border
+
+        super(RandomCenterCropPad, self).__init__(use_base_filter=use_base_filter, **kwargs)
 
     def _get_border(self, border, size):
         k = 2 * border / size

@@ -83,65 +83,181 @@ def unpad_mask(mask, padding):
     return crop_mask(mask, left, top, w - right, h - bottom)
 
 
-@INTERNODE.register_module()
-class Padding(BaseInternode):
-    def __init__(self, padding, fill=(0, 0, 0), padding_mode='constant', **kwargs):
-        assert isinstance(padding, tuple) and len(padding) == 4
+class PaddingInternode(BaseInternode):
+    def __init__(self, fill=(0, 0, 0), padding_mode='constant', **kwargs):
         assert isinstance(fill, tuple) and len(fill) == 3
         assert padding_mode in CV2_PADDING_MODES.keys()
 
-        self.padding = padding
         self.fill = fill
         self.padding_mode = padding_mode
 
+        super(PaddingInternode, self).__init__(**kwargs)
+
     def calc_padding(self, w, h):
-        return self.padding[0], self.padding[1], self.padding[2], self.padding[3]
+        raise NotImplementedError
 
     def calc_intl_param_forward(self, data_dict):
         w, h = get_image_size(data_dict['image'])
         data_dict['intl_padding'] = self.calc_padding(w, h)
         return data_dict
 
-    def forward(self, data_dict):
+    def forward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
         left, top, right, bottom = data_dict['intl_padding']
 
-        if 'image' in data_dict.keys():
-            data_dict['image'] = pad_image(data_dict['image'], (left, top, right, bottom), self.fill, self.padding_mode)
+        data_dict[target_tag] = pad_image(data_dict[target_tag], (left, top, right, bottom), self.fill, self.padding_mode)
+        return data_dict
 
-        if 'bbox' in data_dict.keys():
-            data_dict['bbox'] = pad_bbox(data_dict['bbox'], left, top)
+    def forward_bbox(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
 
-        if 'poly' in data_dict.keys():
-            data_dict['poly'] = pad_poly(data_dict['poly'], left, top)
+        left, top, right, bottom = data_dict['intl_padding']
 
-        if 'point' in data_dict.keys():
-            data_dict['point'] = pad_point(data_dict['point'], left, top)
+        data_dict[target_tag] = pad_bbox(data_dict[target_tag], left, top)
+        return data_dict
 
-        if 'mask' in data_dict.keys():
-            data_dict['mask'] = pad_mask(data_dict['mask'], (left, top, right, bottom), self.padding_mode)
+    def forward_mask(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        left, top, right, bottom = data_dict['intl_padding']
+
+        data_dict[target_tag] = pad_mask(data_dict[target_tag], (left, top, right, bottom), self.padding_mode)
+        return data_dict
+
+    def forward_point(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        left, top, right, bottom = data_dict['intl_padding']
+
+        data_dict[target_tag] = pad_point(data_dict[target_tag], left, top)
+        return data_dict
+
+    def forward_poly(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        left, top, right, bottom = data_dict['intl_padding']
+
+        data_dict[target_tag] = pad_poly(data_dict[target_tag], left, top)
         return data_dict
 
     def erase_intl_param_forward(self, data_dict):
         data_dict.pop('intl_padding')
         return data_dict
 
+
+@INTERNODE.register_module()
+class Padding(PaddingInternode):
+    def __init__(self, padding, fill=(0, 0, 0), padding_mode='constant', **kwargs):
+        assert isinstance(padding, tuple) and len(padding) == 4
+        self.padding = padding
+
+        super(Padding, self).__init__(fill=fill, padding_mode=padding_mode, **kwargs)
+
+    def calc_padding(self, w, h):
+        return self.padding[0], self.padding[1], self.padding[2], self.padding[3]
+
     def __repr__(self):
         return 'Padding(padding={}, fill={}, padding_mode={})'.format(self.padding, self.fill, self.padding_mode)
 
 
+class ReversiblePadding(PaddingInternode, BaseFilterMixin):
+    def __init__(self, fill=(0, 0, 0), padding_mode='constant', use_base_filter=True, **kwargs):
+        self.use_base_filter = use_base_filter
+        super(ReversiblePadding, self).__init__(fill=fill, padding_mode=padding_mode, **kwargs)
+
+    def calc_intl_param_backward(self, data_dict):
+        if 'intl_resize_and_padding_reverse_flag' in data_dict.keys():
+            w, h = data_dict['ori_size']
+
+            data_dict['intl_padding'] = self.calc_padding(w, h)
+        return data_dict
+
+    def backward_image(self, data_dict):
+        if 'intl_padding' in data_dict.keys():
+            left, top, right, bottom = data_dict['intl_padding']
+        else:
+            return data_dict
+
+        target_tag = data_dict['intl_base_target_tag']
+
+        data_dict[target_tag] = unpad_image(data_dict[target_tag], (left, top, right, bottom))
+        return data_dict
+
+    def backward_bbox(self, data_dict):
+        if 'intl_padding' in data_dict.keys():
+            left, top, right, bottom = data_dict['intl_padding']
+            w, h = data_dict['ori_size']
+        else:
+            return data_dict
+
+        target_tag = data_dict['intl_base_target_tag']
+
+        data_dict[target_tag] = unpad_bbox(data_dict[target_tag], left, top)
+        data_dict[target_tag] = clip_bbox(data_dict[target_tag], (w, h))
+
+        data_dict = self.base_filter_bbox(data_dict)
+        return data_dict
+
+    def backward_mask(self, data_dict):
+        if 'intl_padding' in data_dict.keys():
+            left, top, right, bottom = data_dict['intl_padding']
+        else:
+            return data_dict
+
+        target_tag = data_dict['intl_base_target_tag']
+
+        data_dict[target_tag] = unpad_mask(data_dict[target_tag], (left, top, right, bottom))
+        return data_dict
+
+    def backward_point(self, data_dict):
+        if 'intl_padding' in data_dict.keys():
+            left, top, right, bottom = data_dict['intl_padding']
+            w, h = data_dict['ori_size']
+        else:
+            return data_dict
+
+        target_tag = data_dict['intl_base_target_tag']
+
+        data_dict[target_tag] = unpad_point(data_dict[target_tag], left, top)
+        data_dict[target_tag] = clip_point(data_dict[target_tag], (w, h))
+
+        data_dict = self.base_filter_point(data_dict)
+        return data_dict
+
+    def backward_poly(self, data_dict):
+        if 'intl_padding' in data_dict.keys():
+            left, top, right, bottom = data_dict['intl_padding']
+            w, h = data_dict['ori_size']
+        else:
+            return data_dict
+
+        target_tag = data_dict['intl_base_target_tag']
+
+        data_dict[target_tag] = unpad_poly(data_dict[target_tag], left, top)
+        data_dict[target_tag] = clip_poly(data_dict[target_tag], (w, h))
+
+        data_dict = self.base_filter_poly(data_dict)
+        return data_dict
+
+    def erase_intl_param_backward(self, data_dict):
+        if 'intl_padding' in data_dict.keys():
+            data_dict = self.erase_intl_param_forward(data_dict)
+        return data_dict
+
+    def __repr__(self):
+        return 'PaddingBySize(size={}, fill={}, padding_mode={}, center={})'.format(self.size, self.fill, self.padding_mode, self.center)
+
+
 @INTERNODE.register_module()
-class PaddingBySize(Padding, BaseFilterMixin):
-    def __init__(self, size, fill=(0, 0, 0), padding_mode='constant', center=False, use_base_filter=True, **kwargs):
+class PaddingBySize(ReversiblePadding):
+    def __init__(self, size, center=False, fill=(0, 0, 0), padding_mode='constant', use_base_filter=True, **kwargs):
         assert isinstance(size, tuple) and len(size) == 2
-        assert isinstance(fill, tuple) and len(fill) == 3
-        assert padding_mode in CV2_PADDING_MODES.keys()
 
         self.size = size
-        self.fill = fill
-        self.padding_mode = padding_mode
         self.center = center
 
-        self.use_base_filter = use_base_filter
+        super(PaddingBySize, self).__init__(fill=fill, padding_mode=padding_mode, use_base_filter=True, **kwargs)
 
     def calc_padding(self, w, h):
         if self.center:
@@ -156,63 +272,19 @@ class PaddingBySize(Padding, BaseFilterMixin):
             bottom = max(self.size[1] - h, 0)
         return left, top, right, bottom
 
-    def calc_intl_param_backward(self, data_dict):
-        if 'intl_resize_and_padding_reverse_flag' in data_dict.keys():
-            h, w = data_dict['ori_size']
-            h, w = int(h), int(w)
-
-            data_dict['intl_padding'] = self.calc_padding(w, h)
-        return data_dict
-
-    def backward(self, data_dict):
-        if 'intl_padding' in data_dict.keys():
-            left, top, right, bottom = data_dict['intl_padding']
-            h, w = data_dict['ori_size']
-            h, w = int(h), int(w)
-
-            if 'image' in data_dict.keys():
-                data_dict['image'] = unpad_image(data_dict['image'], (left, top, right, bottom))
-
-            if 'bbox' in data_dict.keys():
-                data_dict['bbox'] = unpad_bbox(data_dict['bbox'], left, top)
-                data_dict['bbox'] = clip_bbox(data_dict['bbox'], (w, h))
-
-            if 'mask' in data_dict.keys():
-                data_dict['mask'] = unpad_mask(data_dict['mask'], (left, top, right, bottom))
-
-            if 'point' in data_dict.keys():
-                data_dict['point'] = unpad_point(data_dict['point'], left, top)
-                data_dict['point'] = clip_point(data_dict['point'], (w, h))
-
-            if 'poly' in data_dict.keys():
-                data_dict['poly'] = unpad_poly(data_dict['poly'], left, top)
-                data_dict['poly'] = clip_poly(data_dict['poly'], (w, h))
-
-            data_dict = self.base_filter(data_dict)
-        return data_dict
-
-    def erase_intl_param_backward(self, data_dict):
-        if 'intl_padding' in data_dict.keys():
-            data_dict = self.erase_intl_param_forward(data_dict)
-        return data_dict
-
     def __repr__(self):
         return 'PaddingBySize(size={}, fill={}, padding_mode={}, center={})'.format(self.size, self.fill, self.padding_mode, self.center)
 
 
 @INTERNODE.register_module()
-class PaddingByStride(PaddingBySize):
-    def __init__(self, stride, fill=(0, 0, 0), padding_mode='constant', center=False, use_base_filter=True, **kwargs):
+class PaddingByStride(ReversiblePadding):
+    def __init__(self, stride, center=False, fill=(0, 0, 0), padding_mode='constant', use_base_filter=True, **kwargs):
         assert isinstance(stride, int) and stride > 0
-        assert isinstance(fill, tuple) and len(fill) == 3
-        assert padding_mode in CV2_PADDING_MODES.keys()
 
         self.stride = stride
-        self.fill = fill
-        self.padding_mode = padding_mode
         self.center = center
 
-        self.use_base_filter = use_base_filter
+        super(PaddingByStride, self).__init__(fill=fill, padding_mode=padding_mode, use_base_filter=True, **kwargs)
 
     def calc_padding(self, w, h):
         nw = math.ceil(w / self.stride) * self.stride
@@ -235,15 +307,12 @@ class PaddingByStride(PaddingBySize):
 
 
 @INTERNODE.register_module()
-class RandomExpand(Padding):
+class RandomExpand(PaddingInternode):
     def __init__(self, ratio, fill=(0, 0, 0), padding_mode='constant', **kwargs):
         assert ratio > 1
-        assert isinstance(fill, tuple) and len(fill) == 3
-        assert padding_mode in CV2_PADDING_MODES.keys()
-
         self.ratio = ratio
-        self.fill = fill
-        self.padding_mode = padding_mode
+
+        super(RandomExpand, self).__init__(fill=fill, padding_mode=padding_mode, **kwargs)
 
     def calc_padding(self, w, h):
         r = random.random() * (self.ratio - 1) + 1

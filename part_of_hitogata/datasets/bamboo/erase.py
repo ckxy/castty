@@ -11,8 +11,54 @@ from ..utils.common import get_image_size, is_pil
 __all__ = ['RandomErasing', 'GridMask']
 
 
+class ErasingInternode(BaseInternode):
+    def __init__(self, **kwargs):
+        super(ErasingInternode, self).__init__(**kwargs)
+
+    def forward_image(self, data_dict):
+        if 'intl_erase_mask' not in data_dict.keys():
+            return data_dict
+
+        target_tag = data_dict['intl_base_target_tag']
+
+        mask = data_dict['intl_erase_mask']
+
+        if is_pil(data_dict[target_tag]):
+            bgd = data_dict['intl_erase_bgd']
+            data_dict[target_tag] = Image.composite(data_dict[target_tag], bgd, mask)
+        else:
+            bgd = data_dict['intl_erase_bgd']
+            data_dict[target_tag] = Image.fromarray(data_dict[target_tag])
+            data_dict[target_tag] = Image.composite(data_dict[target_tag], bgd, mask)
+            data_dict[target_tag] = np.array(data_dict[target_tag])
+
+        return data_dict
+
+    def forward_mask(self, data_dict):
+        if 'intl_erase_mask' not in data_dict.keys():
+            return data_dict
+
+        target_tag = data_dict['intl_base_target_tag']
+
+        mask = data_dict['intl_erase_mask']
+
+        mask = (np.asarray(mask) > 0).astype(np.int32)
+        w, h = get_image_size(data_dict[target_tag])
+        bgd = np.zeros((h, w), np.int32)
+        data_dict[target_tag] = data_dict[target_tag] * mask + bgd * (1 - mask)
+
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        if 'intl_erase_mask' in data_dict.keys():
+            data_dict.pop('intl_erase_mask')
+        if 'intl_erase_bgd' in data_dict.keys():
+            data_dict.pop('intl_erase_bgd')
+        return data_dict
+
+
 @INTERNODE.register_module()
-class RandomErasing(BaseInternode):
+class RandomErasing(ErasingInternode):
     def __init__(self, scale=(0.02, 0.33), ratio=(0.3, 3.3), offset=False, value=(0, 0, 0), **kwargs):
         assert isinstance(value, tuple)
         if (scale[0] > scale[1]) or (ratio[0] > ratio[1]):
@@ -24,6 +70,8 @@ class RandomErasing(BaseInternode):
         self.ratio = ratio
         self.offset = offset
         self.value = value
+
+        super(RandomErasing, self).__init__(**kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys()
@@ -56,38 +104,6 @@ class RandomErasing(BaseInternode):
 
         return data_dict
 
-    def forward(self, data_dict):
-        if 'intl_erase_mask' not in data_dict.keys():
-            return data_dict
-
-        # x, y, new_w, new_h = data_dict['intl_erase_params']
-        # x, y, new_w, new_h = 234, 3, 152, 345
-        mask = data_dict['intl_erase_mask']
-
-        if is_pil(data_dict['image']):
-            bgd = data_dict['intl_erase_bgd']
-            data_dict['image'] = Image.composite(data_dict['image'], bgd, mask)
-        else:
-            bgd = data_dict['intl_erase_bgd']
-            data_dict['image'] = Image.fromarray(data_dict['image'])
-            data_dict['image'] = Image.composite(data_dict['image'], bgd, mask)
-            data_dict['image'] = np.array(data_dict['image'])
-
-        if 'mask' in data_dict.keys():
-            mask = (np.asarray(mask) > 0).astype(np.int32)
-            w, h = get_image_size(data_dict['image'])
-            bgd = np.zeros((h, w), np.int32)
-            data_dict['mask'] = data_dict['mask'] * mask + bgd * (1 - mask)
-
-        return data_dict
-
-    def erase_intl_param_forward(self, data_dict):
-        if 'intl_erase_mask' in data_dict.keys():
-            data_dict.pop('intl_erase_mask')
-        if 'intl_erase_bgd' in data_dict.keys():
-            data_dict.pop('intl_erase_bgd')
-        return data_dict
-
     def __repr__(self):
         if self.offset:
             return 'RandomErasing(scale={}, ratio={}, offset={})'.format(self.scale, self.ratio, self.offset)
@@ -96,7 +112,7 @@ class RandomErasing(BaseInternode):
 
 
 @INTERNODE.register_module()
-class GridMask(RandomErasing):
+class GridMask(ErasingInternode):
     def __init__(self, use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=1, **kwargs):
         assert 0 <= rotate < 90
 
@@ -106,6 +122,8 @@ class GridMask(RandomErasing):
         self.offset = offset
         self.invert = invert
         self.ratio = ratio
+
+        super(GridMask, self).__init__(**kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         assert 'point' not in data_dict.keys()

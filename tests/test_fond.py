@@ -20,7 +20,9 @@ def kp(data_dict, rc, data_info, index=0):
     print(data_dict.keys())
     print(data_dict['image'][index].shape)
 
-    res = dict(image=data_dict['image'][index], ori_size=data_dict['ori_size'][index])
+    ori_size = data_dict['image_meta'][0]['ori_size']
+
+    res = dict(image=data_dict['image'][index], ori_size=ori_size)
 
     if 'bbox' in data_dict.keys():
         res['bbox'] = data_dict['bbox'][index].numpy()
@@ -44,7 +46,7 @@ def kp(data_dict, rc, data_info, index=0):
         img = draw_polygon(img, res['poly'], data_dict['poly_meta'][index].get('keep', None), data_dict['poly_meta'][index].get('class_id', None), data_info['poly']['classes'])
     
     plt.imshow(img)
-    plt.axis('off')
+    # plt.axis('off')
 
 
 if __name__ == '__main__':

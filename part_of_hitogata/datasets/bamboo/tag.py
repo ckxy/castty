@@ -28,6 +28,9 @@ class EraseTags(BaseInternode):
             data_dict.pop(tag)
         return data_dict
 
+    def backward(self, data_dict):
+        return data_dict
+
     def __repr__(self):
         return 'EraseTags(tags={})'.format(tuple(self.tags))
 
@@ -68,6 +71,9 @@ class CopyTag(BaseInternode):
 
     def forward(self, data_dict):
         data_dict[self.dst_tag] = copy.deepcopy(data_dict[self.src_tag])
+        return data_dict
+
+    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

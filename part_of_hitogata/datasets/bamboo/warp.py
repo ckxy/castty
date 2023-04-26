@@ -198,9 +198,6 @@ class WarpResize(WarpInternode):
         return scale, new_size
 
     def calc_intl_param_forward(self, data_dict):
-        # if 'warp_size' in data_dict.keys():
-        #     size = data_dict['warp_size']
-        # else:
         size = get_image_size(data_dict['image'])
 
         M = self.build_matrix(size)
@@ -219,17 +216,36 @@ class WarpResize(WarpInternode):
 
     def calc_intl_param_backward(self, data_dict):
         if 'intl_resize_and_padding_reverse_flag' in data_dict.keys():
-            h, w = data_dict['ori_size']
-            h, w = int(h), int(w)
+            w, h = data_dict['ori_size']
             M = self.build_matrix((w, h))
             data_dict['intl_warp_tmp_matrix'] = np.array(np.matrix(M).I)
             data_dict['intl_warp_tmp_size'] = (w, h)
         return data_dict
 
-    def backward(self, data_dict):
-        if 'intl_warp_tmp_matrix' in data_dict.keys():
-            data_dict = self.forward(data_dict)
-        return data_dict
+    def backward_image(self, data_dict):
+        if 'intl_warp_tmp_matrix' not in data_dict.keys():
+            return data_dict
+        return self.forward_image(data_dict)
+
+    def backward_bbox(self, data_dict):
+        if 'intl_warp_tmp_matrix' not in data_dict.keys():
+            return data_dict
+        return self.forward_bbox(data_dict)
+
+    def backward_mask(self, data_dict):
+        if 'intl_warp_tmp_matrix' not in data_dict.keys():
+            return data_dict
+        return self.forward_mask(data_dict)
+
+    def backward_point(self, data_dict):
+        if 'intl_warp_tmp_matrix' not in data_dict.keys():
+            return data_dict
+        return self.forward_point(data_dict)
+
+    def backward_poly(self, data_dict):
+        if 'intl_warp_tmp_matrix' not in data_dict.keys():
+            return data_dict
+        return self.forward_poly(data_dict)
 
     def erase_intl_param_backward(self, data_dict):
         if 'intl_warp_tmp_matrix' in data_dict.keys():

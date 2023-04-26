@@ -12,20 +12,29 @@ __all__ = ['ToTensor', 'ToPILImage', 'ToCV2Image']
 
 @INTERNODE.register_module()
 class ToTensor(BaseInternode):
-    def forward(self, data_dict):
-        if 'image' in data_dict.keys():
-            assert is_pil(data_dict['image'])
-            data_dict['image'] = to_tensor(data_dict['image'])
-        
-        if 'mask' in data_dict.keys():
-            data_dict['mask'] = torch.from_numpy(data_dict['mask'])
+    def forward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        assert is_pil(data_dict[target_tag])
+        data_dict[target_tag] = to_tensor(data_dict[target_tag])
         return data_dict
 
-    def backward(self, data_dict):
-        if 'image' in data_dict.keys():
-            data_dict['image'] = to_pil_image(data_dict['image'])
-        if 'mask' in data_dict.keys():
-            data_dict['mask'] = data_dict['mask'].detach().cpu().numpy().astype(np.int32)
+    def forward_mask(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        data_dict[target_tag] = torch.from_numpy(data_dict[target_tag])
+        return data_dict
+
+    def backward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        data_dict[target_tag] = to_pil_image(data_dict[target_tag])
+        return data_dict
+
+    def backward_mask(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        data_dict[target_tag] = data_dict[target_tag].detach().cpu().numpy().astype(np.int32)
         return data_dict
 
     def rper(self):
@@ -34,16 +43,18 @@ class ToTensor(BaseInternode):
 
 @INTERNODE.register_module()
 class ToPILImage(BaseInternode):
-    def forward(self, data_dict):
-        if 'image' in data_dict.keys():
-            assert not is_pil(data_dict['image'])
-            data_dict['image'] = Image.fromarray(data_dict['image'])
+    def forward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        assert not is_pil(data_dict[target_tag])
+        data_dict[target_tag] = Image.fromarray(data_dict[target_tag])
         return data_dict
 
-    def backward(self, data_dict):
-        if 'image' in data_dict.keys():
-            assert is_pil(data_dict['image'])
-            data_dict['image'] = np.array(data_dict['image'])
+    def backward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        assert is_pil(data_dict[target_tag])
+        data_dict[target_tag] = np.array(data_dict[target_tag])
         return data_dict
 
     def rper(self):
@@ -52,16 +63,18 @@ class ToPILImage(BaseInternode):
 
 @INTERNODE.register_module()
 class ToCV2Image(BaseInternode):
-    def forward(self, data_dict):
-        if 'image' in data_dict.keys():
-            assert is_pil(data_dict['image'])
-            data_dict['image'] = np.array(data_dict['image'])
+    def forward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        assert is_pil(data_dict[target_tag])
+        data_dict[target_tag] = np.array(data_dict[target_tag])
         return data_dict
 
-    def backward(self, data_dict):
-        if 'image' in data_dict.keys():
-            assert not is_pil(data_dict['image'])
-            data_dict['image'] = Image.fromarray(data_dict['image'])
+    def backward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        assert not is_pil(data_dict[target_tag])
+        data_dict[target_tag] = Image.fromarray(data_dict[target_tag])
         return data_dict
 
     def rper(self):
@@ -70,14 +83,16 @@ class ToCV2Image(BaseInternode):
 
 @INTERNODE.register_module()
 class To1CHTensor(BaseInternode):
-    def forward(self, data_dict):
-        if 'image' in data_dict.keys():
-            data_dict['image'] = data_dict['image'][0].unsqueeze(0)
+    def forward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        data_dict[target_tag] = data_dict[target_tag][0].unsqueeze(0)
         return data_dict
 
-    def backward(self, data_dict):
-        if 'image' in data_dict.keys():
-            data_dict['image'] = data_dict['image'].repeat(3, 1, 1)
+    def backward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+        
+        data_dict[target_tag] = data_dict[target_tag].repeat(3, 1, 1)
         return data_dict
 
     def rper(self):

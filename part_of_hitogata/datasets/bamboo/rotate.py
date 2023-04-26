@@ -18,6 +18,8 @@ class Rot90(BaseInternode):
         assert set(k) | set([1, 2, 3]) == set([1, 2, 3])
         self.k = sorted(list(k))
 
+        super(Rot90, self).__init__(**kwargs)
+
     @staticmethod
     def build_matrix(angle, img_size):
         w, h = img_size
@@ -53,47 +55,66 @@ class Rot90(BaseInternode):
 
         return data_dict
 
-    def forward(self, data_dict):
+    def forward_image(self, data_dict):
         if data_dict['intl_rot90_angle'] == 0:
             return data_dict
+        target_tag = data_dict['intl_base_target_tag']
 
-        if 'image' in data_dict.keys():
-            if is_pil(data_dict['image']):
-                if data_dict['intl_rot90_angle'] == 90:
-                    data_dict['image'] = data_dict['image'].transpose(Image.Transpose.ROTATE_270)
-                elif data_dict['intl_rot90_angle'] == 180:
-                    data_dict['image'] = data_dict['image'].transpose(Image.Transpose.ROTATE_180)
-                else:
-                    data_dict['image'] = data_dict['image'].transpose(Image.Transpose.ROTATE_90)
-            else:
-                if data_dict['intl_rot90_angle'] == 90:
-                    data_dict['image'] = cv2.rotate(data_dict['image'], cv2.ROTATE_90_CLOCKWISE)
-                elif data_dict['intl_rot90_angle'] == 180:
-                    data_dict['image'] = cv2.rotate(data_dict['image'], cv2.ROTATE_180)
-                else:
-                    data_dict['image'] = cv2.rotate(data_dict['image'], cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-        if 'bbox' in data_dict.keys():
-            data_dict['bbox'] = warp_bbox(data_dict['bbox'], data_dict['intl_rot90_matrix'])
-
-        if 'mask' in data_dict.keys():
+        if is_pil(data_dict[target_tag]):
             if data_dict['intl_rot90_angle'] == 90:
-                data_dict['mask'] = cv2.rotate(data_dict['mask'], cv2.ROTATE_90_CLOCKWISE)
+                data_dict[target_tag] = data_dict[target_tag].transpose(Image.Transpose.ROTATE_270)
             elif data_dict['intl_rot90_angle'] == 180:
-                data_dict['mask'] = cv2.rotate(data_dict['mask'], cv2.ROTATE_180)
+                data_dict[target_tag] = data_dict[target_tag].transpose(Image.Transpose.ROTATE_180)
             else:
-                data_dict['mask'] = cv2.rotate(data_dict['mask'], cv2.ROTATE_90_COUNTERCLOCKWISE)
+                data_dict[target_tag] = data_dict[target_tag].transpose(Image.Transpose.ROTATE_90)
+        else:
+            if data_dict['intl_rot90_angle'] == 90:
+                data_dict[target_tag] = cv2.rotate(data_dict[target_tag], cv2.ROTATE_90_CLOCKWISE)
+            elif data_dict['intl_rot90_angle'] == 180:
+                data_dict[target_tag] = cv2.rotate(data_dict[target_tag], cv2.ROTATE_180)
+            else:
+                data_dict[target_tag] = cv2.rotate(data_dict[target_tag], cv2.ROTATE_90_COUNTERCLOCKWISE)
+        return data_dict
 
-        if 'point' in data_dict.keys():
-            n = len(data_dict['point'])
-            if n > 0:
-                points = data_dict['point'].reshape(-1, 2)
-                points = warp_point(points, data_dict['intl_rot90_matrix'])
-                data_dict['point'] = points.reshape(n, -1, 2)
+    def forward_bbox(self, data_dict):
+        if data_dict['intl_rot90_angle'] == 0:
+            return data_dict
+        target_tag = data_dict['intl_base_target_tag']
+        
+        data_dict[target_tag] = warp_bbox(data_dict[target_tag], data_dict['intl_rot90_matrix'])
+        return data_dict
 
-        if 'poly' in data_dict.keys():
-            data_dict['poly'] = [warp_point(p, data_dict['intl_rot90_matrix']) for p in data_dict['poly']]
+    def forward_mask(self, data_dict):
+        if data_dict['intl_rot90_angle'] == 0:
+            return data_dict
+        target_tag = data_dict['intl_base_target_tag']
 
+        if data_dict['intl_rot90_angle'] == 90:
+            data_dict[target_tag] = cv2.rotate(data_dict[target_tag], cv2.ROTATE_90_CLOCKWISE)
+        elif data_dict['intl_rot90_angle'] == 180:
+            data_dict[target_tag] = cv2.rotate(data_dict[target_tag], cv2.ROTATE_180)
+        else:
+            data_dict[target_tag] = cv2.rotate(data_dict[target_tag], cv2.ROTATE_90_COUNTERCLOCKWISE)
+        return data_dict
+
+    def forward_point(self, data_dict):
+        if data_dict['intl_rot90_angle'] == 0:
+            return data_dict
+        target_tag = data_dict['intl_base_target_tag']
+        
+        n = len(data_dict[target_tag])
+        if n > 0:
+            points = data_dict[target_tag].reshape(-1, 2)
+            points = warp_point(points, data_dict['intl_rot90_matrix'])
+            data_dict[target_tag] = points.reshape(n, -1, 2)
+        return data_dict
+
+    def forward_poly(self, data_dict):
+        if data_dict['intl_rot90_angle'] == 0:
+            return data_dict
+        target_tag = data_dict['intl_base_target_tag']
+        
+        data_dict[target_tag] = [warp_point(p, data_dict['intl_rot90_matrix']) for p in data_dict[target_tag]]
         return data_dict
 
     def erase_intl_param_forward(self, data_dict):

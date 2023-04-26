@@ -24,44 +24,74 @@ class Flip(BaseInternode):
             map_idx = lines[0].strip().split(',')
             self.map_idx = list(map(int, map_idx))
             self.map_path = mapping
+            
+        super(Flip, self).__init__(**kwargs)
 
-    def forward(self, data_dict):
+    def calc_intl_param_forward(self, data_dict):
         w, h = get_image_size(data_dict['image'])
+        data_dict['intl_flip_wh'] = (w, h)
+        return data_dict
 
-        if is_pil(data_dict['image']):
+    def forward_image(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+
+        if is_pil(data_dict[target_tag]):
             mode = Image.FLIP_LEFT_RIGHT if self.horizontal else Image.FLIP_TOP_BOTTOM
-            data_dict['image'] = data_dict['image'].transpose(mode)
+            data_dict[target_tag] = data_dict[target_tag].transpose(mode)
         else:
             mode = 1 if self.horizontal else 0
-            data_dict['image'] = cv2.flip(data_dict['image'], mode)
+            data_dict[target_tag] = cv2.flip(data_dict[target_tag], mode)
 
-        if 'bbox' in data_dict.keys():
-            if self.horizontal:
-                data_dict['bbox'][:, 0], data_dict['bbox'][:, 2] = w - data_dict['bbox'][:, 2], w - data_dict['bbox'][:, 0]
-            else:
-                data_dict['bbox'][:, 1], data_dict['bbox'][:, 3] = h - data_dict['bbox'][:, 3], h - data_dict['bbox'][:, 1]
+        return data_dict
 
-        if 'mask' in data_dict.keys():
-            mode = 1 if self.horizontal else 0
-            data_dict['mask'] = cv2.flip(data_dict['mask'], mode)
+    def forward_bbox(self, data_dict):
+        w, h = data_dict['intl_flip_wh']
+        target_tag = data_dict['intl_base_target_tag']
+        
+        if self.horizontal:
+            data_dict[target_tag][:, 0], data_dict[target_tag][:, 2] = w - data_dict[target_tag][:, 2], w - data_dict[target_tag][:, 0]
+        else:
+            data_dict[target_tag][:, 1], data_dict[target_tag][:, 3] = h - data_dict[target_tag][:, 3], h - data_dict[target_tag][:, 1]
 
-        if 'point' in data_dict.keys():
-            if self.horizontal:
-                data_dict['point'][..., 0] = w - data_dict['point'][..., 0]
-            else:
-                data_dict['point'][..., 1] = h - data_dict['point'][..., 1]
-            if self.map_idx is not None:
-                for i in range(len(data_dict['point'])):
-                    data_dict['point'][i] = data_dict['point'][i, self.map_idx]
+        return data_dict
 
-        if 'poly' in data_dict.keys():
-            if self.horizontal:
-                for i in range(len(data_dict['poly'])):
-                    data_dict['poly'][i][:, 0] = w - data_dict['poly'][i][:, 0]
-            else:
-                for i in range(len(data_dict['poly'])):
-                    data_dict['poly'][i][:, 1] = h - data_dict['poly'][i][:, 1]
+    def forward_mask(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
+        
+        mode = 1 if self.horizontal else 0
+        data_dict[target_tag] = cv2.flip(data_dict[target_tag], mode)
 
+        return data_dict
+
+    def forward_point(self, data_dict):
+        w, h = data_dict['intl_flip_wh']
+        target_tag = data_dict['intl_base_target_tag']
+        
+        if self.horizontal:
+            data_dict[target_tag][..., 0] = w - data_dict[target_tag][..., 0]
+        else:
+            data_dict[target_tag][..., 1] = h - data_dict[target_tag][..., 1]
+        if self.map_idx is not None:
+            for i in range(len(data_dict[target_tag])):
+                data_dict[target_tag][i] = data_dict[target_tag][i, self.map_idx]
+
+        return data_dict
+
+    def forward_poly(self, data_dict):
+        w, h = data_dict['intl_flip_wh']
+        target_tag = data_dict['intl_base_target_tag']
+        
+        if self.horizontal:
+            for i in range(len(data_dict[target_tag])):
+                data_dict[target_tag][i][:, 0] = w - data_dict[target_tag][i][:, 0]
+        else:
+            for i in range(len(data_dict[target_tag])):
+                data_dict[target_tag][i][:, 1] = h - data_dict[target_tag][i][:, 1]
+
+        return data_dict
+
+    def erase_intl_param_forward(self, data_dict):
+        data_dict.pop('intl_flip_wh')
         return data_dict
 
     def __repr__(self):
