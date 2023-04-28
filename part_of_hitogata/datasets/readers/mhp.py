@@ -1,5 +1,4 @@
 import os
-import ntpath
 import numpy as np
 from PIL import Image
 from .reader import Reader
@@ -50,7 +49,7 @@ class MHPV1Reader(Reader):
             )
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         img = self.read_image(self.image_paths[index])
         w, h = get_image_size(img)
 
@@ -66,8 +65,9 @@ class MHPV1Reader(Reader):
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=self.image_paths[index],
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=self.image_paths[index],
+            image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
             mask=mask_all
         )
 

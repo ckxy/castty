@@ -120,13 +120,15 @@ def tsr(data_dict, classes, rc, index=0):
     # print(points, 'ppp')
     # print(data_dict['bbox_meta'][index])
 
-    res = rc(image=data_dict['image'][index], ori_size=data_dict['ori_size'][index], point=points, bbox=bboxes, mask=row_mask)
+    ori_size = data_dict['image_meta'][index]['ori_size']
+
+    res = rc(image=data_dict['image'][index], ori_size=ori_size, point=points, bbox=bboxes, mask=row_mask)
     img = res['image']
     points = res['point']
     bboxes = res['bbox']
     row_mask = res['mask']
 
-    res = rc(ori_size=data_dict['ori_size'][index], mask=col_mask)
+    res = rc(ori_size=ori_size, mask=col_mask)
     col_mask = res['mask']
 
     pt_img = draw_point_without_label(img.copy(), points, data_dict['point_meta'][index].get('visible', None))
@@ -187,7 +189,7 @@ if __name__ == '__main__':
 
     for data in tqdm(dataloader):
         # pass
-        tsr(data, info['bbox_classes'], rc, 0)
+        tsr(data, info['bbox']['classes'], rc, 0)
         plt.show()
         break
 

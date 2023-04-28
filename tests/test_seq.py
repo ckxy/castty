@@ -18,9 +18,12 @@ def sq(data_dict, rc, index=0):
     img = data_dict['image'][index]
     seq = data_dict['seq'][index]
 
+    print(data_dict.keys())
     print(img.shape)
 
-    res = rc(image=img, ori_size=data_dict['ori_size'][index])
+    ori_size = data_dict['image_meta'][index]['ori_size']
+
+    res = rc(image=img, ori_size=ori_size)
     img = res['image']
 
     # img = draw_seq(img, seq)

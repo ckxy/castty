@@ -20,7 +20,9 @@ def ga(data_dict, classes, rc, index=0):
 
     print(bboxes, 'b')
 
-    res = rc(image=data_dict['image'][index], ori_size=data_dict['ori_size'][index], bbox=bboxes)
+    ori_size = data_dict['image_meta'][index]['ori_size']
+
+    res = rc(image=data_dict['image'][index], ori_size=ori_size, bbox=bboxes)
     img1 = res['image']
     img2 = img1.copy()
     bboxes = res['bbox']
@@ -33,7 +35,7 @@ def ga(data_dict, classes, rc, index=0):
     # ga_img.save('atssa.jpg')
 
     print(bboxes, 'a')
-    print(data_dict['ori_size'][index])
+    print(ori_size)
 
     if 'ga_bbox' in data_dict:
         plt.subplot(211)

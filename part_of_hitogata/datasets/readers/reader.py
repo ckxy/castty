@@ -12,7 +12,7 @@ class Reader(object):
     def info(self):
         return self._info
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         raise NotImplementedError
 
     def __repr__(self):

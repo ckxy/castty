@@ -1,9 +1,8 @@
 import os
-import numpy as np
-from addict import Dict
 from .reader import Reader
-from .utils import read_image_paths
 from .builder import READER
+from .utils import read_image_paths
+from ..utils.common import get_image_size
 
 
 __all__ = ['ImageReader']
@@ -19,21 +18,21 @@ class ImageReader(Reader):
         self.image_paths = read_image_paths(self.root)
         assert len(self.image_paths) > 0
 
-    def get_dataset_info(self):
-        return range(len(self.image_paths)), Dict({})
+        self._info = dict(forcat=dict())
 
-    def get_data_info(self, index):
-        return
-
-    def __call__(self, index):
+    def __getitem__(self, index):
         img = self.read_image(self.image_paths[index])
-        w, h = img.size
+        w, h = get_image_size(img)
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=self.image_paths[index]
+            image_meta=dict(ori_size=(w, h), path=self.image_paths[index])
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=self.image_paths[index]
         )
+
+    def __len__(self):
+        return len(self.image_paths)
 
     def __repr__(self):
         return 'ImageReader(root={}, {})'.format(self.root, super(ImageReader, self).__repr__())

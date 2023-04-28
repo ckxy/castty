@@ -45,11 +45,11 @@ class FondReader(Reader):
         if 'poly' in self.mode:
             self._info['forcat']['poly'] = dict(classes=['eye'])
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         image = self.read_image(self.image)
         w, h = get_image_size(image)
 
-        labels = [np.array([i], dtype=np.float32) for i in self.label]
+        labels = [np.array(i, dtype=np.float32) for i in self.label]
 
         bboxes = np.array(self.bbox).astype(np.float32).reshape(-1, 4)
         bbox_meta = Meta(

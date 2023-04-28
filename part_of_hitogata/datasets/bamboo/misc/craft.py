@@ -14,21 +14,23 @@ __all__ = ['CalcLinkMap']
 
 @INTERNODE.register_module()
 class CalcLinkMap(BaseInternode):
-    def __init__(self, tag='poly', ratio=0.5):
+    def __init__(self, ratio=0.5, **kwargs):
         assert 0 < ratio < 1
 
-        self.tag = tag
         self.ratio = ratio
 
         self.l1 = (0.5 - ratio / 2) / (0.5 + ratio / 2)
         self.l2 = (0.5 + ratio / 2) / (0.5 - ratio / 2)
 
-    def forward(self, data_dict):
+        super(CalcLinkMap, self).__init__(**kwargs)
+
+    def forward_poly(self, data_dict):
+        target_tag = data_dict['intl_base_target_tag']
         # res_polys = []
         w, h = get_image_size(data_dict['image'])
         mask = Image.new('P', (w, h), 0)
 
-        for poly in data_dict[self.tag]:
+        for poly in data_dict[target_tag]:
             if len(poly) % 2 != 0 or len(poly) < 2:
                 continue
 
@@ -58,5 +60,8 @@ class CalcLinkMap(BaseInternode):
 
         return data_dict
 
+    def backward(self, data_dict):
+        return data_dict
+
     def __repr__(self):
-        return 'CalcLinkMap(tag={}, ratio={})'.format(self.tag, self.ratio)
+        return 'CalcLinkMap(ratio={})'.format(self.ratio)

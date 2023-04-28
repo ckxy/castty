@@ -19,13 +19,13 @@ def mcl(data_dict, classes, rc, index=0):
     label = data_dict['label'][index]
 
     print(img.shape)
-    print(data_dict['path'][index])
+    print(data_dict['image_meta'][index]['path'][index])
     print(label)
     print(classes)
 
-    # print(img.shape)
+    ori_size = data_dict['image_meta'][index]['ori_size']
 
-    res = rc(image=img, ori_size=data_dict['ori_size'][index])
+    res = rc(image=img, ori_size=ori_size)
     img = res['image']
     # print(img.size)
 

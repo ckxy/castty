@@ -18,16 +18,17 @@ test_data = dict(
         serial_batches=True,
         num_threads=0,
         pin_memory=False,
-        # collator=[
-        #     dict(type='EnSeqCollateFN', names=('encoded_seq',)),
-        # ]
+        collator=[
+            dict(type='ListCollateFN', names=('image_meta',)),
+            # dict(type='EnSeqCollateFN', names=('encoded_seq',)),
+        ]
     ),
     dataset=dict(
-        reader=dict(type='LmdbDTRBReader', use_pil=True, root='../datasets/deep-text/evaluation/IC15_1811', char_path='../datasets/deep-text/character.txt'),
-        # reader=dict(type='TextGenReader', path='configs/example_chn.py'),
+        # reader=dict(type='LmdbDTRBReader', use_pil=True, root='../datasets/deep-text/evaluation/IC15_1811', char_path='../datasets/deep-text/character.txt'),
+        reader=dict(type='TextGenReader', path='configs/example_chn.py'),
         internodes=[
             dict(type='DataSource'),
-            # dict(type='TPSStretch', segment=2),
+            dict(type='TPSStretch', segment=2),
             # dict(type='TPSDistort', segment=4, resize=True),
             # dict(type='Resize', size=(320, 32), keep_ratio=True),
             # dict(type='PaddingBySize', size=(320, 32), fill=(0, 0, 0), padding_mode='constant', center=False),

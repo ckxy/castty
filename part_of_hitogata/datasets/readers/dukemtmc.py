@@ -121,7 +121,7 @@ class DukeMTMCAttritubesReader(Reader):
             ),
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         img = self.read_image(self.img_paths[index])
         w, h = img.size
         path = self.img_paths[index]
@@ -160,20 +160,21 @@ class DukeMTMCAttritubesReader(Reader):
         for i, gc in enumerate(self.grouped_classes):
             # print(gc)
             if len(gc) == 1:
-                gl = np.array(labels[i]).astype(np.int32)
+                gl = np.array([labels[i]]).astype(np.int32)
             else:
                 gl = np.zeros(len(gc)).astype(np.int32)
                 gl[labels[i]] = 1
             grouped_labels.append(gl)
 
-        print(self.grouped_classes)
-        print(grouped_labels)
-        exit()
+        # print(self.grouped_classes)
+        # print(grouped_labels)
+        # exit()
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=path,
+            image_meta=dict(ori_size=(w, h), path=path),
             label=grouped_labels
         )
 

@@ -26,6 +26,7 @@ test_data = dict(
         num_threads=0,
         pin_memory=False,
         collator=[
+            dict(type='ListCollateFN', names=('image_meta',)),
             dict(type='BboxCollateFN', names=('bbox',)),
             dict(type='ListCollateFN', names=('bbox_meta',)),
             # dict(type='ListCollateFN', names=('bbox_meta', 'point', 'point_meta')),
@@ -34,32 +35,32 @@ test_data = dict(
         ]
     ),
     dataset=dict(
-        reader=dict(type='LVISAPIReader', set_path='../datasets/coco/annotations/lvis_v1_val.json', img_root='../datasets/coco'),
+        # reader=dict(type='LVISAPIReader', set_path='../datasets/coco/annotations/lvis_v1_val.json', img_root='../datasets/coco'),
         # reader=dict(type='COCOAPIReader', set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017'),
         # reader=dict(type='COCOAPIReader', use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
         # reader=dict(type='VOCReader', use_pil=True, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
-        # reader=dict(
-        #     type='CatReader', 
-        #     internodes=(
-        #         dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
-        #         dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2012', split='trainval', filter_difficult=False, classes=classes),
-        #         # dict(type='COCOAPIReader', use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
-        #     ),
-        #     output_gid=True,
-        # ),
+        reader=dict(
+            type='CatReader', 
+            readers=(
+                dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+                dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2012', split='trainval', filter_difficult=False, classes=classes),
+                # dict(type='COCOAPIReader', use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
+            ),
+            output_gid=True,
+        ),
         internodes=[
-            dict(type='DataSource'),
+            # dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
             #     dict(type='DataSource'),
             # ]),
             # dict(type='Mosaic', internodes=[
             #     dict(type='DataSource'),
             # ]),
-            # dict(type='Mosaic', internodes=[
-            #     dict(type='MixUp', internodes=[
-            #         dict(type='DataSource'),
-            #     ]),
-            # ]),
+            dict(type='Mosaic', internodes=[
+                dict(type='MixUp', internodes=[
+                    dict(type='DataSource'),
+                ]),
+            ]),
             # dict(
             #     type='ChooseABranchByID', 
             #     branchs=[
@@ -162,7 +163,7 @@ test_data = dict(
             # dict(type='WestRandomCrop', min_crop_side_ratio=0.1),
             # dict(type='ToPILImage'),
             dict(type='ToTensor'),
-            # dict(type='CalcCenterNetGrids', ratio=0.25, num_classes=1),
+            # dict(type='CalcCenterNetGrids', ratio=0.25, num_classes=20),
             # dict(type='CalcNanoGrids', scale=5, top_k=9, strides=(8, 16, 32), num_classes=len(classes), analysis=True),
         ],
     ),

@@ -51,7 +51,8 @@ class VOCReader(Reader):
         self._info = dict(
             forcat=dict(
                 bbox=dict(
-                    classes=self.classes
+                    classes=self.classes,
+                    extra_meta=['difficult']
                 )
             )
         )
@@ -98,7 +99,7 @@ class VOCReader(Reader):
 
         return bboxes, classes_list, difficult
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         img = self.read_image(self.image_paths[index])
         w, h = get_image_size(img)
         bbox, cla, difficult = self.read_bbox_voc(self.label_paths[index], self.classes, self.filter_difficult, self.to_remove)
@@ -108,12 +109,14 @@ class VOCReader(Reader):
             class_id=cla,
             score=np.ones(len(bbox)).astype(np.float32),
             difficult=difficult,
+            keep=np.ones(len(bbox)).astype(np.bool_),
         )
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=path,
+            image_meta=dict(ori_size=(w, h), path=path),
             bbox=bbox,
             bbox_meta=bbox_meta
         )
@@ -167,7 +170,7 @@ class VOCSegReader(Reader):
             )
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         img = self.read_image(self.image_paths[index])
         w, h = get_image_size(img)
 
@@ -181,8 +184,9 @@ class VOCSegReader(Reader):
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=self.image_paths[index],
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=self.image_paths[index],
+            image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
             mask=mask
         )
 
@@ -224,7 +228,7 @@ class SBDReader(Reader):
             )
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         img = self.read_image(self.image_paths[index])
         w, h = get_image_size(img)
 
@@ -235,8 +239,9 @@ class SBDReader(Reader):
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=self.image_paths[index],
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=self.image_paths[index],
+            image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
             mask=mask
         )
 

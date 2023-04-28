@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from copy import deepcopy
 from .reader import Reader
 from .builder import READER
 from ..utils.structures import Meta
@@ -147,15 +146,24 @@ class LVISAPIReader(Reader):
 
         return dataset_dicts
 
-    def __call__(self, index):
-        data_line = deepcopy(self.data_lines[index])
-        data_line['image'] = self.read_image(data_line['path'])
-        data_line['bbox_meta'] = Meta(
-            class_id=data_line.pop('class_id'),
-            score=np.ones(len(data_line['bbox']))
+    def __getitem__(self, index):
+        data_line = self.data_lines[index]
+
+        img = self.read_image(data_line['path'])
+        w, h = get_image_size(img)
+
+        bbox_meta = Meta(
+            class_id=data_line['class_id'],
+            score=np.ones(len(data_line['bbox'])).astype(np.float32),
+            keep=np.ones(len(data_line['bbox'])).astype(np.bool_),
         )
-        # data_line['bbox'] = data_line['bbox'][..., :4]
-        return data_line
+
+        return dict(
+            image=img,
+            image_meta=dict(ori_size=(w, h), path=data_line['path']),
+            bbox=data_line['bbox'],
+            bbox_meta=bbox_meta
+        )
 
     def __len__(self):
         return len(self.data_lines)

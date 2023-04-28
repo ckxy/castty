@@ -41,5 +41,8 @@ class CTCEncode(BaseInternode):
 
 		return data_dict
 
+	def backward(self, data_dict):
+		return data_dict
+
 	def __repr__(self):
 		return 'CTCEncode(char_path={}, blank_first={})'.format(self.char_path, self.blank_first)

@@ -42,7 +42,7 @@ class ImageFolderReader(Reader):
             ),
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         img = self.read_image(self.samples[index][0])
         # label = self.samples[index][1]
         label = np.zeros(len(self.classes)).astype(np.float32)
@@ -54,8 +54,9 @@ class ImageFolderReader(Reader):
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=path,
+            image_meta=dict(ori_size=(w, h), path=path),
             label=[label],
         )
 

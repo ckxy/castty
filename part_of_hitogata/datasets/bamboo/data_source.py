@@ -15,6 +15,9 @@ class DataSource(BaseInternode):
             data_dict.pop('len_data_lines')
 
             tmp = copy.deepcopy(data_dict)
-            tmp.update(reader(index))
+            tmp.update(reader[index])
             return tmp
+        return data_dict
+
+    def backward(self, data_dict):
         return data_dict

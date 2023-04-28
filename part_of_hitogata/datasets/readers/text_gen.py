@@ -35,7 +35,7 @@ class TextGenReader(Reader):
             )
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         data = self.renders[index % len(self.renders)]()
 
         img = Image.fromarray(data[0]).convert('RGB')
@@ -46,8 +46,9 @@ class TextGenReader(Reader):
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=f'{self.path}--{index}',
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=f'{self.path}--{index}',
+            image_meta=dict(ori_size=(w, h), path=f'{self.path}--{index}'),
             seq=data[1],
         )
 

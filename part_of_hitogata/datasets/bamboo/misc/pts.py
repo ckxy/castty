@@ -74,7 +74,7 @@ class CalcPTSGrids(BaseInternode):
         center_meta = data_dict['bbox_meta']
 
         gt_keypoints = torch.from_numpy(data_dict['point']) * self.ratio
-        visible = data_dict['point_meta']['visible']
+        visible = data_dict['point_meta']['keep']
 
         for j, ct in enumerate(gt_centers):
             ctx_int, cty_int = ct.int()
@@ -142,6 +142,9 @@ class CalcPTSGrids(BaseInternode):
         data_dict['keypoint_offset_map'] = kpt_offset_target
         data_dict['keypoint_offset_target_weight'] = kpt_offset_target_weight
 
+        return data_dict
+
+    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

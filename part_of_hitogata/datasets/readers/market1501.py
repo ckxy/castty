@@ -1,8 +1,5 @@
 import os
-import ntpath
 import numpy as np
-from addict import Dict
-from PIL import Image
 from .reader import Reader
 from .builder import READER
 
@@ -151,12 +148,12 @@ class Market1501AttritubesReader(Reader):
             ),
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         img = self.read_image(self.img_paths[index])
         w, h = img.size
         path = self.img_paths[index]
 
-        pid = self.pids.index(os.path.splitext(ntpath.basename(path))[0].split('_')[0])
+        pid = self.pids.index(os.path.splitext(os.path.basename(path))[0].split('_')[0])
 
         labels = []
         tmp = []
@@ -205,8 +202,9 @@ class Market1501AttritubesReader(Reader):
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=path,
+            image_meta=dict(ori_size=(w, h), path=path),
             label=grouped_labels
         )
 

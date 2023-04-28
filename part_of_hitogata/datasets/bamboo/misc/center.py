@@ -12,7 +12,7 @@ from torch.nn.functional import affine_grid, grid_sample, pad, interpolate
 __all__ = ['CalcHeatmapByPoint', 'CalcCenterNetGrids']
 
 
-# @INTERNODE.register_module()
+@INTERNODE.register_module()
 class CalcHeatmapByPoint(BaseInternode):
     def __init__(self, ratio=1, sigma=1, resample=False):
         self.ratio = ratio
@@ -93,18 +93,12 @@ class CalcHeatmapByPoint(BaseInternode):
 
         return img, True
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict):
         w, h = get_image_size(data_dict['image'])
         heatmaps_per_img = []
         visible_per_img = []
 
-        print(data_dict['point'].shape)
-
-        if 'point_meta' in data_dict.keys():
-            visible = data_dict['point_meta']['visible']
-        else:
-            visible = np.empty(shape=data_dict['point'].shape[:2], dtype=np.bool)
-            visible.fill(True)
+        visible = data_dict['point_meta']['keep']
 
         for points, vises in zip(data_dict['point'], visible):
             for point, vis in zip(points, vises):
@@ -117,8 +111,7 @@ class CalcHeatmapByPoint(BaseInternode):
         visible_per_img = np.array(visible_per_img).reshape(visible.shape)
         data_dict['heatmap'] = torch.cat(heatmaps_per_img, dim=0)
 
-        if 'point_meta' in data_dict.keys():
-            data_dict['point_meta']['visible'] = visible_per_img
+        data_dict['point_meta']['keep'] = visible_per_img
 
         return data_dict
 
@@ -178,7 +171,7 @@ class CalcCenterNetGrids(BaseInternode):
             offset_target_weight = torch.zeros(2, int(h * self.ratio), int(w * self.ratio)).type(torch.float32)
 
             gt_keypoints = torch.from_numpy(data_dict['point']) * self.ratio
-            visible = data_dict['point_meta']['visible']
+            visible = data_dict['point_meta']['keep']
 
         for j, ct in enumerate(gt_centers):
             ctx_int, cty_int = ct.int()
@@ -240,6 +233,9 @@ class CalcCenterNetGrids(BaseInternode):
 
             data_dict['offset_map'] = offset_target
             data_dict['offset_target_weight'] = offset_target_weight
+        return data_dict
+
+    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

@@ -194,7 +194,7 @@ class CalcNanoGrids(BaseInternode):
                 jj = index - ii * featmap_sizes[k - 1][1]
                 data_dict['ga_index'][k - 1].append([jj, ii, pos_assigned_gt_inds[i].item()])
                 # print(index, ii, jj)
-                box = pos_bboxes[i].numpy().astype(np.int).tolist() + [pos_assigned_gt_inds[i].item()]
+                box = pos_bboxes[i].numpy().astype(np.int32).tolist() + [pos_assigned_gt_inds[i].item()]
                 if box not in data_dict['ga_bbox'][k - 1]:
                     data_dict['ga_bbox'][k - 1].append(box)
 
@@ -206,6 +206,9 @@ class CalcNanoGrids(BaseInternode):
             # exit()
 
         # exit()
+        return data_dict
+
+    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

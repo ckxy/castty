@@ -18,9 +18,11 @@ def ss(data_dict, classes, rc, index=0):
     img = data_dict['image'][index]
     mask = data_dict['mask'][index]
 
-    print(img.shape, mask.shape, data_dict['ori_size'][index])
+    ori_size = data_dict['image_meta'][index]['ori_size']
 
-    res = rc(image=img, ori_size=data_dict['ori_size'][index], mask=mask)
+    print(img.shape, mask.shape, ori_size)
+
+    res = rc(image=img, ori_size=ori_size, mask=mask)
     img = res['image']
     mask = res['mask']
 

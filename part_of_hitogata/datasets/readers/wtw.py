@@ -1,17 +1,16 @@
 import os
-import copy
+import math
 import numpy as np
 from .reader import Reader
 from .builder import READER
+from PIL import Image, ImageDraw
 from ..utils.structures import Meta
 from ..utils.common import get_image_size
+from ..bamboo.crop import crop_image, crop_bbox, crop_point
 try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
-from ..bamboo.crop import crop_image, crop_bbox, crop_point
-from PIL import Image, ImageDraw
-import math
 
 
 __all__ = ['WTWReader', 'WTWLineReader', 'WTWSTReader']
@@ -30,9 +29,14 @@ class WTWReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='kpt-det',
-                bbox_classes=['grid']
-            ),
+                bbox=dict(
+                    classes=['grid'],
+                    extra_meta=['table_id', 'startcol', 'endcol', 'startrow', 'endrow']
+                ),
+                point=dict(
+                    classes=[str(i) for i in range(4)],
+                ),
+            )
         )
 
     def read_annotations(self, xml_path):
@@ -79,9 +83,9 @@ class WTWReader(Reader):
 
         return bboxes, points, table_ids, startcols, endcols, startrows, endrows
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         # index = 4
-        index = 159
+        # index = 159
         path = os.path.join(self.root, 'images', os.path.splitext(self.xml_paths[index])[0] + '.jpg')
         img = self.read_image(path)
         w, h = get_image_size(img)
@@ -98,15 +102,17 @@ class WTWReader(Reader):
             startcol=startcols,
             endcol=endcols,
             startrow=startrows,
-            endrow=endrows
+            endrow=endrows,
+            keep=np.ones(len(bboxes)).astype(np.bool_),
         )
 
-        point_meta = Meta(visible=np.ones(points.shape[:2]).astype(np.bool))
+        point_meta = Meta(keep=np.ones(points.shape[:2]).astype(np.bool_))
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            image_meta=dict(ori_size=(w, h), path=path),
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=path,
             bbox=bboxes,
             bbox_meta=bbox_meta,
             point=points,
@@ -127,15 +133,27 @@ class WTWSTReader(WTWReader):
 
         from tqdm import tqdm
 
-        self.data_lines = []
-        for i in tqdm(range(len(self.xml_paths))):
-            table_ids = self.read_table_ids(os.path.join(self.root, 'xml', self.xml_paths[i]))
-            for j in range(len(np.unique(table_ids))):
-                self.data_lines.append((self.xml_paths[i], j))
+        # self.data_lines = []
+        # for i in tqdm(range(len(self.xml_paths))):
+        #     table_ids = self.read_table_ids(os.path.join(self.root, 'xml', self.xml_paths[i]))
+        #     for j in range(len(np.unique(table_ids))):
+        #         self.data_lines.append((self.xml_paths[i], j))
 
-        # import torch
+        import torch
         # torch.save(self.data_lines, 'wtwst.pth')
-        # self.data_lines = torch.load('wtwst.pth')
+        self.data_lines = torch.load('wtwst.pth')
+
+        self._info = dict(
+            forcat=dict(
+                bbox=dict(
+                    classes=['grid'],
+                    extra_meta=['table_id', 'startcol', 'endcol', 'startrow', 'endrow']
+                ),
+                point=dict(
+                    classes=[str(i) for i in range(4)],
+                ),
+            )
+        )
 
     def read_table_ids(self, xml_path):
         root = ET.parse(xml_path).getroot()
@@ -201,7 +219,7 @@ class WTWSTReader(WTWReader):
 
         return left, top, right, bottom
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         # index = 170
         xml_path, table_id = self.data_lines[index]
 
@@ -231,18 +249,21 @@ class WTWSTReader(WTWReader):
         bbox_meta = Meta(
             class_id=np.zeros(len(bboxes)).astype(np.int32),
             score=np.ones(len(bboxes)).astype(np.float32),
+            table_id=np.zeros(len(bboxes)).astype(np.int32),
             startcol=startcols,
             endcol=endcols,
             startrow=startrows,
-            endrow=endrows
+            endrow=endrows,
+            keep=np.ones(len(bboxes)).astype(np.bool_),
         )
 
-        point_meta = Meta(visible=np.ones(points.shape[:2]).astype(np.bool_))
+        point_meta = Meta(keep=np.ones(points.shape[:2]).astype(np.bool_))
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            image_meta=dict(ori_size=(w, h), path=path),
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=path,
             bbox=bboxes,
             bbox_meta=bbox_meta,
             point=points,
@@ -263,11 +284,11 @@ class WTWLineReader(WTWReader):
 
         self._info = dict(
             forcat=dict(
-                type='ocrdet',
+                poly=dict(classes=['line'])
             ),
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         # index = 235
         path = os.path.join(self.root, 'images', os.path.splitext(self.xml_paths[index])[0] + '.jpg')
         img = self.read_image(path)
@@ -279,12 +300,13 @@ class WTWLineReader(WTWReader):
         for i in range(len(points)):
             polys.append(points[i])
 
-        meta = Meta(ignore_flag=np.zeros(len(polys)).astype(np.bool_))
+        meta = Meta(keep=np.ones(len(polys)).astype(np.bool_))
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=path,
+            image_meta=dict(ori_size=(w, h), path=path),
             poly=polys,
             poly_meta=meta
         )

@@ -2,8 +2,8 @@ import os
 import math
 import torch
 import numpy as np
-from PIL import Image
 from ..builder import INTERNODE
+from PIL import Image, ImageDraw
 from ..base_internode import BaseInternode
 from ...utils.common import get_image_size
 
@@ -123,18 +123,24 @@ class CalcTSRGT(BaseInternode):
         rows = []
         rows_ind = []
 
-        ind = data_dict['bbox_meta']['startrow'] == 0
-        points = data_dict['point'][ind][:, [0, 1], :].reshape(-1, 2)
-        points, ind = self.calc_points_on_x(points, w)
-        rows.append(points)
-        rows_ind.append(ind)
+        for table_id in np.unique(data_dict['bbox_meta']['table_id']):
+            startrows = data_dict['bbox_meta']['startrow'][data_dict['bbox_meta']['table_id'] == table_id]
 
-        for i in range(len(np.unique(data_dict['bbox_meta']['startrow']))):
-            ind = data_dict['bbox_meta']['endrow'] == i
-            points = data_dict['point'][ind][:, [2, 3], :].reshape(-1, 2)
+            ind = (data_dict['bbox_meta']['startrow'] == 0) & (data_dict['bbox_meta']['table_id'] == table_id)
+            points = data_dict['point'][ind][:, [0, 1], :].reshape(-1, 2)
             points, ind = self.calc_points_on_x(points, w)
             rows.append(points)
             rows_ind.append(ind)
+
+            # for i in range(len(np.unique(data_dict['bbox_meta']['startrow']))):
+            for i in range(len(np.unique(startrows))):
+                ind = (data_dict['bbox_meta']['endrow'] == i) & (data_dict['bbox_meta']['table_id'] == table_id)
+                points = data_dict['point'][ind][:, [2, 3], :].reshape(-1, 2)
+                points, ind = self.calc_points_on_x(points, w)
+                rows.append(points)
+                rows_ind.append(ind)
+            # print(table_id, np.unique(startrows))
+        # exit()
 
         row_separators = [[], rows, []]
 
@@ -163,17 +169,18 @@ class CalcTSRGT(BaseInternode):
             row_separators[2].append(bt)
 
         # from part_of_hitogata.utils.point_tools import draw_point, draw_point_without_label
-        # from PIL import ImageDraw, ImageFont
+        # from PIL import ImageFont
         # img = data_dict['image'].copy()
 
         # w, h = img.size
         # l = math.sqrt(h * h + w * w)
         # draw = ImageDraw.Draw(img)
         # r = max(2, int(l / 200))
-        # font = ImageFont.truetype('/Users/liaya/Documents/part-of-hitogata/part_of_hitogata/fonts/arial.ttf', 30)
+        # font = ImageFont.truetype('/Users/liaya/Documents/part-of-hitogata/part_of_hitogata/fonts/arial.ttf', 20)
 
         # # for row_separator in row_separators:
         # for i in range(len(rows_ind)):
+        #     # i = 0
         #     row, row_ind = row_separators[1][i], rows_ind[i]
         #     for j, point in enumerate(row):
         #         x, y = np.around(point).astype(np.int32)
@@ -190,6 +197,7 @@ class CalcTSRGT(BaseInternode):
         #             draw.line((x1, y1, x2, y2), width=r // 2, fill=(255, 0, 0))
         #         else:
         #             draw.line((x1, y1, x2, y2), width=r // 2, fill=(0, 0, 255))
+        #     # break
         # img.show()
         # exit()
 
@@ -250,18 +258,22 @@ class CalcTSRGT(BaseInternode):
         cols = []
         cols_ind = []
 
-        ind = data_dict['bbox_meta']['startcol'] == 0
-        points = data_dict['point'][ind][:, [0, 3], :].reshape(-1, 2)
-        points, ind = self.calc_points_on_y(points, h)
-        cols.append(points)
-        cols_ind.append(ind)
+        for table_id in np.unique(data_dict['bbox_meta']['table_id']):
+            startcols = data_dict['bbox_meta']['startcol'][data_dict['bbox_meta']['table_id'] == table_id]
 
-        for i in range(len(np.unique(data_dict['bbox_meta']['startcol']))):
-            ind = data_dict['bbox_meta']['endcol'] == i
-            points = data_dict['point'][ind][:, [1, 2], :].reshape(-1, 2)
+            ind = (data_dict['bbox_meta']['startcol'] == 0) & (data_dict['bbox_meta']['table_id'] == table_id)
+            points = data_dict['point'][ind][:, [0, 3], :].reshape(-1, 2)
             points, ind = self.calc_points_on_y(points, h)
             cols.append(points)
             cols_ind.append(ind)
+
+            # for i in range(len(np.unique(data_dict['bbox_meta']['startcol']))):
+            for i in range(len(np.unique(startcols))):
+                ind = (data_dict['bbox_meta']['endcol'] == i) & (data_dict['bbox_meta']['table_id'] == table_id)
+                points = data_dict['point'][ind][:, [1, 2], :].reshape(-1, 2)
+                points, ind = self.calc_points_on_y(points, h)
+                cols.append(points)
+                cols_ind.append(ind)
 
         col_separators = [[], cols, []]
 
@@ -290,11 +302,37 @@ class CalcTSRGT(BaseInternode):
             col_separators[2].append(rt)
 
         # from part_of_hitogata.utils.point_tools import draw_point, draw_point_without_label
+        # from PIL import ImageFont
         # img = data_dict['image'].copy()
-        # for col_separator in col_separators:
-        #     for col in col_separator:
-        #         img = draw_point_without_label(img, col[np.newaxis, ...])
+
+        # w, h = img.size
+        # l = math.sqrt(h * h + w * w)
+        # draw = ImageDraw.Draw(img)
+        # r = max(2, int(l / 200))
+        # font = ImageFont.truetype('/Users/liaya/Documents/part-of-hitogata/part_of_hitogata/fonts/arial.ttf', 20)
+
+        # # for row_separator in row_separators:
+        # for i in range(len(cols_ind)):
+        #     # i = 0
+        #     col, col_ind = col_separators[1][i], cols_ind[i]
+        #     for j, point in enumerate(col):
+        #         x, y = np.around(point).astype(np.int32)
+        #         if col_ind[j]:
+        #             draw.ellipse((x - r, y - r, x + r, y + r), fill=(255, 0, 0))
+        #         else:
+        #             draw.ellipse((x - r, y - r, x + r, y + r), fill=(0, 0, 255))
+        #         draw.text((x, y), str(j), fill=(100, 255, 100), font=font)
+
+        #     for j in range(len(col) - 1):
+        #         x1, y1 = np.around(col[j]).astype(np.int32)
+        #         x2, y2 = np.around(col[j + 1]).astype(np.int32)
+        #         if col_ind[j] and col_ind[j + 1]:
+        #             draw.line((x1, y1, x2, y2), width=r // 2, fill=(255, 0, 0))
+        #         else:
+        #             draw.line((x1, y1, x2, y2), width=r // 2, fill=(0, 0, 255))
+        #     # break
         # img.show()
+        # exit()
 
         y_tau = self.tau * h
         col_refpt = torch.zeros(w).type(torch.float32)
@@ -362,6 +400,9 @@ class CalcTSRGT(BaseInternode):
         data_dict['tsr_col_refpt'] = col_refpt
 
         # exit()
+        return data_dict
+
+    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

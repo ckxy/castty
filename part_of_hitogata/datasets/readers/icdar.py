@@ -32,11 +32,11 @@ class ICDARDetReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                poly=dict()
+                poly=dict(classes=['text'])
             ),
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         path = os.path.join(self.img_root, self.image_paths[index])
 
         img = self.read_image(path)
@@ -45,14 +45,14 @@ class ICDARDetReader(Reader):
         lines = [id_.strip() for id_ in open(os.path.join(self.txt_root, self.txt_paths[index]), encoding='UTF-8-sig')]
         
         polys = []
-        ignore_flags = []
+        keep_flags = []
         for l in lines:
             l = l.split(',')[:9]
             coords = l[:-1]
             if self.filter_texts and l[-1] in self.filter_texts:
-                ignore_flags.append(True)
+                keep_flags.append(False)
             else:
-                ignore_flags.append(False)
+                keep_flags.append(True)
             assert len(coords) == 8
             coords = [float(c) for c in coords]
             coords = np.array(coords).reshape(-1, 2)
@@ -61,14 +61,19 @@ class ICDARDetReader(Reader):
         # polys.append(np.array([[460, 155], [510, 160], [515, 175], [470, 170]]).astype(np.float32))
         # ignore_flags.append(False)
 
-        meta = Meta(ignore_flag=np.array(ignore_flags))
+        meta = Meta(
+            # ignore_flag=np.array(ignore_flags)
+            class_id=np.zeros(len(polys)).astype(np.int32),
+            keep=np.array(keep_flags),
+        )
 
         # meta['class_id'] = np.array([1, 1, 0, 0, 0, 0, 0], dtype=np.int32)
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=path,
+            image_meta=dict(ori_size=(w, h), path=path),
             poly=polys,
             poly_meta=meta
         )

@@ -1,9 +1,10 @@
 import os
-import json
 import numpy as np
 from .reader import Reader
 from .builder import READER
 from scipy.io import loadmat
+from ..utils.structures import Meta
+from ..utils.common import get_image_size
 
 
 __all__ = ['MPIIReader']
@@ -11,7 +12,7 @@ __all__ = ['MPIIReader']
 
 @READER.register_module()
 class MPIIReader(Reader):
-    def __init__(self, root, set_path, length=200, **kwargs):
+    def __init__(self, root, set_path, **kwargs):
         super(MPIIReader, self).__init__(**kwargs)
 
         self.root = root
@@ -21,99 +22,118 @@ class MPIIReader(Reader):
         assert os.path.exists(set_path)
 
         self.set_path = set_path
-        self.length = length
 
-        self.mat = loadmat(set_path, struct_as_record=False)['RELEASE'][0, 0]
+        mat = loadmat(set_path)
 
-        # for index in range(10):
-        #     annotation_mpii = self.mat.__dict__['annolist'][0, index]
-        #     img_name = annotation_mpii.__dict__['image'][0, 0].__dict__['name'][0]
-        #     print(img_name)
-        # exit()
+        self.image_paths = []
+        self.data_lines = []
 
-        assert self.mat.__dict__['annolist'][0].shape[0] > 0
+        s = set()
+
+        for i, (anno, train_flag) in enumerate(
+            zip(mat['RELEASE']['annolist'][0, 0][0],
+                mat['RELEASE']['img_train'][0, 0][0])):
+            
+            img_name = anno['image']['name'][0, 0][0]
+ 
+            img_path = os.path.join(self.img_root, img_name)
+            if not os.path.exists(img_path):
+                continue
+
+            if int(train_flag) != 1:
+                continue
+
+            # self.image_paths.append(img_path)
+            
+            # if 'x1' in str(anno['annorect'].dtype):
+            #     head_rect = zip(
+            #         [x1[0, 0] for x1 in anno['annorect']['x1'][0]],
+            #         [y1[0, 0] for y1 in anno['annorect']['y1'][0]],
+            #         [x2[0, 0] for x2 in anno['annorect']['x2'][0]],
+            #         [y2[0, 0] for y2 in anno['annorect']['y2'][0]]
+            #     )
+
+            if 'annopoints' in str(anno['annorect'].dtype):
+                # only one person
+                annopoints = anno['annorect']['annopoints'][0]
+                head_x1s = anno['annorect']['x1'][0]
+                head_y1s = anno['annorect']['y1'][0]
+                head_x2s = anno['annorect']['x2'][0]
+                head_y2s = anno['annorect']['y2'][0]
+
+                joint_poss = []
+                vis_flags = []
+
+                for annopoint, head_x1, head_y1, head_x2, head_y2 in zip(
+                        annopoints, head_x1s, head_y1s, head_x2s, head_y2s):
+                    if len(annopoint) > 0:
+                        # head_rect = [float(head_x1[0, 0]),
+                        #              float(head_y1[0, 0]),
+                        #              float(head_x2[0, 0]),
+                        #              float(head_y2[0, 0])]
+
+                        # joint coordinates
+
+                        joint_pos = -np.ones((1, 16, 2), dtype=np.float32)
+                        vis_flag = np.zeros((1, 16)).astype(np.bool_)
+
+                        annopoint = annopoint['point'][0, 0]
+                        j_id = [j_i[0, 0] for j_i in annopoint['id'][0]]
+                        x = [x[0, 0] for x in annopoint['x'][0]]
+                        y = [y[0, 0] for y in annopoint['y'][0]]
+                        # joint_pos = dict()
+
+                        for _j_id, (_x, _y) in zip(j_id, zip(x, y)):
+                            # joint_pos[str(_j_id)] = [float(_x), float(_y)]
+                            joint_pos[0, _j_id, 0] = float(_x)
+                            joint_pos[0, _j_id, 1] = float(_y)
+
+                        if 'is_visible' in str(annopoint.dtype):
+                            vis = [v[0] if v else [0]
+                                   for v in annopoint['is_visible'][0]]
+                            vis = dict([(k, int(v[0])) if len(v) > 0 else v
+                                        for k, v in zip(j_id, vis)])
+                            for k, v in vis.items():
+                                if v == 1:
+                                    vis_flag[0, k] = True
+
+                        joint_poss.append(joint_pos)
+                        vis_flags.append(vis_flag)
+
+                if len(joint_poss) > 0:
+                    joint_poss = np.concatenate(joint_poss, axis=0)
+                    vis_flags = np.concatenate(vis_flags, axis=0)
+
+                    self.data_lines.append((joint_poss, vis_flags))
+                    self.image_paths.append(img_path)
+
+        assert len(self.image_paths) > 0
 
         self._info = dict(
             forcat=dict(
-                point=dict()
+                point=dict(classes=[str(i) for i in range(16)])
             )
         )
 
-    def __call__(self, index):
-        annotation_mpii = self.mat.__dict__['annolist'][0, index]
-        img_name = annotation_mpii.__dict__['image'][0, 0].__dict__['name'][0]
-
-        img_path = os.path.join(self.img_root, img_name) 
+    def __getitem__(self, index):
+        img_path = os.path.join(self.image_paths[index]) 
         img = self.read_image(img_path)
-
-        person_id = self.mat.__dict__['single_person'][index][0].flatten()
-        print(person_id - 1)
-        exit()
-        for person in (person_id - 1):
-            print(annotation_mpii.__dict__.keys())
-            print(annotation_mpii.__dict__['annorect'][0, 0].__dict__['objpos'][0, 0].__dict__)
-            exit()
-            try:
-                annopoints_img_mpii = annotation_mpii.__dict__['annorect'][0, person].__dict__['annopoints'][0, 0]
-                num_joints = annopoints_img_mpii.__dict__['point'][0].shape[0]
-
-                print(num_joints)
-
-                # Iterate over present joints
-                for i in range(num_joints):
-                    x = annopoints_img_mpii.__dict__['point'][0, i].__dict__['x'].flatten()[0]
-                    y = annopoints_img_mpii.__dict__['point'][0, i].__dict__['y'].flatten()[0]
-                    id_ = annopoints_img_mpii.__dict__['point'][0, i].__dict__['id'][0][0]
-                    vis = annopoints_img_mpii.__dict__['point'][0, i].__dict__['is_visible'].flatten()
-
-                    print(x, y, id_, vis)
-
-                    # No entry corresponding to visible
-                    # if vis.size == 0:
-                    #     vis = 1
-                    # else:
-                    #     vis = vis.item()
-
-                    # gt_per_joint = np.array([x, y, vis]).astype(np.float16)
-                    # gt_per_image[mpii_idx_to_jnt[id_]].append(gt_per_joint)
-
-                annotated_person_flag = True
-            except KeyError:
-                # Person 'x' could not have annotated joints, hence move to person 'y'
-                print('e')
-                continue
-        exit()
-        
-        res['point'] = self.h5f['part'][index] - 1
-        res['visible'] = self.h5f['visible'][index].astype(np.int32)
-
-        print(self.h5f['part'][index] - 1)
-        print(self.h5f['visible'][index].astype(np.int32))
-        exit()
-
-        s = self.h5f['scale'][index]
-        c = self.h5f['center'][index] - 1
-        l = round(s * self.length / 2)
-        x1, y1 = c[0] - l, c[1] - l
-        x2, y2 = c[0] + l, c[1] + l
-        res['bbox'] = np.array([[x1, y1, x2, y2]]).astype(np.float32)
-        res['mpii_scale'] = s
-
-        res['image'] = img
-        res['path'] = img_path
         w, h = get_image_size(img)
-        res['mpii_length'] = self.length
+
+        joint_pos, vis_flags = self.data_lines[index]
+        meta = Meta(keep=vis_flags)
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=img_path,
-            point=np.array(a['joint_self'])[..., :2][np.newaxis, ...].astype(np.float32),
+            image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=img_path,
+            point=joint_pos,
             point_meta=meta
         )
 
     def __len__(self):
-        return self.mat.__dict__['annolist'][0].shape[0]
+        return len(self.image_paths)
 
     def __repr__(self):
-        return 'MPIIReader(root={}, set_path={}, length={}, {})'.format(self.root, self.set_path, self.length, super(MPIIReader, self).__repr__())
+        return 'MPIIReader(root={}, set_path={}, {})'.format(self.root, self.set_path, super(MPIIReader, self).__repr__())

@@ -1,7 +1,6 @@
 import os
 import json
 import numpy as np
-from copy import deepcopy
 from .reader import Reader
 from .builder import READER
 from ..utils.structures import Meta
@@ -36,25 +35,26 @@ class LSPReader(Reader):
         self._info = dict(
             forcat=dict(
                 point=dict(
-                    type='lsp',
+                    classes=[str(i) for i in range(16)],
                 )
             )
         )
 
-    def __call__(self, index):
-        a = self.data_lines[index]
+    def __getitem__(self, index):
+        data_line = self.data_lines[index]
 
-        img_path = os.path.join(self.root, a['img_paths'])
+        img_path = os.path.join(self.root, data_line['img_paths'])
         img = self.read_image(img_path)
         w, h = get_image_size(img)
 
-        meta = Meta(visible=np.array(a['joint_self'])[..., 2][np.newaxis, ...].astype(np.bool_))
+        meta = Meta(keep=np.array(data_line['joint_self'])[..., 2][np.newaxis, ...].astype(np.bool_))
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=img_path,
-            point=np.array(a['joint_self'])[..., :2][np.newaxis, ...].astype(np.float32),
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=img_path,
+            image_meta=dict(ori_size=(w, h), path=img_path),
+            point=np.array(data_line['joint_self'])[..., :2][np.newaxis, ...].astype(np.float32),
             point_meta=meta
         )
 

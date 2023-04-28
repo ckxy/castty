@@ -80,7 +80,7 @@ class LmdbDTRBReader(Reader):
             )
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         index = self.filtered_index_list[index]
 
         with self.env.begin(write=False) as txn:
@@ -108,8 +108,9 @@ class LmdbDTRBReader(Reader):
 
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=f'{self.root}--{index}',
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=f'{self.root}--{index}',
+            image_meta=dict(ori_size=(w, h), path=f'{self.root}--{index}'),
             seq=label,
         )
 

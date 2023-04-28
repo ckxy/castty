@@ -124,7 +124,7 @@ class COCOAPIReader(Reader):
 
         return annotation
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         img_info = self.data_info[index]
 
         path = os.path.join(self.img_root, img_info['file_name'])
@@ -137,16 +137,18 @@ class COCOAPIReader(Reader):
 
         bbox_meta = Meta(
             class_id=anno['labels'],
-            score=np.ones(len(bbox)).astype(np.float32)
+            score=np.ones(len(bbox)).astype(np.float32),
+            keep=np.ones(len(bbox)).astype(np.bool_),
         )
 
         res = dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=path,
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=path,
             bbox=bbox,
             bbox_meta=bbox_meta,
-            coco_id=img_info['id']
+            # coco_id=img_info['id'],
+            image_meta=dict(ori_size=(w, h), path=path, coco_id=img_info['id']),
         )
 
         if self.use_keypoint:

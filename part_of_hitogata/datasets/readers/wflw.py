@@ -26,11 +26,16 @@ class WFLWReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='det-kpt',
+                bbox=dict(
+                    classes=['face'],
+                ),
+                point=dict(
+                    classes=[str(i) for i in range(98)],
+                ),
             )
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         line = self.data_lines[index].strip().split()
         landmark = np.array(list(map(float, line[:196])), dtype=np.float32).reshape(1, -1, 2)
         box = np.array(list(map(int, line[196:200])))
@@ -40,17 +45,24 @@ class WFLWReader(Reader):
         img = self.read_image(os.path.join(self.img_root, name))
         w, h = get_image_size(img)
 
-        point_meta = Meta(visible=np.ones(landmark.shape[:2]).astype(np.bool_))
-        bbox_meta = Meta(box2point=np.zeros(1, dtype=np.int32))
+        point_meta = Meta(keep=np.ones(landmark.shape[:2]).astype(np.bool_))
+        # bbox_meta = Meta(box2point=np.zeros(1, dtype=np.int32))
+        bbox_meta = Meta(
+            class_id=np.zeros([1]).astype(np.int32),
+            score=np.ones([1]).astype(np.float32),
+            keep=np.ones([1]).astype(np.bool_),
+            box2point=np.zeros([1]).astype(np.int32),
+        )
         
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=os.path.join(self.img_root, name),
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=os.path.join(self.img_root, name),
             bbox=box[np.newaxis, ...].astype(np.float32),
             point=landmark,
             point_meta=point_meta,
             bbox_meta=bbox_meta,
+            image_meta=dict(ori_size=(w, h), path=os.path.join(self.img_root, name)),
             # attribute=attribute
         )
 
@@ -91,11 +103,16 @@ class WFLWSIReader(Reader):
 
         self._info = dict(
             forcat=dict(
-                type='det-kpt',
+                bbox=dict(
+                    classes=['face'],
+                ),
+                point=dict(
+                    classes=[str(i) for i in range(98)],
+                ),
             )
         )
 
-    def __call__(self, index):
+    def __getitem__(self, index):
         # index = 4993
         name = self.names[index]
         lines = self.data[name]
@@ -117,17 +134,24 @@ class WFLWSIReader(Reader):
         img = self.read_image(os.path.join(self.img_root, name))
         w, h = get_image_size(img)
 
-        point_meta = Meta(visible=np.ones(landmarks.shape[:2]).astype(np.bool))
-        bbox_meta = Meta(box2point=np.arange(len(landmarks)))
+        point_meta = Meta(keep=np.ones(landmarks.shape[:2]).astype(np.bool_))
+        # bbox_meta = Meta(box2point=np.arange(len(landmarks)))
+        bbox_meta = Meta(
+            class_id=np.zeros(len(landmarks)).astype(np.int32),
+            score=np.ones(len(landmarks)).astype(np.float32),
+            keep=np.ones(len(landmarks)).astype(np.bool_),
+            box2point=np.arange(len(landmarks)).astype(np.int32),
+        )
         
         return dict(
             image=img,
-            ori_size=np.array([h, w]).astype(np.float32),
-            path=os.path.join(self.img_root, name),
+            # ori_size=np.array([h, w]).astype(np.float32),
+            # path=os.path.join(self.img_root, name),
             bbox=boxes,
             point=landmarks,
             point_meta=point_meta,
             bbox_meta=bbox_meta,
+            image_meta=dict(ori_size=(w, h), path=os.path.join(self.img_root, name)),
             # attribute=attribute
         )
 
