@@ -15,23 +15,6 @@ class DataManager(object):
 
         self.dataset = Dataset(cfg.dataset)
 
-        # analysis = None
-        # if self.cfg.analyser:
-        #     print('processing {}'.format(self.cfg.analyser[0]))
-        #     analysis = find_analyser_using_name(self.cfg.analyser[0])(self.dataset, **self.cfg.analyser[1])
-        # else:
-        #     analysis = None
-
-        # if self.cfg.batch_sampler:
-        #     if self.cfg.serial_batches:
-        #         sampler = torch.utils.data.sampler.SequentialSampler(self.dataset)
-        #     else:
-        #         sampler = torch.utils.data.sampler.RandomSampler(self.dataset)
-
-        #     sampler_cfg = deepcopy(self.cfg.batch_sampler)
-        #     sampler_cfg.update(dict(reader=self.dataset.reader, sampler=sampler, batch_size=self.cfg.batch_size, drop_uneven=drop_uneven))
-        #     batch_sampler = build_sampler(sampler_cfg)
-
         if self.cfg.sampler:
             sampler_cfg = deepcopy(self.cfg.sampler)
             sampler_cfg.update(dict(dataset=self.dataset))
@@ -57,25 +40,6 @@ class DataManager(object):
 
         self.info = self.dataset.info
         self.oobmab = self.dataset.bamboo.reverse
-
-        # if self.cfg.batch_sampler:
-        #     self.dataloader = torch.utils.data.DataLoader(
-        #             self.dataset,
-        #             num_workers=self.cfg.num_threads,
-        #             pin_memory=self.cfg.pin_memory,
-        #             collate_fn=self.cf,
-        #             batch_sampler=batch_sampler,
-        #         )
-        # else:
-        #     self.dataloader = torch.utils.data.DataLoader(
-        #         self.dataset,
-        #         batch_size=self.cfg.batch_size,
-        #         shuffle=not self.cfg.serial_batches,
-        #         num_workers=self.cfg.num_threads,
-        #         pin_memory=self.cfg.pin_memory,
-        #         drop_last=drop_uneven,
-        #         collate_fn=self.cf,
-        #     )
 
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,

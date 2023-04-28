@@ -128,7 +128,6 @@ class Market1501AttritubesReader(Reader):
         tmp = sorted(os.listdir(img_root))
         for t in tmp:
             if t.startswith('0000') or t.startswith('-1'):
-                # print(t)
                 continue
             self.img_paths.append(os.path.join(img_root, t))
             self.pids.append(t.split('_')[0])
@@ -167,11 +166,9 @@ class Market1501AttritubesReader(Reader):
                     labels.append(self.f[self.mapping[i]][0][pid] - 1)
         else:
             for i in range(len(self.labels)):
-                # print(i, self.labels[self.mapping[i]], self.f[self.mapping[i]][0][pid] - 1)
                 if 4 <= i <= 12:
                     tmp.append(self.f[self.mapping[i]][0][pid])
                     if i == 12:
-                        # print(tmp)
                         try:
                             labels.append(tmp.index(2) + 1)
                         except ValueError:
@@ -180,7 +177,6 @@ class Market1501AttritubesReader(Reader):
                 elif 13 <= i <= 20:
                     tmp.append(self.f[self.mapping[i]][0][pid])
                     if i == 20:
-                        # print(tmp)
                         try:
                             labels.append(tmp.index(2) + 1)
                         except ValueError:
@@ -188,11 +184,9 @@ class Market1501AttritubesReader(Reader):
                         tmp.clear()
                 else:
                     labels.append(self.f[self.mapping[i]][0][pid] - 1)
-                # labels.append(self.f[self.mapping[i]][0][pid] - 1)
 
         grouped_labels = []
         for i, gc in enumerate(self.grouped_classes):
-            # print(gc)
             if len(gc) == 1:
                 gl = np.array(labels[i]).astype(np.int32)
             else:
@@ -202,8 +196,6 @@ class Market1501AttritubesReader(Reader):
 
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=path,
             image_meta=dict(ori_size=(w, h), path=path),
             label=grouped_labels
         )

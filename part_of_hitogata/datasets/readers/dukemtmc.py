@@ -127,11 +127,10 @@ class DukeMTMCAttritubesReader(Reader):
         path = self.img_paths[index]
 
         pid = self.pids.index(os.path.splitext(os.path.basename(path))[0].split('_')[0])
-        # pid = self.pids.index('0370')
 
         labels = []
         tmp = []
-        # print(self.pids[pid])
+
         if self.mode == 'ab':
             for i in range(len(self.classes)):
                 labels.append(self.f[self.mapping[i]][0][pid] - 1)
@@ -166,14 +165,8 @@ class DukeMTMCAttritubesReader(Reader):
                 gl[labels[i]] = 1
             grouped_labels.append(gl)
 
-        # print(self.grouped_classes)
-        # print(grouped_labels)
-        # exit()
-
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=path,
             image_meta=dict(ori_size=(w, h), path=path),
             label=grouped_labels
         )

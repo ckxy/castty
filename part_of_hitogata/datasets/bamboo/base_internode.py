@@ -1,18 +1,8 @@
 from .builder import INTERNODE
+from ..utils.common import TAG_MAPPING
 
 
 __all__ = ['BaseInternode']
-
-
-TAG_MAPPING = dict(
-    image=['image'],
-    label=['label'],
-    bbox=['bbox'],
-    mask=['mask'],
-    point=['point'],
-    poly=['poly'],
-    seq=['seq']
-)
 
 
 @INTERNODE.register_module()

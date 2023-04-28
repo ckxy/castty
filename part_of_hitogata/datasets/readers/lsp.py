@@ -51,8 +51,6 @@ class LSPReader(Reader):
 
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=img_path,
             image_meta=dict(ori_size=(w, h), path=img_path),
             point=np.array(data_line['joint_self'])[..., :2][np.newaxis, ...].astype(np.float32),
             point_meta=meta

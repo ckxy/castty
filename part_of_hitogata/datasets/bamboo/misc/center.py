@@ -5,8 +5,8 @@ from ..builder import INTERNODE
 from ..base_internode import BaseInternode
 from ...utils.common import get_image_size
 from ....utils.point_tools import heatmaps2points
-from ....utils.heatmap_tools import calc_gaussian_2d, gaussian_radius, gen_gaussian_target
 from torch.nn.functional import affine_grid, grid_sample, pad, interpolate
+from ....utils.heatmap_tools import calc_gaussian_2d, gaussian_radius, gen_gaussian_target
 
 
 __all__ = ['CalcHeatmapByPoint', 'CalcCenterNetGrids']

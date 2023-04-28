@@ -27,8 +27,6 @@ class ImageReader(Reader):
         return dict(
             image=img,
             image_meta=dict(ori_size=(w, h), path=self.image_paths[index])
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=self.image_paths[index]
         )
 
     def __len__(self):

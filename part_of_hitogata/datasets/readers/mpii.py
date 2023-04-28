@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from tqdm import tqdm
 from .reader import Reader
 from .builder import READER
 from scipy.io import loadmat
@@ -31,8 +32,12 @@ class MPIIReader(Reader):
         s = set()
 
         for i, (anno, train_flag) in enumerate(
-            zip(mat['RELEASE']['annolist'][0, 0][0],
-                mat['RELEASE']['img_train'][0, 0][0])):
+            tqdm(
+                zip(mat['RELEASE']['annolist'][0, 0][0],
+                    mat['RELEASE']['img_train'][0, 0][0]),
+                desc='mpii loading'
+            )
+        ):
             
             img_name = anno['image']['name'][0, 0][0]
  
@@ -126,8 +131,6 @@ class MPIIReader(Reader):
         return dict(
             image=img,
             image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=img_path,
             point=joint_pos,
             point_meta=meta
         )

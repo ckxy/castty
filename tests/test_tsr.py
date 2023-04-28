@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from part_of_hitogata.datasets import DataManager
-from part_of_hitogata.configs import load_config, load_config_far_away
+from part_of_hitogata.config import load_config, load_config_far_away
 from part_of_hitogata.utils.point_tools import draw_point, draw_point_without_label
 from part_of_hitogata.utils.heatmap_tools import draw_heatmap
 from part_of_hitogata.utils.bbox_tools import draw_bbox, draw_bbox_without_label

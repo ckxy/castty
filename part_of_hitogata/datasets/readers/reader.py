@@ -1,3 +1,4 @@
+from ..utils import TAG_MAPPING
 from .utils import read_image_pil, read_image_cv2
 
 
@@ -7,6 +8,12 @@ class Reader(object):
             self.use_pil = kwargs['use_pil']
         else:
             self.use_pil = True
+
+        self._tag_mapping = TAG_MAPPING
+
+    @property
+    def tag_mapping(self):
+        return self._tag_mapping
 
     @property
     def info(self):

@@ -38,16 +38,16 @@ test_data = dict(
         # reader=dict(type='LVISAPIReader', set_path='../datasets/coco/annotations/lvis_v1_val.json', img_root='../datasets/coco'),
         # reader=dict(type='COCOAPIReader', set_path='../datasets/coco/annotations/instances_val2017.json', img_root='../datasets/coco/val2017'),
         # reader=dict(type='COCOAPIReader', use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
-        # reader=dict(type='VOCReader', use_pil=True, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
-        reader=dict(
-            type='CatReader', 
-            readers=(
-                dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
-                dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2012', split='trainval', filter_difficult=False, classes=classes),
-                # dict(type='COCOAPIReader', use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
-            ),
-            output_gid=True,
-        ),
+        reader=dict(type='VOCReader', use_pil=True, root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        # reader=dict(
+        #     type='CatReader', 
+        #     readers=(
+        #         dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2007', split='trainval', filter_difficult=False, classes=classes),
+        #         dict(type='VOCReader', root='../datasets/voc/VOCdevkit/VOC2012', split='trainval', filter_difficult=False, classes=classes),
+        #         # dict(type='COCOAPIReader', use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
+        #     ),
+        #     output_gid=True,
+        # ),
         internodes=[
             # dict(type='DataSource'),
             # dict(type='MixUp', internodes=[

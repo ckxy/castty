@@ -10,6 +10,17 @@ except:
     pass
 
 
+TAG_MAPPING = dict(
+    image=['image'],
+    label=['label'],
+    bbox=['bbox'],
+    mask=['mask'],
+    point=['point'],
+    poly=['poly'],
+    seq=['seq']
+)
+
+
 def make_tid():
     return '{0:%Y%m%d%H%M%S%f}'.format(datetime.datetime.now()) + ''.join([str(random.randint(1,10)) for i in range(5)])
 

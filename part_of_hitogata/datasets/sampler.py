@@ -1,11 +1,7 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
-import itertools
-
 import torch
-from copy import deepcopy
-from ..utils.registry import Registry, build_from_cfg
-from torch.utils.data.sampler import Sampler, WeightedRandomSampler
 from .readers.cat import CatReader
+from ..utils.registry import Registry, build_from_cfg
+from torch.utils.data.sampler import WeightedRandomSampler
 
 
 SAMPLER = Registry('sampler')

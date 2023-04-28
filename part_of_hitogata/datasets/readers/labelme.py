@@ -59,8 +59,6 @@ class LabelmeMaskReader(Reader):
 
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=path,
             image_meta=dict(ori_size=(w, h), path=path),
             mask=mask
         )

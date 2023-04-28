@@ -111,8 +111,6 @@ class WTWReader(Reader):
         return dict(
             image=img,
             image_meta=dict(ori_size=(w, h), path=path),
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=path,
             bbox=bboxes,
             bbox_meta=bbox_meta,
             point=points,
@@ -133,15 +131,11 @@ class WTWSTReader(WTWReader):
 
         from tqdm import tqdm
 
-        # self.data_lines = []
-        # for i in tqdm(range(len(self.xml_paths))):
-        #     table_ids = self.read_table_ids(os.path.join(self.root, 'xml', self.xml_paths[i]))
-        #     for j in range(len(np.unique(table_ids))):
-        #         self.data_lines.append((self.xml_paths[i], j))
-
-        import torch
-        # torch.save(self.data_lines, 'wtwst.pth')
-        self.data_lines = torch.load('wtwst.pth')
+        self.data_lines = []
+        for i in tqdm(range(len(self.xml_paths)), desc='wtw single table loading'):
+            table_ids = self.read_table_ids(os.path.join(self.root, 'xml', self.xml_paths[i]))
+            for j in range(len(np.unique(table_ids))):
+                self.data_lines.append((self.xml_paths[i], j))
 
         self._info = dict(
             forcat=dict(
@@ -262,8 +256,6 @@ class WTWSTReader(WTWReader):
         return dict(
             image=img,
             image_meta=dict(ori_size=(w, h), path=path),
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=path,
             bbox=bboxes,
             bbox_meta=bbox_meta,
             point=points,
@@ -304,8 +296,6 @@ class WTWLineReader(WTWReader):
 
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=path,
             image_meta=dict(ori_size=(w, h), path=path),
             poly=polys,
             poly_meta=meta

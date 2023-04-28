@@ -65,8 +65,6 @@ class MHPV1Reader(Reader):
 
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=self.image_paths[index],
             image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
             mask=mask_all
         )

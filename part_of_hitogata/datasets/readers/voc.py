@@ -57,6 +57,11 @@ class VOCReader(Reader):
             )
         )
 
+        self._tag_mapping = dict(
+            image=['image'],
+            bbox=['bbox'],
+        )
+
     @staticmethod
     def read_bbox_voc(xml_path, classes, filter_difficult=False, to_remove=0):
         root = ET.parse(xml_path).getroot()
@@ -114,8 +119,6 @@ class VOCReader(Reader):
 
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=path,
             image_meta=dict(ori_size=(w, h), path=path),
             bbox=bbox,
             bbox_meta=bbox_meta
@@ -184,8 +187,6 @@ class VOCSegReader(Reader):
 
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=self.image_paths[index],
             image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
             mask=mask
         )
@@ -234,13 +235,9 @@ class SBDReader(Reader):
 
         mat = loadmat(self.mask_paths[index])
         mask = mat['GTcls'][0]['Segmentation'][0].astype(np.int32)
-        # mask = Image.fromarray(mask, mode='P')
-        # mask = np.array(mask).astype(np.int32)
 
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=self.image_paths[index],
             image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
             mask=mask
         )

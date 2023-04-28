@@ -46,7 +46,6 @@ class WFLWReader(Reader):
         w, h = get_image_size(img)
 
         point_meta = Meta(keep=np.ones(landmark.shape[:2]).astype(np.bool_))
-        # bbox_meta = Meta(box2point=np.zeros(1, dtype=np.int32))
         bbox_meta = Meta(
             class_id=np.zeros([1]).astype(np.int32),
             score=np.ones([1]).astype(np.float32),
@@ -56,14 +55,11 @@ class WFLWReader(Reader):
         
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=os.path.join(self.img_root, name),
             bbox=box[np.newaxis, ...].astype(np.float32),
             point=landmark,
             point_meta=point_meta,
             bbox_meta=bbox_meta,
             image_meta=dict(ori_size=(w, h), path=os.path.join(self.img_root, name)),
-            # attribute=attribute
         )
 
     def __len__(self):
@@ -94,10 +90,6 @@ class WFLWSIReader(Reader):
             else:
                 self.data[name].append(line.strip())
         self.names = sorted(list(self.data.keys()))
-
-        # for i, name in enumerate(self.names):
-        #     if len(self.data[name]) > 1:
-        #         print(i)
 
         assert len(self.names) > 0
 
@@ -135,7 +127,7 @@ class WFLWSIReader(Reader):
         w, h = get_image_size(img)
 
         point_meta = Meta(keep=np.ones(landmarks.shape[:2]).astype(np.bool_))
-        # bbox_meta = Meta(box2point=np.arange(len(landmarks)))
+
         bbox_meta = Meta(
             class_id=np.zeros(len(landmarks)).astype(np.int32),
             score=np.ones(len(landmarks)).astype(np.float32),
@@ -145,14 +137,11 @@ class WFLWSIReader(Reader):
         
         return dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=os.path.join(self.img_root, name),
             bbox=boxes,
             point=landmarks,
             point_meta=point_meta,
             bbox_meta=bbox_meta,
             image_meta=dict(ori_size=(w, h), path=os.path.join(self.img_root, name)),
-            # attribute=attribute
         )
 
     def __len__(self):

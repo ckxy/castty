@@ -1,7 +1,6 @@
 import os
 import sys
 import types
-import ntpath
 import importlib
 from addict import Dict
 

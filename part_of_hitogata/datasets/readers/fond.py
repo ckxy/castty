@@ -74,8 +74,6 @@ class FondReader(Reader):
 
         res = dict(
             image=image,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=self.image,
             image_meta=dict(ori_size=(w, h), path=self.image)
         )
 

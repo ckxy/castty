@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from part_of_hitogata.datasets import DataManager
-from part_of_hitogata.configs import load_config, load_config_far_away
+from part_of_hitogata.config import load_config, load_config_far_away
 from part_of_hitogata.utils.point_tools import draw_point
 from part_of_hitogata.utils.heatmap_tools import draw_heatmap
 from part_of_hitogata.utils.bbox_tools import draw_bbox
@@ -54,48 +54,6 @@ def kp(data_dict, rc, index=0):
     img = draw_point(img, points, data_dict['point_meta'][index].get('keep', None))
     plt.imshow(img)
     plt.axis('off')
-
-
-def hm(data_dict, rc, index=0):
-    heatmaps = data_dict['heatmap'][index]
-
-    ori_size = data_dict['image_meta'][index]['ori_size']
-
-    res = rc(image=data_dict['image'][index], ori_size=ori_size, heatmap=heatmaps)
-    img = res['image']
-    # p = res['point']
-    heatmaps = res['heatmap']
-    # heatmaps = heatmaps.unsqueeze(0)
-    print(heatmaps.shape)
-    # exit()
-    # print(data_dict['point'][index])
-    # print(data_dict['point'][index] - p)
-    # print((data_dict['point'][index] - p).mean())
-    # exit()
-
-    # cols = math.ceil((1 + len(heatmaps)) / 4)
-    # plt.subplot(3, 1, 1)
-    # plt.imshow(img)
-    # plt.axis('off') 
-
-    # for i, heatmap in enumerate(heatmaps):
-    #     tmp = draw_heatmap(heatmap)
-    #     tmp = tmp.resize(img.size, Image.BILINEAR)
-
-    #     res = Image.blend(img, tmp, 0.5)
-    #     plt.subplot(3, 1, i + 2)
-    #     plt.imshow(res)
-    #     plt.axis('off') 
-
-    for i, heatmap in enumerate(heatmaps):
-        tmp = draw_heatmap(heatmap)
-        # tmp.save('{}.jpg'.format(i))
-        print(img.size, tmp.size)
-
-        res = Image.blend(img, tmp, 0.5)
-        plt.subplot(4, 4, i + 1)
-        plt.imshow(res)
-        plt.axis('off')
 
 
 if __name__ == '__main__':

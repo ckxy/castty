@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from part_of_hitogata.datasets import DataManager
-from part_of_hitogata.configs import load_config, load_config_far_away
+from part_of_hitogata.config import load_config, load_config_far_away
 from part_of_hitogata.utils.bbox_tools import draw_bbox
 from part_of_hitogata.utils.point_tools import draw_point
 from part_of_hitogata.utils.mask_tools import draw_mask

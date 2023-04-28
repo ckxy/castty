@@ -9,7 +9,7 @@ from PIL import Image
 import numpy as np
 from tqdm import tqdm
 
-from part_of_hitogata.configs import load_config, load_config_far_away
+from part_of_hitogata.config import load_config, load_config_far_away
 from part_of_hitogata.visualization.toto import Toto
 
 

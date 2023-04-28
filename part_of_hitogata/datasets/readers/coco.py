@@ -143,17 +143,14 @@ class COCOAPIReader(Reader):
 
         res = dict(
             image=img,
-            # ori_size=np.array([h, w]).astype(np.float32),
-            # path=path,
             bbox=bbox,
             bbox_meta=bbox_meta,
-            # coco_id=img_info['id'],
             image_meta=dict(ori_size=(w, h), path=path, coco_id=img_info['id']),
         )
 
         if self.use_keypoint:
             res['point'] = anno['keypoints'][..., :2]
-            res['point_meta'] = Meta(visible=anno['keypoints'][..., 2] > 0)
+            res['point_meta'] = Meta(keep=anno['keypoints'][..., 2] > 0)
 
         return res
 
