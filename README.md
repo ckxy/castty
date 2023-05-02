@@ -1,1 +1,1 @@
-# Part of my own project
+# ono issen
