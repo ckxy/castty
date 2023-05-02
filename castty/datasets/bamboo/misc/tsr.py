@@ -168,7 +168,7 @@ class CalcTSRGT(BaseInternode):
             row_separators[0].append(ut)
             row_separators[2].append(bt)
 
-        # from part_of_hitogata.utils.point_tools import draw_point, draw_point_without_label
+        # from castty.utils.point_tools import draw_point, draw_point_without_label
         # from PIL import ImageFont
         # img = data_dict['image'].copy()
 
@@ -176,7 +176,7 @@ class CalcTSRGT(BaseInternode):
         # l = math.sqrt(h * h + w * w)
         # draw = ImageDraw.Draw(img)
         # r = max(2, int(l / 200))
-        # font = ImageFont.truetype('/Users/liaya/Documents/part-of-hitogata/part_of_hitogata/fonts/arial.ttf', 20)
+        # font = ImageFont.truetype('/Users/liaya/Documents/part-of-hitogata/castty/fonts/arial.ttf', 20)
 
         # # for row_separator in row_separators:
         # for i in range(len(rows_ind)):
@@ -301,7 +301,7 @@ class CalcTSRGT(BaseInternode):
             col_separators[0].append(lt)
             col_separators[2].append(rt)
 
-        # from part_of_hitogata.utils.point_tools import draw_point, draw_point_without_label
+        # from castty.utils.point_tools import draw_point, draw_point_without_label
         # from PIL import ImageFont
         # img = data_dict['image'].copy()
 
@@ -309,7 +309,7 @@ class CalcTSRGT(BaseInternode):
         # l = math.sqrt(h * h + w * w)
         # draw = ImageDraw.Draw(img)
         # r = max(2, int(l / 200))
-        # font = ImageFont.truetype('/Users/liaya/Documents/part-of-hitogata/part_of_hitogata/fonts/arial.ttf', 20)
+        # font = ImageFont.truetype('/Users/liaya/Documents/part-of-hitogata/castty/fonts/arial.ttf', 20)
 
         # # for row_separator in row_separators:
         # for i in range(len(cols_ind)):

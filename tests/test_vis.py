@@ -9,8 +9,8 @@ from PIL import Image
 import numpy as np
 from tqdm import tqdm
 
-from part_of_hitogata.config import load_config, load_config_far_away
-from part_of_hitogata.visualization.toto import Toto
+from castty.config import load_config, load_config_far_away
+from castty.visualization.toto import Toto
 
 
 if __name__ == '__main__':

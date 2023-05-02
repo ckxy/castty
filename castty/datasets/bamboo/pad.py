@@ -5,7 +5,7 @@ import numbers
 import numpy as np
 from .builder import INTERNODE
 from .base_internode import BaseInternode
-from .filter_mixin import BaseFilterMixin
+from .mixin import BaseFilterMixin
 from torchvision.transforms.functional import pad
 from .crop import crop_image, crop_bbox, crop_poly, crop_point, crop_mask
 from ..utils.common import is_pil, get_image_size, clip_bbox, clip_point, clip_poly

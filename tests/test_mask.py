@@ -9,9 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from part_of_hitogata.datasets import DataManager
-from part_of_hitogata.config import load_config, load_config_far_away
-from part_of_hitogata.utils.mask_tools import draw_mask
+from castty.datasets import DataManager
+from castty.config import load_config, load_config_far_away
+from castty.utils.mask_tools import draw_mask
 
 
 def ss(data_dict, classes, rc, index=0):

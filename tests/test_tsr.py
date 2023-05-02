@@ -9,12 +9,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from part_of_hitogata.datasets import DataManager
-from part_of_hitogata.config import load_config, load_config_far_away
-from part_of_hitogata.utils.point_tools import draw_point, draw_point_without_label
-from part_of_hitogata.utils.heatmap_tools import draw_heatmap
-from part_of_hitogata.utils.bbox_tools import draw_bbox, draw_bbox_without_label
-from part_of_hitogata.utils.mask_tools import draw_mask
+from castty.datasets import DataManager
+from castty.config import load_config, load_config_far_away
+from castty.utils.point_tools import draw_point, draw_point_without_label
+from castty.utils.heatmap_tools import draw_heatmap
+from castty.utils.bbox_tools import draw_bbox, draw_bbox_without_label
+from castty.utils.mask_tools import draw_mask
 
 from torchvision.transforms.functional import to_tensor
 from torch.nn.functional import interpolate

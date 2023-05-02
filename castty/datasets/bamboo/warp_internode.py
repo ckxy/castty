@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 from .builder import build_internode
 from .base_internode import BaseInternode
-from .filter_mixin import BaseFilterMixin
+from .mixin import BaseFilterMixin
 from ..utils.common import get_image_size, is_pil, clip_bbox, clip_point, clip_poly
 from ..utils.warp_tools import fix_cv2_matrix, warp_bbox, warp_mask, warp_point, warp_image, calc_expand_size_and_matrix
 

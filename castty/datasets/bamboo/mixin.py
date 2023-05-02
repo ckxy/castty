@@ -1,6 +1,31 @@
 from ..utils.common import clip_bbox, clip_poly, filter_bbox_by_length, filter_point, filter_poly, filter_list
 
 
+TAG_MAPPING = dict(
+    image=['image'],
+    label=['label'],
+    bbox=['bbox'],
+    mask=['mask'],
+    point=['point'],
+    poly=['poly'],
+    seq=['seq']
+)
+
+
+def identity(data_dict):
+    return data_dict
+
+
+FUNC_MAPPING = dict()
+for tag in TAG_MAPPING.keys():
+    FUNC_MAPPING[tag] = identity
+
+
+class DataAugMixin(object):
+    def identity(data_dict):
+        return data_dict
+
+
 class BaseFilterMixin(object):
     use_base_filter = True
 

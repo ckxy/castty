@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 
-from part_of_hitogata.configs import load_config, load_config_far_away
-from part_of_hitogata.visualization.toto import Toto
+from castty.configs import load_config, load_config_far_away
+from castty.visualization.toto import Toto
 
 
 if __name__ == '__main__':

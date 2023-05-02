@@ -5,7 +5,7 @@ from PIL import Image
 from .builder import INTERNODE
 from .base_internode import BaseInternode
 from .warp_internode import WarpInternode
-from .filter_mixin import BaseFilterMixin
+from .mixin import BaseFilterMixin
 from ...utils.bbox_tools import calc_iou1, xyxy2xywh
 from ..utils.common import get_image_size, is_pil, filter_bbox_by_center, filter_bbox_by_length, clip_bbox, clip_point, clip_poly
 

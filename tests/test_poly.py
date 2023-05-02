@@ -9,9 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from part_of_hitogata.datasets import DataManager
-from part_of_hitogata.config import load_config, load_config_far_away
-from part_of_hitogata.utils.polygon_tools import draw_polygon, get_cw_order_form
+from castty.datasets import DataManager
+from castty.config import load_config, load_config_far_away
+from castty.utils.polygon_tools import draw_polygon, get_cw_order_form
 
 
 def po(data_dict, rc, index=0):
@@ -31,7 +31,7 @@ def po(data_dict, rc, index=0):
     img = res['image']
     poly = res['poly']
 
-    # from part_of_hitogata.utils.mask_tools import draw_mask
+    # from castty.utils.mask_tools import draw_mask
     # mask = data_dict['mask'][index]
     # res = rc(ori_size=ori_size, mask=mask)
     # mask = res['mask']

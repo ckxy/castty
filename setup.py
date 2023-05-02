@@ -14,8 +14,8 @@ def get_requirements():
         return [line.strip() for line in f.readlines()]
 
 
-PACKAGE_NAME = 'part-of-hitogata'
-VERSION = '0.0.1'
+PACKAGE_NAME = 'castty'
+VERSION = '0.1.0'
 AUTHOR = 'ckxy'
 
 if __name__ == '__main__':

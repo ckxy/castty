@@ -9,9 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from part_of_hitogata.datasets import DataManager
-from part_of_hitogata.config import load_config, load_config_far_away
-from part_of_hitogata.utils.bbox_tools import xywh2xyxy, xyxy2xywh, draw_bbox, grid_analysis
+from castty.datasets import DataManager
+from castty.config import load_config, load_config_far_away
+from castty.utils.bbox_tools import xywh2xyxy, xyxy2xywh, draw_bbox, grid_analysis
 
 
 def ga(data_dict, classes, rc, index=0):

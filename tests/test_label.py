@@ -9,9 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from part_of_hitogata.datasets import DataManager
-from part_of_hitogata.config import load_config, load_config_far_away
-from part_of_hitogata.utils.label_tools import draw_label
+from castty.datasets import DataManager
+from castty.config import load_config, load_config_far_away
+from castty.utils.label_tools import draw_label
 
 
 def mcl(data_dict, classes, rc, index=0):
