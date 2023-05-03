@@ -93,7 +93,7 @@ class CalcHeatmapByPoint(BaseInternode):
 
         return img, True
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         w, h = get_image_size(data_dict['image'])
         heatmaps_per_img = []
         visible_per_img = []
@@ -141,7 +141,7 @@ class CalcCenterNetGrids(BaseInternode):
         self.use_bbox = use_bbox
         self.use_point = use_point
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         w, h = get_image_size(data_dict['image'])
 
         center_heatmap_target = torch.zeros(self.num_classes, int(h * self.ratio), int(w * self.ratio)).type(torch.float32)
@@ -233,9 +233,6 @@ class CalcCenterNetGrids(BaseInternode):
 
             data_dict['offset_map'] = offset_target
             data_dict['offset_target_weight'] = offset_target_weight
-        return data_dict
-
-    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

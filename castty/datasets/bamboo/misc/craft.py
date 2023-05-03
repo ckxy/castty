@@ -24,7 +24,7 @@ class CalcLinkMap(BaseInternode):
 
         super(CalcLinkMap, self).__init__(**kwargs)
 
-    def forward_poly(self, data_dict):
+    def forward_poly(self, data_dict, **kwargs):
         target_tag = data_dict['intl_base_target_tag']
         # res_polys = []
         w, h = get_image_size(data_dict['image'])
@@ -58,9 +58,6 @@ class CalcLinkMap(BaseInternode):
         # data_dict['poly'] = res_polys
         data_dict['mask'] = np.array(mask)
 
-        return data_dict
-
-    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

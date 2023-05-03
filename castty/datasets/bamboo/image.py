@@ -2,6 +2,7 @@ import random
 import numpy as np
 from PIL import Image
 from .builder import INTERNODE
+from .mixin import DataAugMixin
 from ..utils.common import is_pil
 from itertools import permutations
 from .base_internode import BaseInternode
@@ -12,8 +13,8 @@ __all__ = ['Normalize', 'SwapChannels', 'RandomSwapChannels']
 
 
 @INTERNODE.register_module()
-class Normalize(BaseInternode):
-    def __init__(self, mean, std, **kwargs):
+class Normalize(DataAugMixin, BaseInternode):
+    def __init__(self, mean, std, tag_mapping=dict(image=['image']), **kwargs):
         self.mean = mean
         self.std = std
 
@@ -25,19 +26,21 @@ class Normalize(BaseInternode):
         self.r_mean = tuple(self.r_mean)
         self.r_std = tuple(self.r_std)
 
-        super(Normalize, self).__init__(**kwargs)
+        forward_mapping = dict(
+            image=self.forward_image,
+        )
+        backward_mapping = dict(
+            image=self.backward_image,
+        )
+        super(Normalize, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
 
-    def forward_image(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
+    def forward_image(self, image, meta, **kwargs):
+        image = normalize(image, self.mean, self.std)
+        return image, meta
 
-        data_dict[target_tag] = normalize(data_dict[target_tag], self.mean, self.std)
-        return data_dict
-
-    def backward_image(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
-
-        data_dict[target_tag] = normalize(data_dict[target_tag], self.r_mean, self.r_std)
-        return data_dict
+    def backward_image(self, image, meta, **kwargs):
+        image = normalize(image, self.r_mean, self.r_std)
+        return image, meta
 
     def __repr__(self):
         return 'Normalize(mean={}, std={})'.format(self.mean, self.std)
@@ -46,9 +49,15 @@ class Normalize(BaseInternode):
         return 'Normalize(mean={}, std={})'.format(self.r_mean, self.r_std)
 
 
-class SwapInternode(BaseInternode):
-    def __init__(self, **kwargs):
-        super(SwapInternode, self).__init__(**kwargs)
+class SwapInternode(DataAugMixin, BaseInternode):
+    def __init__(self, tag_mapping=dict(image=['image']), **kwargs):
+        forward_mapping = dict(
+            image=self.forward_image,
+        )
+        backward_mapping = dict(
+            image=self.backward_image,
+        )
+        super(SwapInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
 
     @staticmethod
     def swap_channels(image, swap):
@@ -64,10 +73,16 @@ class SwapInternode(BaseInternode):
             image = Image.fromarray(image)
         return image
 
+    def forward_image(self, image, meta, **kwargs):
+        return image, meta
+
+    def backward_image(self, image, meta, **kwargs):
+        return image, meta
+
 
 @INTERNODE.register_module()
 class SwapChannels(SwapInternode):
-    def __init__(self, swap, **kwargs):
+    def __init__(self, swap, tag_mapping=dict(image=['image']), **kwargs):
         self.swap = swap
 
         self.r_swap = []
@@ -76,19 +91,15 @@ class SwapChannels(SwapInternode):
             self.r_swap.append(idx)
         self.r_swap = tuple(self.r_swap)
 
-        super(SwapChannels, self).__init__(**kwargs)
+        super(SwapChannels, self).__init__(tag_mapping, **kwargs)
 
-    def forward_image(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
+    def forward_image(self, image, meta, **kwargs):
+        image = self.swap_channels(image, self.swap)
+        return image, meta
 
-        data_dict[target_tag] = self.swap_channels(data_dict[target_tag], self.swap)
-        return data_dict
-
-    def backward_image(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
-
-        data_dict[target_tag] = self.swap_channels(data_dict[target_tag], self.r_swap)
-        return data_dict
+    def backward_image(self, image, meta, **kwargs):
+        image = self.swap_channels(image, self.r_swap)
+        return image, meta
 
     def __repr__(self):
         return 'SwapChannels(swap={})'.format(self.swap)
@@ -105,18 +116,11 @@ class RandomSwapChannels(SwapInternode):
         super(RandomSwapChannels, self).__init__(**kwargs)
 
     def calc_intl_param_forward(self, data_dict):
-        data_dict['intl_swap'] = random.choice(self.perms)
-        return data_dict
+        return dict(intl_swap=random.choice(self.perms))
 
-    def forward_image(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
-        
-        data_dict[target_tag] = self.swap_channels(data_dict[target_tag], data_dict['intl_swap'])
-        return data_dict
-
-    def erase_intl_param_forward(self, data_dict):
-        data_dict.pop('intl_swap')
-        return data_dict
+    def forward_image(self, image, meta, intl_swap, **kwargs):
+        image = self.swap_channels(image, intl_swap)
+        return image, meta
 
     def __repr__(self):
         return type(self).__name__ + '()'

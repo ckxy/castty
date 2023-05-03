@@ -32,16 +32,13 @@ class CTCEncode(BaseInternode):
 		else:
 			self.character = dict_character + ['[CTCblank]']
 
-	def forward(self, data_dict):
+	def forward(self, data_dict, **kwargs):
 		data_dict['seq_length'] = torch.IntTensor(1).fill_(len(data_dict['seq']))
 
 		seq = list(data_dict['seq'])
 		seq = [self.mapping[char] for char in seq]
 		data_dict['encoded_seq'] = torch.IntTensor(seq)
 
-		return data_dict
-
-	def backward(self, data_dict):
 		return data_dict
 
 	def __repr__(self):

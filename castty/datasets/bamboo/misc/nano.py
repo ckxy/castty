@@ -24,7 +24,7 @@ class CalcNanoGrids(BaseInternode):
             for i in range(1, len(self.strides)):
                 assert self.strides[i] > self.strides[i - 1]
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         # _, h, w = data_dict['image'].shape
         w, h = get_image_size(data_dict['image'])
         featmap_sizes = [(h // s, w // s) for s in self.strides]
@@ -206,9 +206,6 @@ class CalcNanoGrids(BaseInternode):
             # exit()
 
         # exit()
-        return data_dict
-
-    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

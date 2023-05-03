@@ -5,7 +5,7 @@ from PIL import Image
 from .builder import INTERNODE
 from .base_internode import BaseInternode
 from .warp_internode import WarpInternode
-from .mixin import BaseFilterMixin
+from .mixin import BaseFilterMixin, DataAugMixin
 from ...utils.bbox_tools import calc_iou1, xyxy2xywh
 from ..utils.common import get_image_size, is_pil, filter_bbox_by_center, filter_bbox_by_length, clip_bbox, clip_point, clip_poly
 
@@ -52,83 +52,84 @@ def crop_mask(mask, x1, y1, x2, y2):
     return mask
 
 
-class CropInternode(BaseInternode, BaseFilterMixin):
-    def __init__(self, use_base_filter=True, **kwargs):
+TAG_MAPPING = dict(
+    image=['image'],
+    bbox=['bbox'],
+    mask=['mask'],
+    point=['point'],
+    poly=['poly'],
+)
+
+
+class CropInternode(DataAugMixin, BaseInternode, BaseFilterMixin):
+    def __init__(self, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
         self.use_base_filter = use_base_filter
 
-        super(CropInternode, self).__init__(**kwargs)
+        forward_mapping = dict(
+            image=self.forward_image,
+            bbox=self.forward_bbox,
+            mask=self.forward_mask,
+            point=self.forward_point,
+            poly=self.forward_poly
+        )
+        backward_mapping = dict()
+        super(CropInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
 
     def calc_cropping(self, data_dict):
         raise NotImplementedError
 
     def calc_intl_param_forward(self, data_dict):
-        data_dict['intl_cropping'] = self.calc_cropping(data_dict)
-        return data_dict
+        xmin, ymin, xmax, ymax = self.calc_cropping(data_dict)
+        return dict(intl_cropping=(xmin, ymin, xmax, ymax))
 
-    def forward_image(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
+    def forward_image(self, image, meta, intl_cropping, **kwargs):
+        xmin, ymin, xmax, ymax = intl_cropping
+        image = crop_image(image, xmin, ymin, xmax, ymax)
+        return image, meta
 
-        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
-
-        data_dict[target_tag] = crop_image(data_dict[target_tag], xmin, ymin, xmax, ymax)
-        return data_dict
-
-    def forward_bbox(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
-        
-        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+    def forward_bbox(self, bbox, meta, intl_cropping, **kwargs):        
+        xmin, ymin, xmax, ymax = intl_cropping
         dst_size = (xmax - xmin, ymax - ymin)
 
-        data_dict[target_tag] = crop_bbox(data_dict[target_tag], xmin, ymin)
-        data_dict[target_tag] = clip_bbox(data_dict[target_tag], dst_size)
+        bbox = crop_bbox(bbox, xmin, ymin)
+        bbox = clip_bbox(bbox, dst_size)
 
-        data_dict = self.base_filter_bbox(data_dict)
-        return data_dict
+        bbox, meta = self.base_filter_bbox(bbox, meta)
+        return bbox, meta
 
-    def forward_mask(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
+    def forward_mask(self, mask, meta, intl_cropping, **kwargs):
+        xmin, ymin, xmax, ymax = intl_cropping
+        mask = crop_mask(mask, xmin, ymin, xmax, ymax)
+        return mask, meta
 
-        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
-
-        data_dict[target_tag] = crop_mask(data_dict[target_tag], xmin, ymin, xmax, ymax)
-        return data_dict
-
-    def forward_point(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
-        
-        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+    def forward_point(self, point, meta, intl_cropping, **kwargs):        
+        xmin, ymin, xmax, ymax = intl_cropping
         dst_size = (xmax - xmin, ymax - ymin)
 
-        data_dict[target_tag] = crop_point(data_dict[target_tag], xmin, ymin)
-        data_dict[target_tag] = clip_point(data_dict[target_tag], dst_size)
+        point = crop_point(point, xmin, ymin)
+        point = clip_point(point, dst_size)
 
-        data_dict = self.base_filter_point(data_dict)
-        return data_dict
+        point, meta = self.base_filter_point(point, meta)
+        return point, meta
 
-    def forward_poly(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
-        
-        xmin, ymin, xmax, ymax = data_dict['intl_cropping']
+    def forward_poly(self, poly, meta, intl_cropping, **kwargs):        
+        xmin, ymin, xmax, ymax = intl_cropping
         dst_size = (xmax - xmin, ymax - ymin)
 
-        data_dict[target_tag] = crop_poly(data_dict[target_tag], xmin, ymin)
-        data_dict[target_tag] = clip_poly(data_dict[target_tag], dst_size)
+        poly = crop_poly(poly, xmin, ymin)
+        poly = clip_poly(poly, dst_size)
 
-        data_dict = self.base_filter_poly(data_dict)
-        return data_dict
-
-    def erase_intl_param_forward(self, data_dict):
-        data_dict.pop('intl_cropping')
-        return data_dict
+        poly, meta = self.base_filter_poly(poly, meta)
+        return poly, meta
 
 
 @INTERNODE.register_module()
 class Crop(CropInternode):
-    def __init__(self, size, use_base_filter=True, **kwargs):
+    def __init__(self, size, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
         assert len(size) == 2 and size[0] > 0 and size[1] > 0
         self.size = size
 
-        super(Crop, self).__init__(use_base_filter=use_base_filter, **kwargs)
+        super(Crop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys() and 'poly' not in data_dict.keys()
@@ -212,23 +213,23 @@ class AdaptiveTranslate(WarpInternode):
         return T
 
     def calc_intl_param_forward(self, data_dict):
-        data_dict['intl_warp_tmp_matrix'] = self.calc_cropping(data_dict)
-        data_dict['intl_warp_tmp_size'] = get_image_size(data_dict['image'])
-        data_dict = super(AdaptiveTranslate, self).calc_intl_param_forward(data_dict)
+        # data_dict['intl_warp_tmp_matrix'] = self.calc_cropping(data_dict)
+        # data_dict['intl_warp_tmp_size'] = get_image_size(data_dict['image'])
+        # data_dict = super(AdaptiveTranslate, self).calc_intl_param_forward(data_dict)
 
-        return data_dict
+        return dict(intl_warp_tmp_matrix=self.calc_cropping(data_dict), intl_warp_tmp_size=get_image_size(data_dict['image']))
 
 
 @INTERNODE.register_module()
 class MinIOUCrop(CropInternode):
-    def __init__(self, threshs, aspect_ratio=2, attempts=50, use_base_filter=True, **kwargs):
+    def __init__(self, threshs, aspect_ratio=2, attempts=50, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
         assert aspect_ratio >= 1
 
         self.threshs = [None] + list(threshs)
         self.aspect_ratio = aspect_ratio
         self.attempts = attempts
 
-        super(MinIOUCrop, self).__init__(use_base_filter=use_base_filter, **kwargs)
+        super(MinIOUCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'bbox' in data_dict.keys()
@@ -283,8 +284,8 @@ class MinIOUCrop(CropInternode):
 
 @INTERNODE.register_module()
 class MinIOGCrop(MinIOUCrop):
-    def __init__(self, threshs, aspect_ratio=2, attempts=50, use_base_filter=True, **kwargs):
-        super(MinIOGCrop, self).__init__(threshs, aspect_ratio, attempts, use_base_filter, **kwargs)
+    def __init__(self, threshs, aspect_ratio=2, attempts=50, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
+        super(MinIOGCrop, self).__init__(threshs, aspect_ratio, attempts, tag_mapping, use_base_filter, **kwargs)
         self.ul = (3 / 10 / self.aspect_ratio, 10 * self.aspect_ratio / 3)
 
     @staticmethod
@@ -399,7 +400,7 @@ class CenterCrop(Crop):
 
 @INTERNODE.register_module()
 class RandomAreaCrop(CropInternode):
-    def __init__(self, scale=(0.08, 1.0), ratio=(3 / 4, 4 / 3), attempts=10, use_base_filter=True, **kwargs):
+    def __init__(self, scale=(0.08, 1.0), ratio=(3 / 4, 4 / 3), attempts=10, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
         assert scale[0] < scale[1]
         assert scale[1] <= 1 and scale[0] > 0
         assert ratio[0] <= ratio[1]
@@ -408,7 +409,7 @@ class RandomAreaCrop(CropInternode):
         self.ratio = ratio
         self.attempts = attempts
 
-        super(RandomAreaCrop, self).__init__(use_base_filter=use_base_filter, **kwargs)
+        super(RandomAreaCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         width, height = get_image_size(data_dict['image'])
@@ -450,12 +451,12 @@ class RandomAreaCrop(CropInternode):
 
 @INTERNODE.register_module()
 class EastRandomCrop(CropInternode):
-    def __init__(self, max_tries=50, min_crop_side_ratio=0.1, use_base_filter=True, **kwargs):
+    def __init__(self, max_tries=50, min_crop_side_ratio=0.1, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
         assert 0 < min_crop_side_ratio <= 1
         self.max_tries = max_tries
         self.min_crop_side_ratio = min_crop_side_ratio
 
-        super(EastRandomCrop, self).__init__(use_base_filter=use_base_filter, **kwargs)
+        super(EastRandomCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'poly' in data_dict.keys() or 'bbox' in data_dict.keys()
@@ -575,11 +576,11 @@ class EastRandomCrop(CropInternode):
 
 @INTERNODE.register_module()
 class WestRandomCrop(CropInternode):
-    def __init__(self, min_crop_side_ratio=0.1, use_base_filter=True, **kwargs):
+    def __init__(self, min_crop_side_ratio=0.1, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
         assert 0 < min_crop_side_ratio <= 1
         self.min_crop_side_ratio = min_crop_side_ratio
 
-        super(WestRandomCrop, self).__init__(use_base_filter=use_base_filter, **kwargs)
+        super(WestRandomCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'poly' in data_dict.keys() or 'bbox' in data_dict.keys()
@@ -684,13 +685,13 @@ class WestRandomCrop(CropInternode):
 
 @INTERNODE.register_module()
 class RandomCenterCropPad(CropInternode):
-    def __init__(self, size, ratios, border=128, use_base_filter=True, **kwargs):
+    def __init__(self, size, ratios, border=128, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
         assert len(size) == 2 and size[0] > 0 and size[1] > 0
         self.size = size
         self.ratios = ratios
         self.border = border
 
-        super(RandomCenterCropPad, self).__init__(use_base_filter=use_base_filter, **kwargs)
+        super(RandomCenterCropPad, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def _get_border(self, border, size):
         k = 2 * border / size

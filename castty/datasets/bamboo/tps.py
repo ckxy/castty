@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 from .builder import INTERNODE
 import torch.nn.functional as F
+from .mixin import DataAugMixin
 from .base_internode import BaseInternode
 from ..utils.common import get_image_size, is_pil
 from torchvision.transforms.functional import to_tensor, to_pil_image
@@ -103,42 +104,39 @@ def gen_grid(size, src_cps, tgt_cps, eps=1e-6, resize=False):
     return grids
 
 
-class TPS(BaseInternode):
-    def __init__(self, segment, resize=False, **kwargs):
+class TPS(DataAugMixin, BaseInternode):
+    def __init__(self, segment, resize=False, tag_mapping=dict(image=['image']), **kwargs):
         assert segment > 1
 
         self.segment = segment
         self.resize = resize
 
-        super(TPS, self).__init__(**kwargs)
+        forward_mapping = dict(
+            image=self.forward_image
+        )
+        backward_mapping = dict()
+        super(TPS, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         raise NotImplementedError
 
-    def forward_image(self, data_dict):
-        target_tag = data_dict['intl_base_target_tag']
-        
-        if not is_pil(data_dict[target_tag]):
-            data_dict[target_tag] = Image.fromarray(data_dict[target_tag])
+    def forward_image(self, image, meta, intl_tps_tgt_cps, intl_tps_src_cps, **kwargs):        
+        if not is_pil(image):
+            image = Image.fromarray(image)
             is_np = True
         else:
             is_np = False
 
-        grids = gen_grid(get_image_size(data_dict[target_tag]), data_dict['intl_tps_src_cps'], data_dict['intl_tps_tgt_cps'], resize=self.resize)
+        grids = gen_grid(get_image_size(image), intl_tps_src_cps, intl_tps_tgt_cps, resize=self.resize)
 
-        img = to_tensor(data_dict[target_tag])
+        img = to_tensor(image)
         img = img.unsqueeze(0)
         img = F.grid_sample(img, torch.from_numpy(grids).unsqueeze(0), align_corners=True)
-        data_dict[target_tag] = to_pil_image(img[0])
+        image = to_pil_image(img[0])
         
         if is_np:
-            data_dict[target_tag] = np.array(data_dict[target_tag])
-        return data_dict
-
-    def erase_intl_param_forward(self, data_dict):
-        data_dict.pop('intl_tps_src_cps')
-        data_dict.pop('intl_tps_tgt_cps')
-        return data_dict
+            image = np.array(image)
+        return image, meta
 
     def __repr__(self):
         raise NotImplementedError
@@ -146,8 +144,8 @@ class TPS(BaseInternode):
 
 @INTERNODE.register_module()
 class TPSStretch(TPS):
-    def __init__(self, segment, **kwargs):
-        super(TPSStretch, self).__init__(segment, False)
+    def __init__(self, segment, tag_mapping=dict(image=['image']), **kwargs):
+        super(TPSStretch, self).__init__(segment, False, tag_mapping)
 
     @staticmethod
     def stretch(size, segment):
@@ -193,8 +191,8 @@ class TPSStretch(TPS):
         return src_pts, dst_pts
 
     def calc_intl_param_forward(self, data_dict):
-        data_dict['intl_tps_tgt_cps'], data_dict['intl_tps_src_cps'] = self.stretch(get_image_size(data_dict['image']), self.segment)
-        return data_dict
+        intl_tps_tgt_cps, intl_tps_src_cps = self.stretch(get_image_size(data_dict['image']), self.segment)
+        return dict(intl_tps_tgt_cps=intl_tps_tgt_cps, intl_tps_src_cps=intl_tps_src_cps)
 
     def __repr__(self):
         return 'TPSStretch(segment={})'.format(self.segment)
@@ -237,8 +235,8 @@ class TPSDistort(TPS):
         return src_pts, dst_pts
 
     def calc_intl_param_forward(self, data_dict):
-        data_dict['intl_tps_tgt_cps'], data_dict['intl_tps_src_cps'] = self.distort(get_image_size(data_dict['image']), self.segment)
-        return data_dict
+        intl_tps_tgt_cps, intl_tps_src_cps = self.distort(get_image_size(data_dict['image']), self.segment)
+        return dict(intl_tps_tgt_cps=intl_tps_tgt_cps, intl_tps_src_cps=intl_tps_src_cps)
 
     def __repr__(self):
         return 'TPSDistort(segment={}, resize={})'.format(self.segment, self.resize)

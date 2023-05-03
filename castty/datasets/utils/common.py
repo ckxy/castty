@@ -107,10 +107,10 @@ def filter_bbox_by_center(bboxes, img_size):
     width, height = img_size
     bboxes = xyxy2xywh(bboxes)
     centers = bboxes[..., :2]
-    # t = np.logical_and(centers[..., 0] >= 0, centers[..., 0] < width)
-    # s = np.logical_and(centers[..., 1] >= 0, centers[..., 1] < height)
-    # keep = np.logical_and(t, s)
-    keep = (centers[..., 0] >= 0 & centers[..., 0] < width) & (centers[..., 1] >= 0 & centers[..., 1] < height)
+    t = np.logical_and(centers[..., 0] >= 0, centers[..., 0] < width)
+    s = np.logical_and(centers[..., 1] >= 0, centers[..., 1] < height)
+    keep = np.logical_and(t, s)
+    # keep = (centers[..., 0] >= 0 & centers[..., 0] < width) & (centers[..., 1] >= 0 & centers[..., 1] < height)
     keep = np.nonzero(keep)[0].tolist()
     return keep
 

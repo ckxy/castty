@@ -1,14 +1,15 @@
 from .bamboo import Bamboo
 import torch.utils.data as data
+from .utils.common import TAG_MAPPING
 from .readers.builder import build_reader
 
 
 class Dataset(data.Dataset):
-    def __init__(self, cfg, **kwargs):
+    def __init__(self, cfg):
         self.cfg = cfg
 
         self.reader = build_reader(cfg.reader)
-        self.bamboo = Bamboo(cfg.internodes)
+        self.bamboo = Bamboo(cfg.internodes, tag_mapping=TAG_MAPPING)
 
         self.info = self.reader.info
         forcat = self.info.pop('forcat')

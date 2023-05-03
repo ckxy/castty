@@ -170,7 +170,7 @@ class DBEncode(BaseInternode):
                    canvas[y_min_valid:y_max_valid + 1,
                           x_min_valid:x_max_valid + 1])
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         labels = data_dict['poly_meta']['class_id']
 
         w, h = get_image_size(data_dict['image'])
@@ -199,9 +199,6 @@ class DBEncode(BaseInternode):
 
         data_dict['poly_meta']['keep'] = np.logical_not(ignore_flags)
 
-        return data_dict
-
-    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

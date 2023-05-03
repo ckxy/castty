@@ -19,5 +19,5 @@ class DataSource(BaseInternode):
             return tmp
         return data_dict
 
-    def backward(self, data_dict):
-        return data_dict
+    # def backward(self, data_dict):
+    #     return data_dict

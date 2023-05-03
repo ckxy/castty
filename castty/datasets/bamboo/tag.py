@@ -23,12 +23,9 @@ class EraseTags(BaseInternode):
             else:
                 raise ValueError
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         for tag in self.tags:
             data_dict.pop(tag)
-        return data_dict
-
-    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):
@@ -44,11 +41,11 @@ class RenameTag(BaseInternode):
         self.old_name = old_name
         self.new_name = new_name
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         data_dict[self.new_name] = data_dict.pop(self.old_name)
         return data_dict
 
-    def reverse(self, **kwargs):
+    def backward(self, kwargs):
         if self.new_name in kwargs.keys():
             kwargs[self.old_name] = kwargs.pop(self.new_name)
         return kwargs
@@ -69,11 +66,8 @@ class CopyTag(BaseInternode):
         self.src_tag = src_tag
         self.dst_tag = dst_tag
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         data_dict[self.dst_tag] = copy.deepcopy(data_dict[self.src_tag])
-        return data_dict
-
-    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

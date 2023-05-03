@@ -115,7 +115,7 @@ class CalcTSRGT(BaseInternode):
         else:
             return y, ind[i]
 
-    def __call__(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         w, h = get_image_size(data_dict['image'])
 
         # ------------生成行GT部分------------

@@ -23,33 +23,23 @@ __all__ = ['MixUp', 'CutMix', 'Mosaic']
 class MixUp(Bamboo):
     def calc_intl_param_forward(self, data_dict):
         index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
-        # while index_mix == data_dict['index']:
-        #     index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
-        data_dict['intl_index_mix'] = index_mix
-        data_dict['intl_lam'] = np.random.beta(1.5, 1.5)
-        return data_dict
+        return dict(intl_index_mix=index_mix, intl_lam=np.random.beta(1.5, 1.5))
 
-    def erase_intl_param_forward(self, data_dict):
-        data_dict.pop('intl_index_mix')
-        data_dict.pop('intl_lam')
-        return data_dict
-
-    def forward(self, data_dict):
+    def forward(self, data_dict, intl_index_mix, intl_lam, **kwargs):
         index = data_dict['index']
-        index_mix = data_dict['intl_index_mix']
 
         reader = data_dict['reader']
         len_data_lines = data_dict['len_data_lines']
 
         a = super(MixUp, self).forward(data_dict)
 
-        if index == index_mix:
+        if index == intl_index_mix:
             return a
 
         k = a.keys()
         assert 'mask' not in k and 'point' not in  k and 'poly' not in  k
 
-        data_dict['index'] = index_mix
+        data_dict['index'] = intl_index_mix
         data_dict['len_data_lines'] = len_data_lines
         data_dict['reader'] = reader
         b = super(MixUp, self).forward(data_dict)
@@ -62,28 +52,24 @@ class MixUp(Bamboo):
         a['image'] = pad_image(a['image'], (0, 0, max(max_w - w_a, 0), max(max_h - h_a, 0)))
         b['image'] = pad_image(b['image'], (0, 0, max(max_w - w_b, 0), max(max_h - h_b, 0)))
 
-        # a['ori_size'] = np.array([max_h, max_w]).astype(np.float32)
-
-        lam = data_dict['intl_lam']
-
         if is_pil(a['image']):
-            a['image'] = Image.blend(a['image'], b['image'], 1 - lam)
+            a['image'] = Image.blend(a['image'], b['image'], 1 - intl_lam)
         else:
-            a['image'] = cv2.addWeighted(a['image'], lam, b['image'], 1 - lam, 0)
+            a['image'] = cv2.addWeighted(a['image'], intl_lam, b['image'], 1 - intl_lam, 0)
 
-        a['image_meta']['path'] = '[mixup]({}, {}, {})'.format(a['image_meta']['path'], b['image_meta']['path'], lam)
+        a['image_meta']['path'] = '[mixup]({}, {}, {})'.format(a['image_meta']['path'], b['image_meta']['path'], intl_lam)
         a['image_meta']['ori_size'] = (max_w, max_h)
 
         if 'bbox' in k:
             a['bbox'] = np.concatenate([a['bbox'], b['bbox']])
 
-            a['bbox_meta']['score'] *= lam
-            b['bbox_meta']['score'] *= 1 - lam
+            a['bbox_meta']['score'] *= intl_lam
+            b['bbox_meta']['score'] *= 1 - intl_lam
             a['bbox_meta'] += b['bbox_meta']
 
         if 'label' in k:
             for i in range(len(a['label'])):
-                a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
+                a['label'][i] = a['label'][i] * intl_lam + b['label'][i] * (1 - intl_lam)
 
         return a
 
@@ -95,20 +81,9 @@ class MixUp(Bamboo):
 class CutMix(Bamboo):
     def calc_intl_param_forward(self, data_dict):
         index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
-        # while index_mix == data_dict['index']:
-        #     index_mix = random.randint(0, data_dict['len_data_lines'] - 1)
-        data_dict['intl_index_mix'] = index_mix
-        data_dict['intl_lam'] = np.random.beta(1.5, 1.5)
-        return data_dict
+        return dict(intl_index_mix=index_mix, intl_lam=np.random.beta(1.5, 1.5))
 
-    def erase_intl_param_forward(self, data_dict):
-        data_dict.pop('intl_index_mix')
-        data_dict.pop('intl_lam')
-        return data_dict
-
-    def forward(self, data_dict):
-        index_mix = data_dict['intl_index_mix']
-
+    def forward(self, data_dict, intl_index_mix, intl_lam, **kwargs):
         reader = data_dict['reader']
         len_data_lines = data_dict['len_data_lines']
 
@@ -117,7 +92,7 @@ class CutMix(Bamboo):
         k = a.keys()
         assert 'bbox' not in k and 'point' not in k and 'poly' not in k
 
-        data_dict['index'] = index_mix
+        data_dict['index'] = intl_index_mix
         data_dict['len_data_lines'] = len_data_lines
         data_dict['reader'] = reader
         b = super(CutMix, self).forward(data_dict)
@@ -125,9 +100,7 @@ class CutMix(Bamboo):
         wa, ha = get_image_size(a['image'])
         wb, hb = get_image_size(b['image'])
 
-        lam = data_dict['intl_lam']
-
-        xa1, ya1, xa2, ya2 = self.rand_boxa(get_image_size(a['image']), lam)
+        xa1, ya1, xa2, ya2 = self.rand_boxa(get_image_size(a['image']), intl_lam)
 
         w_bcut = int((xa2 - xa1) * wa / wb)
         h_bcut = int((ya2 - ya1) * ha / hb)
@@ -151,27 +124,15 @@ class CutMix(Bamboo):
         else:
             a['image'][ya1:ya2, xa1:xa2] = b_cut
 
-        a['image_meta']['path'] = '[cutmix]({}, {}, {})'.format(a['image_meta']['path'], b['image_meta']['path'], lam)
-        # a['image_meta']['ori_size'] = (max_w, max_h)
+        a['image_meta']['path'] = '[cutmix]({}, {}, {})'.format(a['image_meta']['path'], b['image_meta']['path'], intl_lam)
 
         # adjust lambda to exactly match pixel ratio
         lam = 1 - ((xa2 - xa1) * (ya2 - ya1) / (wa * ha))
-
-        # if 'path' in k:
-        #     a['path'] = '[cutmix]({}, {}, {})'.format(a['path'], b['path'], lam)
-
-        # print(a['label'])
 
         if 'label' in k:
             for i in range(len(a['label'])):
                 # print(a['label'][i].shape)
                 a['label'][i] = a['label'][i] * lam + b['label'][i] * (1 - lam)
-                # a['label'][i] = a['label'][i].astype(np.float32)
-                # print(a['label'][i].shape)
-
-
-        # print(a['label'])
-        # exit()
 
         if 'mask' in k:
             bmask_cut = crop_mask(b['mask'], xb1, yb1, xb2, yb2)
@@ -205,16 +166,9 @@ class CutMix(Bamboo):
 @INTERNODE.register_module()
 class Mosaic(Bamboo):
     def calc_intl_param_forward(self, data_dict):
-        data_dict['intl_mosaic_ids'] = [random.randint(0, data_dict['len_data_lines'] - 1) for _ in range(3)]
-        return data_dict
+        return dict(intl_mosaic_ids=[random.randint(0, data_dict['len_data_lines'] - 1) for _ in range(3)])
 
-    def erase_intl_param_forward(self, data_dict):
-        data_dict.pop('intl_mosaic_ids')
-        return data_dict
-
-    def forward(self, data_dict):
-        indices = data_dict['intl_mosaic_ids']
-        
+    def forward(self, data_dict, intl_mosaic_ids, **kwargs):      
         reader = data_dict['reader']
         len_data_lines = data_dict['len_data_lines']
 
@@ -223,17 +177,17 @@ class Mosaic(Bamboo):
         k = d1.keys()
         assert 'label' not in k
 
-        data_dict['index'] = indices[0]
+        data_dict['index'] = intl_mosaic_ids[0]
         data_dict['len_data_lines'] = len_data_lines
         data_dict['reader'] = reader
         d2 = super(Mosaic, self).forward(data_dict)
 
-        data_dict['index'] = indices[1]
+        data_dict['index'] = intl_mosaic_ids[1]
         data_dict['len_data_lines'] = len_data_lines
         data_dict['reader'] = reader
         d3 = super(Mosaic, self).forward(data_dict)
 
-        data_dict['index'] = indices[2]
+        data_dict['index'] = intl_mosaic_ids[2]
         data_dict['len_data_lines'] = len_data_lines
         data_dict['reader'] = reader
         d4 = super(Mosaic, self).forward(data_dict)
@@ -268,8 +222,6 @@ class Mosaic(Bamboo):
             img4[yc:yc + h4, xc:xc + w4] = d4['image']
 
         d1['image'] = img4
-        # d1['ori_size'] = np.array([new_h, new_w]).astype(np.float32)
-        # d1['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['path'], d2['path'], d3['path'], d4['path'])
 
         d1['image_meta']['path'] = '[mosaic]({}, {}, {}, {})'.format(d1['image_meta']['path'], d2['image_meta']['path'], d3['image_meta']['path'], d4['image_meta']['path'])
         d1['image_meta']['ori_size'] = (new_w, new_h)
@@ -284,7 +236,6 @@ class Mosaic(Bamboo):
             d1['bbox_meta'] += d2['bbox_meta']
             d1['bbox_meta'] += d3['bbox_meta']
             d1['bbox_meta'] += d4['bbox_meta']
-            # res['bbox_meta'] = deepcopy(d1['bbox_meta'])
 
         if 'point' in k:
             p1 = pad_point(d1['point'], xc - w1, yc - h1)
@@ -296,7 +247,6 @@ class Mosaic(Bamboo):
             d1['point_meta'] += d2['point_meta']
             d1['point_meta'] += d3['point_meta']
             d1['point_meta'] += d4['point_meta']
-            # res['point_meta'] = deepcopy(d1['point_meta'])
 
         if 'mask' in k:
             mask4 = np.zeros((new_h, new_w)).astype(np.int32)
@@ -319,7 +269,6 @@ class Mosaic(Bamboo):
             d1['poly_meta'] += d2['poly_meta']
             d1['poly_meta'] += d3['poly_meta']
             d1['poly_meta'] += d4['poly_meta']
-            # res['poly_meta'] = deepcopy(d1['poly_meta'])
 
         return d1
 

@@ -40,7 +40,7 @@ class WFLWCrop(CropInternode):
 
         return x1, y1, x2, y2
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         data_dict = super(WFLWCrop, self).forward(data_dict)
 
         if self.return_offset:

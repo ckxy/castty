@@ -5,8 +5,8 @@ import sys
 import torch
 import numpy as np
 from ..builder import INTERNODE
-from ..crop import CropInternode
 from ..base_internode import BaseInternode
+from ..crop import CropInternode, TAG_MAPPING
 from ...utils.common import get_image_size, is_pil, clip_poly
 try:
     import pyclipper
@@ -74,7 +74,7 @@ class PSEEncode(BaseInternode):
         self.shrink_ratio = shrink_ratio
         self.max_shrink = max_shrink
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         assert 'class_id' in data_dict['poly_meta'].keys()
         labels = data_dict['poly_meta']['class_id']
 
@@ -108,22 +108,20 @@ class PSEEncode(BaseInternode):
 
         return data_dict
 
-    def backward(self, data_dict):
-        return data_dict
-
     def __repr__(self):
         return 'PSEMCEncode(num_classes={}, shrink_ratio={}, max_shrink={})'.format(self.num_classes, tuple(self.shrink_ratio), self.max_shrink)
 
 
 @INTERNODE.register_module()
 class PSECrop(CropInternode):
-    def __init__(self, size, positive_sample_ratio=5.0 / 8.0, **kwargs):
+    def __init__(self, size, positive_sample_ratio=5.0 / 8.0, tag_mapping=TAG_MAPPING, **kwargs):
         assert 0 <= positive_sample_ratio <= 1
 
         self.size = size
         self.positive_sample_ratio = positive_sample_ratio
 
-        super(PSECrop, self).__init__(use_base_filter=False, **kwargs)
+        # super(PSECrop, self).__init__(use_base_filter=False, **kwargs)
+        super(PSECrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=False, **kwargs)
 
     def sample_offset(self, img_gt, img_size):
         w, h = img_size

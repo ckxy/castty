@@ -89,7 +89,17 @@ class PrintHAHA(BaseInternode, SpecificTagsMixin):
 
 
 if __name__ == '__main__':
-    printhaha = PrintHAHA()
-    a = dict(bbox='c')
-    a = printhaha(a)
-    print(a)
+    # printhaha = PrintHAHA()
+    # a = dict(bbox='c')
+    # a = printhaha(a)
+    # print(a)
+
+    from castty.datasets.bamboo import Bamboo
+
+    internodes = [
+        dict(type='Bamboo', internodes=[dict(type='ToTensor')]),
+        dict(type='ToTensor')
+    ]
+
+    b = Bamboo(internodes, tag_mapping='aaa')
+    print(b)

@@ -3,6 +3,7 @@ import math
 import random
 import numpy as np
 from .builder import INTERNODE
+from .mixin import DataAugMixin
 from .base_internode import BaseInternode
 from PIL import Image, ImageOps, ImageDraw
 from ..utils.common import get_image_size, is_pil
@@ -11,50 +12,38 @@ from ..utils.common import get_image_size, is_pil
 __all__ = ['RandomErasing', 'GridMask']
 
 
-class ErasingInternode(BaseInternode):
-    def __init__(self, **kwargs):
-        super(ErasingInternode, self).__init__(**kwargs)
+class ErasingInternode(DataAugMixin, BaseInternode):
+    def __init__(self, tag_mapping=dict(image=['image'], mask=['mask']), **kwargs):
+        forward_mapping = dict(
+            image=self.forward_image,
+            mask=self.forward_mask,
+        )
+        backward_mapping = dict()
+        super(ErasingInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
 
-    def forward_image(self, data_dict):
-        if 'intl_erase_mask' not in data_dict.keys():
-            return data_dict
+    def forward_image(self, image, meta, intl_erase_mask, intl_erase_bgd, **kwargs):
+        if intl_erase_mask is None:
+            return image, meta
 
-        target_tag = data_dict['intl_base_target_tag']
-
-        mask = data_dict['intl_erase_mask']
-
-        if is_pil(data_dict[target_tag]):
-            bgd = data_dict['intl_erase_bgd']
-            data_dict[target_tag] = Image.composite(data_dict[target_tag], bgd, mask)
+        if is_pil(image):
+            image = Image.composite(image, intl_erase_bgd, intl_erase_mask)
         else:
-            bgd = data_dict['intl_erase_bgd']
-            data_dict[target_tag] = Image.fromarray(data_dict[target_tag])
-            data_dict[target_tag] = Image.composite(data_dict[target_tag], bgd, mask)
-            data_dict[target_tag] = np.array(data_dict[target_tag])
+            image = Image.fromarray(image)
+            image = Image.composite(image, intl_erase_bgd, intl_erase_mask)
+            image = np.array(image)
 
-        return data_dict
+        return image, meta
 
-    def forward_mask(self, data_dict):
-        if 'intl_erase_mask' not in data_dict.keys():
-            return data_dict
+    def forward_mask(self, mask, meta, intl_erase_mask, intl_erase_bgd, **kwargs):
+        if intl_erase_mask is None:
+            return mask, meta
 
-        target_tag = data_dict['intl_base_target_tag']
-
-        mask = data_dict['intl_erase_mask']
-
-        mask = (np.asarray(mask) > 0).astype(np.int32)
-        w, h = get_image_size(data_dict[target_tag])
+        intl_erase_mask = (np.asarray(intl_erase_mask) > 0).astype(np.int32)
+        w, h = get_image_size(mask)
         bgd = np.zeros((h, w), np.int32)
-        data_dict[target_tag] = data_dict[target_tag] * mask + bgd * (1 - mask)
+        mask = mask * intl_erase_mask + bgd * (1 - intl_erase_mask)
 
-        return data_dict
-
-    def erase_intl_param_forward(self, data_dict):
-        if 'intl_erase_mask' in data_dict.keys():
-            data_dict.pop('intl_erase_mask')
-        if 'intl_erase_bgd' in data_dict.keys():
-            data_dict.pop('intl_erase_bgd')
-        return data_dict
+        return mask, meta
 
 
 @INTERNODE.register_module()
@@ -76,6 +65,8 @@ class RandomErasing(ErasingInternode):
     def calc_intl_param_forward(self, data_dict):
         assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys()
 
+        param = dict(intl_erase_mask=None, intl_erase_bgd=None)
+
         w, h = get_image_size(data_dict['image'])
         area = w * h
         for attempt in range(10):
@@ -89,20 +80,20 @@ class RandomErasing(ErasingInternode):
                 y = random.randint(0, h - new_h)
                 x = random.randint(0, w - new_w)
 
-                data_dict['intl_erase_mask'] = Image.new("L", get_image_size(data_dict['image']), 255)
-                draw = ImageDraw.Draw(data_dict['intl_erase_mask'])
+                param['intl_erase_mask'] = Image.new("L", get_image_size(data_dict['image']), 255)
+                draw = ImageDraw.Draw(param['intl_erase_mask'])
                 draw.rectangle((x, y, x + new_w, y + new_h), fill=0)
 
                 if 'image' in data_dict.keys():
                     if self.offset:
                         offset = 2 * (np.random.rand(h, w) - 0.5)
                         offset = np.uint8(offset * 255)
-                        data_dict['intl_erase_bgd'] = Image.fromarray(offset).convert('RGB')
+                        param['intl_erase_bgd'] = Image.fromarray(offset).convert('RGB')
                     else:
-                        data_dict['intl_erase_bgd'] = Image.new('RGB', get_image_size(data_dict['image']), self.value)
+                        param['intl_erase_bgd'] = Image.new('RGB', get_image_size(data_dict['image']), self.value)
                 break
 
-        return data_dict
+        return param
 
     def __repr__(self):
         if self.offset:
@@ -164,17 +155,18 @@ class GridMask(ErasingInternode):
             r = np.random.randint(self.rotate)
             mask = mask.rotate(r)
 
-        data_dict['intl_erase_mask'] = mask.crop(((ww - w) // 2, (hh - h) // 2, (ww - w) // 2 + w, (hh - h) // 2 + h))
+        param = dict()
+        param['intl_erase_mask'] = mask.crop(((ww - w) // 2, (hh - h) // 2, (ww - w) // 2 + w, (hh - h) // 2 + h))
 
         if 'image' in data_dict.keys():
             if self.offset:
                 offset = 2 * (np.random.rand(h, w) - 0.5)
                 offset = np.uint8(offset * 255)
-                data_dict['intl_erase_bgd'] = Image.fromarray(offset).convert('RGB')
+                param['intl_erase_bgd'] = Image.fromarray(offset).convert('RGB')
             else:
-                data_dict['intl_erase_bgd'] = Image.new('RGB', get_image_size(data_dict['image']), 0)
+                param['intl_erase_bgd'] = Image.new('RGB', get_image_size(data_dict['image']), 0)
 
-        return data_dict
+        return param
 
     def __repr__(self):
         return 'GridMask(use_h={}, use_w={}, ratio={}, rotate={}, offset={}, invert={})'.format(self.use_h, self.use_w, self.ratio, self.rotate, self.offset, self.invert)

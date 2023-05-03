@@ -48,7 +48,7 @@ class CalcPTSGrids(BaseInternode):
         res_weights[2 * k] = 1
         res_weights[2 * k + 1] = 1
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, **kwargs):
         w, h = get_image_size(data_dict['image'])
 
         center_heatmap_target = torch.zeros(1, int(h * self.ratio), int(w * self.ratio)).type(torch.float32)
