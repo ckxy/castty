@@ -1,6 +1,4 @@
 import cv2
-import random
-import datetime
 import numpy as np
 from PIL import Image
 from ...utils.bbox_tools import xyxy2xywh
@@ -19,10 +17,6 @@ TAG_MAPPING = dict(
     poly=['poly'],
     seq=['seq']
 )
-
-
-def make_tid():
-    return '{0:%Y%m%d%H%M%S%f}'.format(datetime.datetime.now()) + ''.join([str(random.randint(1,10)) for i in range(5)])
 
 
 def is_pil(img):

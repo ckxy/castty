@@ -27,6 +27,8 @@ class DataAugMixin(object):
             self.backward_mapping = backward_mapping
 
     def forward(self, data_dict, **param):
+        # print(type(self).__name__, self.tag_mapping)
+        # exit()
         for map2func, tags in self.tag_mapping.items():
             if map2func not in self.forward_mapping.keys():
                 continue

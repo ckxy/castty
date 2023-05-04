@@ -48,7 +48,7 @@ class ErasingInternode(DataAugMixin, BaseInternode):
 
 @INTERNODE.register_module()
 class RandomErasing(ErasingInternode):
-    def __init__(self, scale=(0.02, 0.33), ratio=(0.3, 3.3), offset=False, value=(0, 0, 0), **kwargs):
+    def __init__(self, scale=(0.02, 0.33), ratio=(0.3, 3.3), offset=False, value=(0, 0, 0), tag_mapping=dict(image=['image'], mask=['mask']), **kwargs):
         assert isinstance(value, tuple)
         if (scale[0] > scale[1]) or (ratio[0] > ratio[1]):
             warnings.warn("range should be of kind (min, max)")
@@ -60,7 +60,7 @@ class RandomErasing(ErasingInternode):
         self.offset = offset
         self.value = value
 
-        super(RandomErasing, self).__init__(**kwargs)
+        super(RandomErasing, self).__init__(tag_mapping=tag_mapping, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys()
@@ -104,7 +104,7 @@ class RandomErasing(ErasingInternode):
 
 @INTERNODE.register_module()
 class GridMask(ErasingInternode):
-    def __init__(self, use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=1, **kwargs):
+    def __init__(self, use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=1, tag_mapping=dict(image=['image'], mask=['mask']), **kwargs):
         assert 0 <= rotate < 90
 
         self.use_h = use_h
@@ -114,7 +114,7 @@ class GridMask(ErasingInternode):
         self.invert = invert
         self.ratio = ratio
 
-        super(GridMask, self).__init__(**kwargs)
+        super(GridMask, self).__init__(tag_mapping=tag_mapping, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         assert 'point' not in data_dict.keys()

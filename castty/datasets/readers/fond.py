@@ -23,7 +23,7 @@ class FondReader(Reader):
         self.point = point
         self.poly = poly
 
-        self._info = dict(forcat=dict())
+        self._info = dict(forcat=dict(), tag_mapping=dict(image=['image']))
 
         if 'label' in self.mode:
             self._info['forcat']['label'] = dict(
@@ -36,14 +36,19 @@ class FondReader(Reader):
                     ['clear', 'blur']
                 ]
             )
+            self._info['tag_mapping']['label'] = ['label']
         if 'bbox' in self.mode:
             self._info['forcat']['bbox'] = dict(classes=['face'])
+            self._info['tag_mapping']['bbox'] = ['bbox']
         if 'mask' in self.mode:
             self._info['forcat']['mask'] = dict(classes=['__background__', 'eye'])
+            self._info['tag_mapping']['mask'] = ['mask']
         if 'point' in self.mode:
             self._info['forcat']['point'] = dict(classes=[str(i) for i in range(5)])
+            self._info['tag_mapping']['point'] = ['point']
         if 'poly' in self.mode:
             self._info['forcat']['poly'] = dict(classes=['eye'])
+            self._info['tag_mapping']['poly'] = ['poly']
 
     def __getitem__(self, index):
         image = self.read_image(self.image)

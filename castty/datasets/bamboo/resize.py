@@ -248,13 +248,13 @@ class ResizeAndPadding(Bamboo):
         if resize:
             assert resize['type'] in ['Resize', 'WarpResize']
             resize['expand'] = True
-            self.internodes.append(build_internode(resize))
+            self.internodes.append(build_internode(resize, **kwargs))
         else:
             self.internodes.append(build_internode(dict(type='BaseInternode')))
 
         if padding:
             assert padding['type'] in ['PaddingBySize', 'PaddingByStride']
-            self.internodes.append(build_internode(padding))
+            self.internodes.append(build_internode(padding, **kwargs))
         else:
             self.internodes.append(build_internode(dict(type='BaseInternode')))
 

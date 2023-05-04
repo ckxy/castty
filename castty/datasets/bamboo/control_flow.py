@@ -82,7 +82,7 @@ class ChooseABranchByID(ChooseOne):
 
 class InternodeWarpper(BaseInternode):
 	def __init__(self, internode, **kwargs):
-		self.internode = build_internode(internode)
+		self.internode = build_internode(internode, **kwargs)
 
 
 @INTERNODE.register_module()

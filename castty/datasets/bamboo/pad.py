@@ -176,7 +176,7 @@ class ReversiblePadding(PaddingInternode, BaseFilterMixin):
             w, h = data_dict['ori_size']
             return dict(intl_padding=self.calc_padding(w, h), intl_ori_size=data_dict['ori_size'])
         else:
-            return dict(intl_padding=None)
+            return dict(intl_padding=None, intl_ori_size=None)
 
     def backward_image(self, image, meta, intl_padding, intl_ori_size, **kwargs):
         if intl_padding is not None:
@@ -192,7 +192,7 @@ class ReversiblePadding(PaddingInternode, BaseFilterMixin):
             left, top, right, bottom = intl_padding
             w, h = intl_ori_size
         else:
-            return data_dict
+            return bbox, meta
 
         bbox = unpad_bbox(bbox, left, top)
         bbox = clip_bbox(bbox, (w, h))

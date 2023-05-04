@@ -17,7 +17,7 @@ class Warp(Bamboo):
     def __init__(self, internodes, expand=False, ccs=True, **kwargs):
         assert len(internodes) > 0
 
-        self.internode = WarpInternode(ccs=ccs)
+        self.internode = WarpInternode(ccs=ccs, **kwargs)
         self.internodes = []
         self.ccs = ccs
         self.expand = expand
@@ -26,7 +26,7 @@ class Warp(Bamboo):
             assert cfg['type'] in ['WarpPerspective', 'WarpScale', 'WarpStretch', 'WarpRotate', 'WarpShear', 'WarpTranslate']
             cfg['ccs'] = False
             cfg['expand'] = False
-            self.internodes.append(build_internode(cfg))
+            self.internodes.append(build_internode(cfg, **kwargs))
 
     def forward(self, data_dict):
         # intl_warp_matrix = np.eye(3)

@@ -1,6 +1,5 @@
 from .bamboo import Bamboo
 import torch.utils.data as data
-from .utils.common import TAG_MAPPING
 from .readers.builder import build_reader
 
 
@@ -9,13 +8,17 @@ class Dataset(data.Dataset):
         self.cfg = cfg
 
         self.reader = build_reader(cfg.reader)
-        self.bamboo = Bamboo(cfg.internodes, tag_mapping=TAG_MAPPING)
+        self._info = self.reader.info
+        self.bamboo = Bamboo(cfg.internodes, tag_mapping=self._info['tag_mapping'])
 
-        self.info = self.reader.info
-        forcat = self.info.pop('forcat')
-        self.info.update(forcat)
+        forcat = self._info.pop('forcat')
+        self._info.update(forcat)
 
         self.branch_id = 0
+
+    @property
+    def info(self):
+        return self._info
 
     def __getitem__(self, index):
         data_dict = dict(reader=self.reader, index=index, len_data_lines=len(self), intl_branch_id=self.branch_id)

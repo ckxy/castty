@@ -9,7 +9,7 @@ class Reader(object):
         else:
             self.use_pil = True
 
-        self._tag_mapping = TAG_MAPPING
+        self._info = dict(tag_mapping=TAG_MAPPING)
 
     @property
     def tag_mapping(self):
