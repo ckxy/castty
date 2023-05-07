@@ -6,7 +6,8 @@ from PIL import Image
 from .builder import INTERNODE
 from .mixin import DataAugMixin
 from .base_internode import BaseInternode
-from ..utils.common import get_image_size, is_pil
+from ..utils.common import get_image_size, is_pil, is_cv2
+from torchvision.transforms import functional, InterpolationMode
 from ..utils.warp_tools import calc_expand_size_and_matrix, warp_bbox, warp_point
 
 
@@ -85,13 +86,15 @@ class Rot90(DataAugMixin, BaseInternode):
                 image = image.transpose(Image.Transpose.ROTATE_180)
             else:
                 image = image.transpose(Image.Transpose.ROTATE_90)
-        else:
+        elif is_cv2(image):
             if intl_rot90_angle == 90:
                 image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
             elif intl_rot90_angle == 180:
                 image = cv2.rotate(image, cv2.ROTATE_180)
             else:
                 image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        else:
+            image = functional.rotate(image, 360 - intl_rot90_angle, InterpolationMode.NEAREST, True, None, 0)
         return image, meta
 
     def forward_bbox(self, bbox, meta, intl_rot90_angle, intl_rot90_matrix, **kwargs):
@@ -104,12 +107,17 @@ class Rot90(DataAugMixin, BaseInternode):
         if intl_rot90_angle == 0:
             return mask, meta
 
-        if intl_rot90_angle == 90:
-            mask = cv2.rotate(mask, cv2.ROTATE_90_CLOCKWISE)
-        elif intl_rot90_angle == 180:
-            mask = cv2.rotate(mask, cv2.ROTATE_180)
+        if is_cv2(mask):
+            if intl_rot90_angle == 90:
+                mask = cv2.rotate(mask, cv2.ROTATE_90_CLOCKWISE)
+            elif intl_rot90_angle == 180:
+                mask = cv2.rotate(mask, cv2.ROTATE_180)
+            else:
+                mask = cv2.rotate(mask, cv2.ROTATE_90_COUNTERCLOCKWISE)
         else:
-            mask = cv2.rotate(mask, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            mask = mask.unsqueeze(0)
+            mask = functional.rotate(mask, 360 - intl_rot90_angle, InterpolationMode.NEAREST, True, None, 0)
+            mask = mask[0]
         return mask, meta
 
     def forward_point(self, point, meta, intl_rot90_angle, intl_rot90_matrix, **kwargs):

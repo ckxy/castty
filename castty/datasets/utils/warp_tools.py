@@ -1,9 +1,10 @@
 import cv2
 import math
+import torch
 import numpy as np
 from PIL import Image
+from .common import is_pil, is_cv2
 from ...utils.bbox_tools import xyxy2xywh
-from .common import is_pil
 
 
 def fix_cv2_matrix(M):
@@ -14,24 +15,12 @@ def fix_cv2_matrix(M):
 
 def calc_expand_size_and_matrix(M, img_size):
     w, h = img_size
-    # xx = []
-    # yy = []
-    # for x, y in ((0, 0), (w, 0), (w, h), (0, h)):
-    #     xx.append(M[0, 0] * x + M[0, 1] * y + M[0, 2])
-    #     yy.append(M[1, 0] * x + M[1, 1] * y + M[1, 2])
-    # nw = math.ceil(max(xx)) - math.floor(min(xx))
-    # nh = math.ceil(max(yy)) - math.floor(min(yy))
     P = np.array([(0, 0), (w, 0), (w, h), (0, h)], dtype=np.float32)
     P = warp_point(P, M)
-    # print(P)
-    # print(np.min(P[..., 0]), np.min(P[..., 1]))
-    # exit()
 
     nw = int(np.ceil(np.max(P[..., 0])) - np.floor(np.min(P[..., 0])))
     nh = int(np.ceil(np.max(P[..., 1])) - np.floor(np.min(P[..., 1])))
     E = np.eye(3)
-    # E[0, 2] = (nw - w) / 2
-    # E[1, 2] = (nh - h) / 2
     E[0, 2] = -np.min(P[..., 0])
     E[1, 2] = -np.min(P[..., 1])
     return E, (nw, nh)
@@ -68,18 +57,34 @@ def warp_image(image, M, dst_size, ccs=False):
         matrix = np.array(np.matrix(M).I).flatten()
         matrix = (matrix / matrix[-1]).tolist()
         return image.transform(dst_size, Image.PERSPECTIVE, matrix, Image.BILINEAR)
-    else:
+    elif is_cv2(image):
         matrix = np.matrix(M)
         if ccs:
             matrix = fix_cv2_matrix(matrix)
         return cv2.warpPerspective(image, matrix, dst_size)
+    else:
+        # coeffs = M.flatten().tolist()
+        # print(M)
+        # matrix = np.array(np.matrix(M).I).flatten()
+        # coeffs = (matrix / matrix[-1]).tolist()
+        # return perspective(image, dst_size, coeffs, interpolation='bilinear', fill=0)
+        raise NotImplementedError('not support')
 
 
 def warp_mask(mask, M, dst_size, ccs=False):
-    matrix = np.matrix(M)
-    if ccs:
-        matrix = fix_cv2_matrix(matrix)
-    mask = cv2.warpPerspective(mask, matrix, dst_size, flags=cv2.INTER_NEAREST)
+    if is_cv2(mask):
+        matrix = np.matrix(M)
+        if ccs:
+            matrix = fix_cv2_matrix(matrix)
+        mask = cv2.warpPerspective(mask, matrix, dst_size, flags=cv2.INTER_NEAREST)
+    else:
+        # coeffs = M.flatten().tolist()
+        # matrix = np.array(np.matrix(M).I).flatten()
+        # coeffs = (matrix / matrix[-1]).tolist()
+        # mask = mask.unsqueeze(0)
+        # mask = perspective(mask, dst_size, coeffs, interpolation='nearest', fill=0)
+        # mask = mask[0]
+        raise NotImplementedError('not support')
     return mask
 
 

@@ -3,8 +3,8 @@ import numpy as np
 from PIL import Image
 from .builder import INTERNODE
 from .mixin import DataAugMixin
-from ..utils.common import is_pil
 from .base_internode import BaseInternode
+from ..utils.common import is_pil, is_tensor
 from torchvision.transforms.functional import to_tensor, to_pil_image
 
 
@@ -99,10 +99,14 @@ class To1CHTensor(DataAugMixin, BaseInternode):
         super(To1CHTensor, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
 
     def forward_image(self, image, meta, **kwargs):
+        if not is_tensor(image):
+            raise ValueError
         image = image[0].unsqueeze(0)
         return image, meta
 
     def backward_image(self, image, meta=None, **kwargs):
+        if not is_tensor(image):
+            raise ValueError
         image = image.repeat(3, 1, 1)
         return image, meta
 

@@ -94,12 +94,34 @@ if __name__ == '__main__':
     # a = printhaha(a)
     # print(a)
 
-    from castty.datasets.bamboo import Bamboo
+    # from castty.datasets.bamboo import Bamboo
 
-    internodes = [
-        dict(type='Bamboo', internodes=[dict(type='ToTensor')]),
-        dict(type='ToTensor')
-    ]
+    # internodes = [
+    #     dict(type='Bamboo', internodes=[dict(type='ToTensor')]),
+    #     dict(type='ToTensor')
+    # ]
 
-    b = Bamboo(internodes, tag_mapping='aaa')
-    print(b)
+    # b = Bamboo(internodes, tag_mapping='aaa')
+    # print(b)
+
+    from PIL import Image
+    import numpy as np
+    import torch
+    from torchvision.transforms.functional import crop
+
+    img = Image.open('images/test900.jpg').convert('RGB')
+    print(img)
+    img = np.array(img)
+    img = torch.from_numpy(img)
+    print(img.shape)
+    img = img.permute(2, 0, 1)
+    img = crop(img, 100, 500, 400, 700)
+    img = img.permute(1, 2, 0)
+    img = img.numpy()
+    print(img.shape)
+    # exit()
+    img = Image.fromarray(img)
+    # print(img)
+    # exit()
+    # img = img.crop(100, 500,)
+    img.show()

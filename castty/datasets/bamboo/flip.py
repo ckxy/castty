@@ -5,7 +5,8 @@ from PIL import Image
 from .builder import INTERNODE
 from .mixin import DataAugMixin
 from .base_internode import BaseInternode
-from ..utils.common import get_image_size, is_pil
+from ..utils.common import get_image_size, is_pil, is_cv2
+from torchvision.transforms.functional import hflip, vflip
 
 
 __all__ = ['Flip']
@@ -52,9 +53,14 @@ class Flip(DataAugMixin, BaseInternode):
         if is_pil(image):
             mode = Image.FLIP_LEFT_RIGHT if self.horizontal else Image.FLIP_TOP_BOTTOM
             image = image.transpose(mode)
-        else:
+        elif is_cv2(image):
             mode = 1 if self.horizontal else 0
             image = cv2.flip(image, mode)
+        else:
+            if self.horizontal:
+                image = hflip(image)
+            else:
+                image = vflip(image)
         return image, meta
 
     def forward_bbox(self, bbox, meta, intl_flip_wh, **kwargs):
@@ -67,9 +73,15 @@ class Flip(DataAugMixin, BaseInternode):
 
         return bbox, meta
 
-    def forward_mask(self, mask, meta, intl_flip_wh, **kwargs):        
-        mode = 1 if self.horizontal else 0
-        mask = cv2.flip(mask, mode)
+    def forward_mask(self, mask, meta, intl_flip_wh, **kwargs): 
+        if is_cv2(mask):
+            mode = 1 if self.horizontal else 0
+            mask = cv2.flip(mask, mode)
+        else:
+            if self.horizontal:
+                mask = hflip(mask)
+            else:
+                mask = vflip(mask)
         return mask, meta
 
     def forward_point(self, point, meta, intl_flip_wh, **kwargs):

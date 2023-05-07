@@ -8,7 +8,7 @@ from .base_internode import BaseInternode
 from .mixin import BaseFilterMixin, DataAugMixin
 from torchvision.transforms.functional import pad
 from .crop import crop_image, crop_bbox, crop_poly, crop_point, crop_mask
-from ..utils.common import is_pil, get_image_size, clip_bbox, clip_point, clip_poly
+from ..utils.common import is_pil, is_cv2, get_image_size, clip_bbox, clip_point, clip_poly
 
 
 __all__ = ['Padding', 'PaddingBySize', 'PaddingByStride', 'RandomExpand']
@@ -36,8 +36,10 @@ def pad_image(image, padding, fill=(0, 0, 0), padding_mode='constant'):
 
     if is_pil(image):
         image = pad(image, (left, top, right, bottom), fill, padding_mode)
-    else:
+    elif is_cv2(image):
         image = cv2.copyMakeBorder(image, top, bottom, left, right, CV2_PADDING_MODES[padding_mode], value=fill)
+    else:
+        image = pad(image, (left, top, right, bottom), None, padding_mode)
     return image
 
 
@@ -64,7 +66,10 @@ def pad_point(points, left, top):
 
 def pad_mask(mask, padding, padding_mode):
     left, top, right, bottom = padding
-    mask = cv2.copyMakeBorder(mask, top, bottom, left, right, CV2_PADDING_MODES[padding_mode], value=0)
+    if is_cv2(mask):
+        mask = cv2.copyMakeBorder(mask, top, bottom, left, right, CV2_PADDING_MODES[padding_mode], value=0)
+    else:
+        mask = pad(mask, (left, top, right, bottom), None, padding_mode)
     return mask
 
 

@@ -4,9 +4,9 @@ import numpy as np
 from PIL import Image
 from .builder import INTERNODE
 from .mixin import DataAugMixin
-from ..utils.common import is_pil
+from ..utils.common import is_pil, is_cv2
 from .base_internode import BaseInternode
-from torchvision.transforms.functional import normalize, to_grayscale, adjust_brightness, adjust_contrast, adjust_saturation, adjust_hue
+from torchvision.transforms.functional import normalize, rgb_to_grayscale, adjust_brightness, adjust_contrast, adjust_saturation, adjust_hue
 
 
 __all__ = ['BrightnessEnhancement', 'ContrastEnhancement', 'SaturationEnhancement', 'HueEnhancement', 'ToGrayscale']
@@ -34,10 +34,12 @@ class BrightnessEnhancement(DataAugMixin, BaseInternode):
     def forward_image(self, image, meta, intl_brightness_factor, **kwargs):
         if is_pil(image):
             image = adjust_brightness(image, intl_brightness_factor)
-        else:
+        elif is_cv2(image):
             image = Image.fromarray(image)
             image = adjust_brightness(image, intl_brightness_factor)
             image = np.array(image)
+        else:
+            image = adjust_brightness(image, intl_brightness_factor)
 
         return image, meta
 
@@ -67,10 +69,12 @@ class ContrastEnhancement(DataAugMixin, BaseInternode):
     def forward_image(self, image, meta, intl_contrast_factor, **kwargs):
         if is_pil(image):
             image = adjust_contrast(image, intl_contrast_factor)
-        else:
+        elif is_cv2(image):
             image = Image.fromarray(image)
             image = adjust_contrast(image, intl_contrast_factor)
             image = np.array(image)
+        else:
+            image = adjust_contrast(image, intl_contrast_factor)
 
         return image, meta
 
@@ -100,10 +104,12 @@ class SaturationEnhancement(DataAugMixin, BaseInternode):
     def forward_image(self, image, meta, intl_saturation_factor, **kwargs):
         if is_pil(image):
             image = adjust_saturation(image, intl_saturation_factor)
-        else:
+        elif is_cv2(image):
             image = Image.fromarray(image)
             image = adjust_saturation(image, intl_saturation_factor)
             image = np.array(image)
+        else:
+            image = adjust_saturation(image, intl_saturation_factor)
 
         return image, meta
 
@@ -133,10 +139,12 @@ class HueEnhancement(DataAugMixin, BaseInternode):
     def forward_image(self, image, meta, intl_hue_factor, **kwargs):
         if is_pil(image):
             image = adjust_hue(image, intl_hue_factor)
-        else:
+        elif is_cv2(image):
             image = Image.fromarray(image)
             image = adjust_hue(image, intl_hue_factor)
             image = np.array(image)
+        else:
+            image = adjust_hue(image, intl_hue_factor)
 
         return image, meta
 
@@ -155,9 +163,11 @@ class ToGrayscale(DataAugMixin, BaseInternode):
 
     def forward_image(self, image, meta, **kwargs):
         if is_pil(image):
-            image = to_grayscale(image, num_output_channels=3)
-        else:
+            image = rgb_to_grayscale(image, num_output_channels=3)
+        elif is_cv2(image):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             image = image[..., np.newaxis]
             image = np.repeat(image, 3, axis=-1)
+        else:
+            image = rgb_to_grayscale(image, num_output_channels=3)
         return image, meta

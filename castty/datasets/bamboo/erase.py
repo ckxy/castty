@@ -1,12 +1,13 @@
 import cv2
 import math
+import torch
 import random
 import numpy as np
 from .builder import INTERNODE
 from .mixin import DataAugMixin
 from .base_internode import BaseInternode
 from PIL import Image, ImageOps, ImageDraw
-from ..utils.common import get_image_size, is_pil
+from ..utils.common import get_image_size, is_pil, is_cv2
 
 
 __all__ = ['RandomErasing', 'GridMask']
@@ -27,10 +28,17 @@ class ErasingInternode(DataAugMixin, BaseInternode):
 
         if is_pil(image):
             image = Image.composite(image, intl_erase_bgd, intl_erase_mask)
-        else:
+        elif is_cv2(image):
             image = Image.fromarray(image)
             image = Image.composite(image, intl_erase_bgd, intl_erase_mask)
             image = np.array(image)
+        else:
+            intl_erase_mask = torch.from_numpy((np.array(intl_erase_mask) > 0).astype(np.int32))
+            intl_erase_mask = intl_erase_mask.unsqueeze(0).repeat(3, 1, 1)
+            w, h = get_image_size(image)
+            intl_erase_bgd = torch.from_numpy(np.array(intl_erase_bgd))
+            intl_erase_bgd = intl_erase_bgd.permute(2, 0, 1)
+            image = image * intl_erase_mask + intl_erase_bgd * (1 - intl_erase_mask)
 
         return image, meta
 
@@ -38,10 +46,16 @@ class ErasingInternode(DataAugMixin, BaseInternode):
         if intl_erase_mask is None:
             return mask, meta
 
-        intl_erase_mask = (np.asarray(intl_erase_mask) > 0).astype(np.int32)
-        w, h = get_image_size(mask)
-        bgd = np.zeros((h, w), np.int32)
-        mask = mask * intl_erase_mask + bgd * (1 - intl_erase_mask)
+        if is_cv2(mask):
+            intl_erase_mask = (np.array(intl_erase_mask) > 0).astype(np.int32)
+            w, h = get_image_size(mask)
+            bgd = np.zeros((h, w), np.int32)
+            mask = mask * intl_erase_mask + bgd * (1 - intl_erase_mask)
+        else:
+            intl_erase_mask = torch.from_numpy((np.array(intl_erase_mask) > 0).astype(np.int32))
+            h, w = mask.shape
+            bgd = torch.zeros(mask.shape, dtype=mask.dtype)
+            mask = mask * intl_erase_mask + bgd * (1 - intl_erase_mask)
 
         return mask, meta
 

@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from PIL import Image
+from torch import Tensor
 from ...utils.bbox_tools import xyxy2xywh
 try:
     import pyclipper
@@ -26,6 +27,20 @@ def is_pil(img):
         return False
 
 
+def is_cv2(img):
+    if isinstance(img, np.ndarray):
+        return True
+    else:
+        return False
+
+
+def is_tensor(img):
+    if isinstance(img, Tensor):
+        return True
+    else:
+        return False
+
+
 def get_image_size(img):
     if isinstance(img, Image.Image):
         w, h = img.size
@@ -35,7 +50,12 @@ def get_image_size(img):
         else:
             h, w = img.shape
     else:
-        _, h, w = img.shape
+        h = img.shape[-2]
+        w = img.shape[-1]
+        # if img.ndim == 3:
+        #     _, h, w = img.shape
+        # else:
+        #     h, w = img.shape
     return w, h
 
 

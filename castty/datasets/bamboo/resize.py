@@ -10,7 +10,8 @@ from .mixin import DataAugMixin
 from .builder import build_internode
 from .base_internode import BaseInternode
 from .control_flow import InternodeWarpper
-from ..utils.common import get_image_size, is_pil
+from ..utils.common import get_image_size, is_pil, is_cv2
+from torchvision.transforms import functional, InterpolationMode
 
 
 __all__ = ['Resize', 'Rescale', 'RescaleLimitedByBound', 'ResizeAndPadding']
@@ -19,8 +20,11 @@ __all__ = ['Resize', 'Rescale', 'RescaleLimitedByBound', 'ResizeAndPadding']
 def resize_image(image, size):
     if is_pil(image):
         image = image.resize(size, Image.Resampling.BILINEAR)
-    else:
+    elif is_cv2(image):
         image = cv2.resize(image, size)
+    else:
+        w, h = size
+        image = functional.resize(image, (h, w), interpolation=InterpolationMode.BILINEAR, max_size=None, antialias="warn")
     return image
 
 
@@ -46,7 +50,13 @@ def resize_point(points, scale):
 
 
 def resize_mask(mask, size):
-    mask = cv2.resize(mask, size, interpolation=cv2.INTER_NEAREST)
+    if is_cv2(mask):
+        mask = cv2.resize(mask, size, interpolation=cv2.INTER_NEAREST)
+    else:
+        w, h = size
+        mask = mask.unsqueeze(0)
+        mask = functional.resize(mask, (h, w), interpolation=InterpolationMode.NEAREST, max_size=None)
+        mask = mask[0]
     return mask
 
 
@@ -264,12 +274,12 @@ class ResizeAndPadding(Bamboo):
 
             if hasattr(self.internodes[0], 'calc_scale_and_new_size'):
                 _, (nw, nh) = self.internodes[0].calc_scale_and_new_size(w, h)
-                intl_resize_size = (nh, nw)
+                intl_resize_size = (nw, nh)
             elif isinstance(self.internodes[0], InternodeWarpper) and hasattr(self.internodes[0].internode, 'calc_scale_and_new_size'):
                 _, (nw, nh) = self.internodes[0].internode.calc_scale_and_new_size(w, h)
-                intl_resize_size= (nh, nw)
+                intl_resize_size= (nw, nh)
             else:
-                intl_resize_size = (h, w)
+                intl_resize_size = (w, h)
 
             # data_dict['intl_resize_and_padding_reverse_flag'] = True
             return dict(intl_resize_and_padding_reverse_flag=True, intl_resize_size=intl_resize_size)

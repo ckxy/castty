@@ -40,9 +40,9 @@ class WarpInternode(DataAugMixin, BaseInternode, BaseFilterMixin):
     def calc_intl_param_forward(self, data_dict):
         raise NotImplementedError
 
-    def forward_rest(self, data_dict, **kwargs):
-        if 'intl_warp_rest_matrix' in kwargs.keys():
-            data_dict['intl_warp_matrix'] = kwargs['intl_warp_rest_matrix'] @ data_dict['intl_warp_matrix']
+    def forward_rest(self, data_dict, intl_warp_rest_matrix=None, **kwargs):
+        if intl_warp_rest_matrix is not None:
+            data_dict['intl_warp_matrix'] = intl_warp_rest_matrix @ data_dict['intl_warp_matrix']
         return data_dict
 
     def forward_image(self, image, meta, intl_warp_tmp_matrix, intl_warp_tmp_size, **kwargs):

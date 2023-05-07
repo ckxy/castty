@@ -6,7 +6,7 @@ from .builder import INTERNODE
 import torch.nn.functional as F
 from .mixin import DataAugMixin
 from .base_internode import BaseInternode
-from ..utils.common import get_image_size, is_pil
+from ..utils.common import get_image_size, is_pil, is_tensor
 from torchvision.transforms.functional import to_tensor, to_pil_image
 
 
@@ -120,7 +120,14 @@ class TPS(DataAugMixin, BaseInternode):
     def calc_intl_param_forward(self, data_dict):
         raise NotImplementedError
 
-    def forward_image(self, image, meta, intl_tps_tgt_cps, intl_tps_src_cps, **kwargs):        
+    def forward_image(self, image, meta, intl_tps_tgt_cps, intl_tps_src_cps, **kwargs): 
+        if is_tensor(image):
+            grids = gen_grid(get_image_size(image), intl_tps_src_cps, intl_tps_tgt_cps, resize=self.resize)
+            image = image.unsqueeze(0)
+            image = F.grid_sample(image, torch.from_numpy(grids).unsqueeze(0), align_corners=True)
+            image = image[0]
+            return image, meta
+
         if not is_pil(image):
             image = Image.fromarray(image)
             is_np = True

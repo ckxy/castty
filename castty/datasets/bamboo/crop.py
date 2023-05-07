@@ -7,7 +7,8 @@ from .base_internode import BaseInternode
 from .warp_internode import WarpInternode
 from .mixin import BaseFilterMixin, DataAugMixin
 from ...utils.bbox_tools import calc_iou1, xyxy2xywh
-from ..utils.common import get_image_size, is_pil, filter_bbox_by_center, filter_bbox_by_length, clip_bbox, clip_point, clip_poly
+from torchvision.transforms.functional import crop as tensor_crop
+from ..utils.common import get_image_size, is_pil, is_cv2, filter_bbox_by_center, filter_bbox_by_length, clip_bbox, clip_point, clip_poly
 
 
 __all__ = ['Crop', 'AdaptiveCrop', 'AdaptiveTranslate', 'MinIOUCrop', 'MinIOGCrop', 'CenterCrop', 'RandomAreaCrop', 'EastRandomCrop', 'WestRandomCrop', 'RandomCenterCropPad']
@@ -16,11 +17,13 @@ __all__ = ['Crop', 'AdaptiveCrop', 'AdaptiveTranslate', 'MinIOUCrop', 'MinIOGCro
 def crop_image(image, x1, y1, x2, y2):
     if is_pil(image):
         image = image.crop((x1, y1, x2, y2))
-    else:
+    elif is_cv2(image):
         # image = image[y1:y2, x1:x2]
         image = Image.fromarray(image)
         image = image.crop((x1, y1, x2, y2))
         image = np.array(image)
+    else:
+        image = tensor_crop(image, y1, x1, y2 - y1, x2 - x1)
     return image
 
 
@@ -46,9 +49,14 @@ def crop_point(points, x1, y1):
 
 
 def crop_mask(mask, x1, y1, x2, y2):
-    mask = Image.fromarray(mask)
-    mask = mask.crop((x1, y1, x2, y2))
-    mask = np.array(mask)
+    if is_cv2(mask):
+        mask = Image.fromarray(mask)
+        mask = mask.crop((x1, y1, x2, y2))
+        mask = np.array(mask)
+    else:
+        mask = mask.unsqueeze(0)
+        mask = tensor_crop(mask, y1, x1, y2 - y1, x2 - x1)
+        mask = mask[0]
     return mask
 
 
@@ -140,7 +148,7 @@ class Crop(CropInternode):
         ymin = random.randint(0, h - self.size[1])
         xmax = xmin + self.size[0]
         ymax = ymin + self.size[1]
-        # xmin, ymin, xmax, ymax = 0, 0, 50, 50
+        xmin, ymin, xmax, ymax = 0, 200, 600, 600
         return xmin, ymin, xmax, ymax
 
     def __repr__(self):

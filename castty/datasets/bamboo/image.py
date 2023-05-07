@@ -3,9 +3,9 @@ import numpy as np
 from PIL import Image
 from .builder import INTERNODE
 from .mixin import DataAugMixin
-from ..utils.common import is_pil
 from itertools import permutations
 from .base_internode import BaseInternode
+from ..utils.common import is_pil, is_tensor
 from torchvision.transforms.functional import normalize
 
 
@@ -67,7 +67,10 @@ class SwapInternode(DataAugMixin, BaseInternode):
         else:
             is_np = True
 
-        image = image[..., swap]
+        if is_tensor(image):
+            image = image[swap, ...]
+        else:
+            image = image[..., swap]
 
         if not is_np:
             image = Image.fromarray(image)
