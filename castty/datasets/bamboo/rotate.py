@@ -37,7 +37,9 @@ class Rot90(DataAugMixin, BaseInternode):
             poly=self.forward_poly
         )
         backward_mapping = dict()
-        super(Rot90, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(Rot90, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     @staticmethod
     def build_matrix(angle, img_size):

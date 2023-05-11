@@ -20,7 +20,9 @@ class ErasingInternode(DataAugMixin, BaseInternode):
             mask=self.forward_mask,
         )
         backward_mapping = dict()
-        super(ErasingInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(ErasingInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def forward_image(self, image, meta, intl_erase_mask, intl_erase_bgd, **kwargs):
         if intl_erase_mask is None:

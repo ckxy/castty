@@ -18,6 +18,3 @@ class DataSource(BaseInternode):
             tmp.update(reader[index])
             return tmp
         return data_dict
-
-    # def backward(self, data_dict):
-    #     return data_dict

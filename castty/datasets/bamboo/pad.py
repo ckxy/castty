@@ -113,7 +113,9 @@ class PaddingInternode(DataAugMixin, BaseInternode):
             poly=self.forward_poly
         )
         backward_mapping = dict()
-        super(PaddingInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(PaddingInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def calc_padding(self, w, h):
         raise NotImplementedError
@@ -154,7 +156,8 @@ class Padding(PaddingInternode):
         assert isinstance(padding, tuple) and len(padding) == 4
         self.padding = padding
 
-        super(Padding, self).__init__(fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, **kwargs)
+        # super(Padding, self).__init__(fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, **kwargs)
+        PaddingInternode.__init__(self, fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, **kwargs)
 
     def calc_padding(self, w, h):
         return self.padding[0], self.padding[1], self.padding[2], self.padding[3]
@@ -165,9 +168,11 @@ class Padding(PaddingInternode):
 
 class ReversiblePadding(PaddingInternode, BaseFilterMixin):
     def __init__(self, fill=(0, 0, 0), padding_mode='constant', tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
-        self.use_base_filter = use_base_filter
+        # self.use_base_filter = use_base_filter
+        BaseFilterMixin.__init__(self, use_base_filter)
 
-        super(ReversiblePadding, self).__init__(fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, **kwargs)
+        # super(ReversiblePadding, self).__init__(fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, **kwargs)
+        PaddingInternode.__init__(self, fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, **kwargs)
         self.backward_mapping = dict(
             image=self.backward_image,
             bbox=self.backward_bbox,
@@ -252,7 +257,8 @@ class PaddingBySize(ReversiblePadding):
         self.size = size
         self.center = center
 
-        super(PaddingBySize, self).__init__(fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, use_base_filter=True, **kwargs)
+        # super(PaddingBySize, self).__init__(fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, use_base_filter=True, **kwargs)
+        ReversiblePadding.__init__(self, fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_padding(self, w, h):
         if self.center:
@@ -273,13 +279,14 @@ class PaddingBySize(ReversiblePadding):
 
 @INTERNODE.register_module()
 class PaddingByStride(ReversiblePadding):
-    def __init__(self, stride, center=False, fill=(0, 0, 0), padding_mode='constant', use_base_filter=True, **kwargs):
+    def __init__(self, stride, center=False, fill=(0, 0, 0), padding_mode='constant', tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
         assert isinstance(stride, int) and stride > 0
 
         self.stride = stride
         self.center = center
 
-        super(PaddingByStride, self).__init__(fill=fill, padding_mode=padding_mode, use_base_filter=True, **kwargs)
+        # super(PaddingByStride, self).__init__(fill=fill, padding_mode=padding_mode, use_base_filter=True, **kwargs)
+        ReversiblePadding.__init__(self, fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_padding(self, w, h):
         nw = math.ceil(w / self.stride) * self.stride
@@ -307,7 +314,8 @@ class RandomExpand(PaddingInternode):
         assert ratio > 1
         self.ratio = ratio
 
-        super(RandomExpand, self).__init__(fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, **kwargs)
+        # super(RandomExpand, self).__init__(fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, **kwargs)
+        PaddingInternode.__init__(self, fill=fill, padding_mode=padding_mode, tag_mapping=tag_mapping, **kwargs)
 
     def calc_padding(self, w, h):
         r = random.random() * (self.ratio - 1) + 1

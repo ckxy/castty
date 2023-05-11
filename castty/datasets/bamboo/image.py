@@ -32,7 +32,9 @@ class Normalize(DataAugMixin, BaseInternode):
         backward_mapping = dict(
             image=self.backward_image,
         )
-        super(Normalize, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(Normalize, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def forward_image(self, image, meta, **kwargs):
         image = normalize(image, self.mean, self.std)
@@ -57,7 +59,9 @@ class SwapInternode(DataAugMixin, BaseInternode):
         backward_mapping = dict(
             image=self.backward_image,
         )
-        super(SwapInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(SwapInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     @staticmethod
     def swap_channels(image, swap):
@@ -94,7 +98,8 @@ class SwapChannels(SwapInternode):
             self.r_swap.append(idx)
         self.r_swap = tuple(self.r_swap)
 
-        super(SwapChannels, self).__init__(tag_mapping, **kwargs)
+        # super(SwapChannels, self).__init__(tag_mapping, **kwargs)
+        SwapInternode.__init__(self, tag_mapping, **kwargs)
 
     def forward_image(self, image, meta, **kwargs):
         image = self.swap_channels(image, self.swap)
@@ -113,10 +118,11 @@ class SwapChannels(SwapInternode):
 
 @INTERNODE.register_module()
 class RandomSwapChannels(SwapInternode):
-    def __init__(self, **kwargs):
+    def __init__(self, tag_mapping=dict(image=['image']), **kwargs):
         self.perms = list(permutations(range(3), 3))[1:]
 
-        super(RandomSwapChannels, self).__init__(**kwargs)
+        # super(RandomSwapChannels, self).__init__(**kwargs)
+        SwapInternode.__init__(self, tag_mapping, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         return dict(intl_swap=random.choice(self.perms))

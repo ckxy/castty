@@ -6,7 +6,7 @@ def identity(item, meta=None, **param):
 
 
 class DataAugMixin(object):
-    def __init__(self, tag_mapping=None, forward_mapping=None, backward_mapping=None, **kwargs):
+    def __init__(self, tag_mapping=None, forward_mapping=None, backward_mapping=None):
         if tag_mapping is None:
             self.tag_mapping = TAG_MAPPING
         else:
@@ -54,7 +54,8 @@ class DataAugMixin(object):
 
 
 class BaseFilterMixin(object):
-    use_base_filter = True
+    def __init__(self, use_base_filter=True):
+        self.use_base_filter = use_base_filter
 
     def base_filter_bbox(self, bbox, meta=None):
         # print(self.use_base_filter, 'fff')

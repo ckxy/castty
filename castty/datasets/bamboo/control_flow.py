@@ -16,6 +16,8 @@ class ChooseOne(BaseInternode):
 		for branch in branchs:
 			self.branchs.append(build_internode(branch, **kwargs))
 
+		BaseInternode.__init__(self, **kwargs)
+
 	def calc_intl_param_forward(self, data_dict):
 		intl_bid = random.randint(0, len(self.branchs) - 1)
 		return dict(intl_bid=intl_bid)
@@ -39,7 +41,8 @@ class ChooseSome(ChooseOne):
 	def __init__(self, branchs, num=2, **kwargs):
 		assert num > 1 and num <= len(branchs)
 		self.num = num
-		super(ChooseSome, self).__init__(branchs, **kwargs)
+		# super(ChooseSome, self).__init__(branchs, **kwargs)
+		ChooseOne.__init__(self, branchs, **kwargs)
 
 	def calc_intl_param_forward(self, data_dict):
 		intl_bids = random.sample(list(range(len(self.branchs))), self.num)
@@ -63,7 +66,8 @@ class ChooseSome(ChooseOne):
 @INTERNODE.register_module()
 class ChooseABranchByID(ChooseOne):
 	def __init__(self, branchs, tag='branch_id', **kwargs):
-		super(ChooseABranchByID, self).__init__(branchs, **kwargs)
+		# super(ChooseABranchByID, self).__init__(branchs, **kwargs)
+		ChooseOne.__init__(self, branchs, **kwargs)
 		self.tag = 'intl_' + tag
 
 	def forward(self, data_dict, **kwargs):
@@ -84,6 +88,8 @@ class InternodeWarpper(BaseInternode):
 	def __init__(self, internode, **kwargs):
 		self.internode = build_internode(internode, **kwargs)
 
+		BaseInternode.__init__(self, **kwargs)
+
 
 @INTERNODE.register_module()
 class RandomWarpper(InternodeWarpper):
@@ -92,7 +98,8 @@ class RandomWarpper(InternodeWarpper):
 		internode.pop('p')
 
 		self.p = p
-		super(RandomWarpper, self).__init__(internode, **kwargs)
+		# super(RandomWarpper, self).__init__(internode, **kwargs)
+		InternodeWarpper.__init__(self, internode, **kwargs)
 
 	def calc_intl_param_forward(self, data_dict):
 		intl_random_flag = random.random() < self.p
@@ -114,7 +121,8 @@ class RandomWarpper(InternodeWarpper):
 class ForwardOnly(InternodeWarpper):
 	def __init__(self, internode, **kwargs):
 		internode.pop('one_way')
-		super(ForwardOnly, self).__init__(internode, **kwargs)
+		# super(ForwardOnly, self).__init__(internode, **kwargs)
+		InternodeWarpper.__init__(self, internode, **kwargs)
 
 	def forward(self, data_dict):
 		return self.internode(data_dict)
@@ -130,7 +138,8 @@ class ForwardOnly(InternodeWarpper):
 class BackwardOnly(InternodeWarpper):
 	def __init__(self, internode, **kwargs):
 		internode.pop('one_way')
-		super(BackwardOnly, self).__init__(internode, **kwargs)
+		# super(BackwardOnly, self).__init__(internode, **kwargs)
+		InternodeWarpper.__init__(self, internode, **kwargs)
 
 	def backward(self, kwargs):
 		return self.internode.reverse(**kwargs)

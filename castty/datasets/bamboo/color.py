@@ -25,7 +25,8 @@ class BrightnessEnhancement(DataAugMixin, BaseInternode):
             image=self.forward_image
         )
         backward_mapping = dict()
-        super(BrightnessEnhancement, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         intl_brightness_factor = random.uniform(self.brightness[0], self.brightness[1])
@@ -60,7 +61,8 @@ class ContrastEnhancement(DataAugMixin, BaseInternode):
             image=self.forward_image
         )
         backward_mapping = dict()
-        super(ContrastEnhancement, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         intl_contrast_factor = random.uniform(self.contrast[0], self.contrast[1])
@@ -95,7 +97,8 @@ class SaturationEnhancement(DataAugMixin, BaseInternode):
             image=self.forward_image
         )
         backward_mapping = dict()
-        super(SaturationEnhancement, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         intl_saturation_factor = random.uniform(self.saturation[0], self.saturation[1])
@@ -130,7 +133,8 @@ class HueEnhancement(DataAugMixin, BaseInternode):
             image=self.forward_image
         )
         backward_mapping = dict()
-        super(HueEnhancement, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         intl_hue_factor = random.uniform(self.hue[0], self.hue[1])
@@ -159,7 +163,8 @@ class ToGrayscale(DataAugMixin, BaseInternode):
             image=self.forward_image
         )
         backward_mapping = dict()
-        super(ToGrayscale, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def forward_image(self, image, meta, **kwargs):
         if is_pil(image):

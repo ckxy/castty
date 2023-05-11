@@ -42,10 +42,6 @@ def draw_polygon(img, polygons, keep_flags=None, class_ids=None, classes=None):
 
 
 def get_cw_order_form(polygon):
-	# polygon = np.array([[20, 0], [0, 0], [0, 20], [20, 20]])
-	# print('----in----')
-	# print(polygon, polygon.shape)
-
 	n = len(polygon)
 	center = np.mean(polygon, axis=0)
 	distances = np.power(polygon[..., 0], 2) + np.power(polygon[..., 1], 2)
@@ -59,14 +55,9 @@ def get_cw_order_form(polygon):
 	if cross_p1p2 > 0:
 		res = np.roll(polygon, n - p1_id, 0)
 	elif cross_p1p2 < 0:
-		# print('----in----')
 		res = np.roll(polygon, n - p1_id, 0)
-		# print(res)
 		res = res[::-1, ...]
-		# print(res)
 		res = np.roll(res, 1, 0)
-		# print(res)
-		# print('----out---')
 	else:
 		raise ValueError
 

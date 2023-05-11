@@ -34,7 +34,9 @@ class ToTensor(DataAugMixin, BaseInternode):
             image=self.backward_image,
             mask=self.backward_mask
         )
-        super(ToTensor, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(ToTensor, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def forward_image(self, image, meta, **kwargs):
         assert is_pil(image)
@@ -66,7 +68,9 @@ class ToPILImage(DataAugMixin, BaseInternode):
         backward_mapping = dict(
             image=pil2cv2
         )
-        super(ToPILImage, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(ToPILImage, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def rper(self):
         return 'ToCV2Image()'
@@ -81,7 +85,9 @@ class ToCV2Image(DataAugMixin, BaseInternode):
         backward_mapping = dict(
             image=cv22pil,
         )
-        super(ToCV2Image, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(ToCV2Image, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def rper(self):
         return 'ToPILImage()'
@@ -96,7 +102,9 @@ class To1CHTensor(DataAugMixin, BaseInternode):
         backward_mapping = dict(
             image=self.backward_image,
         )
-        super(To1CHTensor, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(To1CHTensor, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def forward_image(self, image, meta, **kwargs):
         if not is_tensor(image):

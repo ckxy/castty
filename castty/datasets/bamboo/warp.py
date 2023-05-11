@@ -3,7 +3,7 @@ import random
 import numpy as np
 from .bamboo import Bamboo
 from .builder import INTERNODE
-from .builder import build_internode
+# from .builder import build_internode
 from ..utils.common import get_image_size
 from .warp_internode import WarpInternode, TAG_MAPPING
 from ..utils.warp_tools import calc_expand_size_and_matrix
@@ -18,7 +18,7 @@ class Warp(Bamboo):
         assert len(internodes) > 0
 
         self.internode = WarpInternode(ccs=ccs, **kwargs)
-        self.internodes = []
+        tmp_internodes = []
         self.ccs = ccs
         self.expand = expand
 
@@ -26,7 +26,10 @@ class Warp(Bamboo):
             assert cfg['type'] in ['WarpPerspective', 'WarpScale', 'WarpStretch', 'WarpRotate', 'WarpShear', 'WarpTranslate']
             cfg['ccs'] = False
             cfg['expand'] = False
-            self.internodes.append(build_internode(cfg, **kwargs))
+            # self.internodes.append(build_internode(cfg, **kwargs))
+            tmp_internodes.append(cfg)
+
+        Bamboo.__init__(self, tmp_internodes, **kwargs)
 
     def forward(self, data_dict):
         # intl_warp_matrix = np.eye(3)
@@ -64,7 +67,8 @@ class Warp(Bamboo):
 @INTERNODE.register_module()
 class WarpPerspective(WarpInternode):
     def __init__(self, distortion_scale=0.5, tag_mapping=TAG_MAPPING, **kwargs):
-        super(WarpPerspective, self).__init__(tag_mapping=tag_mapping, **kwargs)
+        # super(WarpPerspective, self).__init__(tag_mapping=tag_mapping, **kwargs)
+        WarpInternode.__init__(self, tag_mapping=tag_mapping, **kwargs)
         self.distortion_scale = distortion_scale
 
     @staticmethod
@@ -138,7 +142,8 @@ class WarpPerspective(WarpInternode):
 @INTERNODE.register_module()
 class WarpResize(WarpInternode):
     def __init__(self, size, keep_ratio=True, short=False, tag_mapping=TAG_MAPPING, **kwargs):
-        super(WarpResize, self).__init__(tag_mapping=tag_mapping, **kwargs)
+        # super(WarpResize, self).__init__(tag_mapping=tag_mapping, **kwargs)
+        WarpInternode.__init__(self, tag_mapping=tag_mapping, **kwargs)
 
         assert len(size) == 2
         assert size[0] > 0 and size[1] > 0
@@ -267,8 +272,9 @@ class WarpResize(WarpInternode):
 
 @INTERNODE.register_module()
 class WarpScale(WarpInternode):
-    def __init__(self, r, **kwargs):
-        super(WarpScale, self).__init__(**kwargs)
+    def __init__(self, r, tag_mapping=TAG_MAPPING, **kwargs):
+        # super(WarpScale, self).__init__(**kwargs)
+        WarpInternode.__init__(self, tag_mapping=tag_mapping, **kwargs)
 
         assert len(r) == 2
         assert r[0] <= r[1] and r[0] > 0
@@ -318,8 +324,9 @@ class WarpScale(WarpInternode):
 
 @INTERNODE.register_module()
 class WarpStretch(WarpInternode):
-    def __init__(self, rw, rh, **kwargs):
-        super(WarpStretch, self).__init__(**kwargs)
+    def __init__(self, rw, rh, tag_mapping=TAG_MAPPING, **kwargs):
+        # super(WarpStretch, self).__init__(**kwargs)
+        WarpInternode.__init__(self, tag_mapping=tag_mapping, **kwargs)
 
         assert len(rw) == 2 and len(rh) == 2
         assert rw[0] <= rw[1] and rw[0] > 0
@@ -386,8 +393,9 @@ class WarpStretch(WarpInternode):
 
 @INTERNODE.register_module()
 class WarpRotate(WarpInternode):
-    def __init__(self, angle, **kwargs):
-        super(WarpRotate, self).__init__(**kwargs)
+    def __init__(self, angle, tag_mapping=TAG_MAPPING, **kwargs):
+        # super(WarpRotate, self).__init__(**kwargs)
+        WarpInternode.__init__(self, tag_mapping=tag_mapping, **kwargs)
 
         assert -180 < angle[0] <= 180
         assert -180 < angle[1] <= 180
@@ -443,8 +451,9 @@ class WarpRotate(WarpInternode):
 
 @INTERNODE.register_module()
 class WarpShear(WarpInternode):
-    def __init__(self, ax, ay, **kwargs):
-        super(WarpShear, self).__init__(**kwargs)
+    def __init__(self, ax, ay, tag_mapping=TAG_MAPPING, **kwargs):
+        # super(WarpShear, self).__init__(**kwargs)
+        WarpInternode.__init__(self, tag_mapping=tag_mapping, **kwargs)
 
         assert len(ax) == 2 and len(ay) == 2
         assert ax[0] <= ax[1]
@@ -498,8 +507,9 @@ class WarpShear(WarpInternode):
 
 @INTERNODE.register_module()
 class WarpTranslate(WarpInternode):
-    def __init__(self, rw, rh, **kwargs):
-        super(WarpTranslate, self).__init__(**kwargs)
+    def __init__(self, rw, rh, tag_mapping=TAG_MAPPING, **kwargs):
+        # super(WarpTranslate, self).__init__(**kwargs)
+        WarpInternode.__init__(self, tag_mapping=tag_mapping, **kwargs)
 
         assert len(rw) == 2 and len(rh) == 2
         assert rw[0] <= rw[1]

@@ -115,7 +115,9 @@ class TPS(DataAugMixin, BaseInternode):
             image=self.forward_image
         )
         backward_mapping = dict()
-        super(TPS, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(TPS, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         raise NotImplementedError
@@ -151,9 +153,6 @@ class TPS(DataAugMixin, BaseInternode):
 
 @INTERNODE.register_module()
 class TPSStretch(TPS):
-    def __init__(self, segment, tag_mapping=dict(image=['image']), **kwargs):
-        super(TPSStretch, self).__init__(segment, False, tag_mapping)
-
     @staticmethod
     def stretch(size, segment):
         assert segment > 1

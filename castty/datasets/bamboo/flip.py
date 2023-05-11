@@ -44,7 +44,9 @@ class Flip(DataAugMixin, BaseInternode):
             poly=self.forward_poly
         )
         backward_mapping = dict()
-        super(Flip, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(Flip, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def calc_intl_param_forward(self, data_dict):
         return dict(intl_flip_wh=get_image_size(data_dict['image']))

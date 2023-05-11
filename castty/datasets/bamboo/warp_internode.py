@@ -35,7 +35,10 @@ class WarpInternode(DataAugMixin, BaseInternode, BaseFilterMixin):
             poly=self.forward_poly
         )
         backward_mapping = dict()
-        super(WarpInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(WarpInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
+        BaseFilterMixin.__init__(self, use_base_filter)
 
     def calc_intl_param_forward(self, data_dict):
         raise NotImplementedError

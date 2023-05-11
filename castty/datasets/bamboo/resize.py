@@ -79,7 +79,9 @@ class ResizeInternode(DataAugMixin, BaseInternode):
             poly=self.forward_poly
         )
         backward_mapping = dict()
-        super(ResizeInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(ResizeInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
 
     def calc_scale_and_new_size(self, w, h):
         raise NotImplementedError
@@ -120,7 +122,8 @@ class Resize(ResizeInternode):
         self.keep_ratio = keep_ratio
         self.short = short
 
-        super(Resize, self).__init__(tag_mapping, **kwargs)
+        # super(Resize, self).__init__(tag_mapping, **kwargs)
+        ResizeInternode.__init__(self, tag_mapping, **kwargs)
 
         self.backward_mapping = dict(
             image=self.backward_image,
@@ -202,7 +205,8 @@ class Rescale(ResizeInternode):
         self.ratio_range = ratio_range
         self.mode = mode
 
-        super(Rescale, self).__init__(tag_mapping, **kwargs)
+        # super(Rescale, self).__init__(tag_mapping, **kwargs)
+        ResizeInternode.__init__(self, tag_mapping, **kwargs)
 
     def calc_scale_and_new_size(self, w, h):
         if self.mode == 'range':
@@ -222,7 +226,8 @@ class Rescale(ResizeInternode):
 @INTERNODE.register_module()
 class RescaleLimitedByBound(Rescale):
     def __init__(self, ratio_range, long_size_bound, short_size_bound, mode='range', tag_mapping=TAG_MAPPING, **kwargs):
-        super(RescaleLimitedByBound, self).__init__(ratio_range, mode, tag_mapping, **kwargs)
+        # super(RescaleLimitedByBound, self).__init__(ratio_range, mode, tag_mapping, **kwargs)
+        Rescale.__init__(self, ratio_range, mode, tag_mapping, **kwargs)
         assert long_size_bound >= short_size_bound
 
         self.long_size_bound = long_size_bound
@@ -254,19 +259,28 @@ class ResizeAndPadding(Bamboo):
     def __init__(self, resize=None, padding=None, **kwargs):
         assert resize or padding
 
-        self.internodes = []
+        internodes = []
         if resize:
             assert resize['type'] in ['Resize', 'WarpResize']
             resize['expand'] = True
-            self.internodes.append(build_internode(resize, **kwargs))
+            # internodes.append(build_internode(resize, **kwargs))
+            internodes.append(resize)
         else:
-            self.internodes.append(build_internode(dict(type='BaseInternode')))
+            # internodes.append(build_internode(dict(type='BaseInternode')))
+            internodes.append(dict(type='BaseInternode'))
 
         if padding:
             assert padding['type'] in ['PaddingBySize', 'PaddingByStride']
-            self.internodes.append(build_internode(padding, **kwargs))
+            # internodes.append(build_internode(padding, **kwargs))
+            internodes.append(padding)
         else:
-            self.internodes.append(build_internode(dict(type='BaseInternode')))
+            # internodes.append(build_internode(dict(type='BaseInternode')))
+            internodes.append(dict(type='BaseInternode'))
+
+        # print(internodes)
+        Bamboo.__init__(self, internodes, **kwargs)
+        # print(self.internodes)
+        # exit()
 
     def calc_intl_param_backward(self, data_dict):
         if 'ori_size' in data_dict.keys():

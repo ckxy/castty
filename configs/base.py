@@ -44,8 +44,8 @@ mask = [[459.847, 566.848 ],
 mode = [
     # 'label',
     # 'bbox',
-    'mask',
-    'point',
+    # 'mask',
+    # 'point',
     # 'poly'
 ]
 
@@ -61,7 +61,7 @@ test_data = dict(
             # dict(type='BboxCollateFN', names=('bbox',)),
             # dict(type='ListCollateFN', names=('bbox_meta',)),
             # dict(type='ListCollateFN', names=('mask_meta',)),
-            dict(type='ListCollateFN', names=('point_meta',)),
+            # dict(type='ListCollateFN', names=('point_meta',)),
             # dict(type='ListCollateFN', names=('poly', 'poly_meta')),
         ]
     ),
@@ -133,6 +133,7 @@ test_data = dict(
             #     ),
             #     # one_way='forward'
             # ),
+            # dict(type='Resize', size=(512, 512), keep_ratio=True, short=False),
             # dict(type='Rescale', ratio_range=(0.5, 3), mode='range'),
             # dict(type='RescaleLimitedByBound', long_size_bound=1280, short_size_bound=640, ratio_range=(0.5, 3), mode='range'),
             # dict(type='Rot90', k=[1]),
@@ -205,7 +206,7 @@ test_data = dict(
             #     # dict(type='WarpTranslate', rw=(-0.2, -0.2), rh=(0.2, 0.2)),
             #     # dict(type='WarpResize', size=(416, 416), keep_ratio=True),
             # ]),
-            dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5), expand=True),
+            # dict(type='WarpStretch', rw=(1.5, 1.5), rh=(0.5, 0.5), expand=True),
         ],
     ),
 )

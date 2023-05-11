@@ -71,8 +71,6 @@ TAG_MAPPING = dict(
 
 class CropInternode(DataAugMixin, BaseInternode, BaseFilterMixin):
     def __init__(self, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
-        self.use_base_filter = use_base_filter
-
         forward_mapping = dict(
             image=self.forward_image,
             bbox=self.forward_bbox,
@@ -81,7 +79,10 @@ class CropInternode(DataAugMixin, BaseInternode, BaseFilterMixin):
             poly=self.forward_poly
         )
         backward_mapping = dict()
-        super(CropInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        # super(CropInternode, self).__init__(tag_mapping, forward_mapping, backward_mapping, **kwargs)
+        DataAugMixin.__init__(self, tag_mapping, forward_mapping, backward_mapping)
+        BaseInternode.__init__(self, **kwargs)
+        BaseFilterMixin.__init__(self, use_base_filter)
 
     def calc_cropping(self, data_dict):
         raise NotImplementedError
@@ -137,7 +138,8 @@ class Crop(CropInternode):
         assert len(size) == 2 and size[0] > 0 and size[1] > 0
         self.size = size
 
-        super(Crop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        # super(Crop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        CropInternode.__init__(self, tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'point' not in data_dict.keys() and 'bbox' not in data_dict.keys() and 'poly' not in data_dict.keys()
@@ -237,7 +239,8 @@ class MinIOUCrop(CropInternode):
         self.aspect_ratio = aspect_ratio
         self.attempts = attempts
 
-        super(MinIOUCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        # super(MinIOUCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        CropInternode.__init__(self, tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'bbox' in data_dict.keys()
@@ -293,7 +296,8 @@ class MinIOUCrop(CropInternode):
 @INTERNODE.register_module()
 class MinIOGCrop(MinIOUCrop):
     def __init__(self, threshs, aspect_ratio=2, attempts=50, tag_mapping=TAG_MAPPING, use_base_filter=True, **kwargs):
-        super(MinIOGCrop, self).__init__(threshs, aspect_ratio, attempts, tag_mapping, use_base_filter, **kwargs)
+        # super(MinIOGCrop, self).__init__(threshs, aspect_ratio, attempts, tag_mapping, use_base_filter, **kwargs)
+        MinIOUCrop.__init__(self, threshs, aspect_ratio, attempts, tag_mapping, use_base_filter, **kwargs)
         self.ul = (3 / 10 / self.aspect_ratio, 10 * self.aspect_ratio / 3)
 
     @staticmethod
@@ -417,7 +421,8 @@ class RandomAreaCrop(CropInternode):
         self.ratio = ratio
         self.attempts = attempts
 
-        super(RandomAreaCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        # super(RandomAreaCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        CropInternode.__init__(self, tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         width, height = get_image_size(data_dict['image'])
@@ -464,7 +469,8 @@ class EastRandomCrop(CropInternode):
         self.max_tries = max_tries
         self.min_crop_side_ratio = min_crop_side_ratio
 
-        super(EastRandomCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        # super(EastRandomCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        CropInternode.__init__(self, tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'poly' in data_dict.keys() or 'bbox' in data_dict.keys()
@@ -588,7 +594,8 @@ class WestRandomCrop(CropInternode):
         assert 0 < min_crop_side_ratio <= 1
         self.min_crop_side_ratio = min_crop_side_ratio
 
-        super(WestRandomCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        # super(WestRandomCrop, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        CropInternode.__init__(self, tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def calc_cropping(self, data_dict):
         assert 'poly' in data_dict.keys() or 'bbox' in data_dict.keys()
@@ -699,7 +706,8 @@ class RandomCenterCropPad(CropInternode):
         self.ratios = ratios
         self.border = border
 
-        super(RandomCenterCropPad, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        # super(RandomCenterCropPad, self).__init__(tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
+        CropInternode.__init__(self, tag_mapping=tag_mapping, use_base_filter=use_base_filter, **kwargs)
 
     def _get_border(self, border, size):
         k = 2 * border / size
