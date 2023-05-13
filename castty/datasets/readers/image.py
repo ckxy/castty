@@ -18,7 +18,7 @@ class ImageReader(Reader):
         self.image_paths = read_image_paths(self.root)
         assert len(self.image_paths) > 0
 
-        self._info = dict(forcat=dict())
+        self._info = dict(forcat=dict(), tag_mapping=dict(image=['image']))
 
     def __getitem__(self, index):
         img = self.read_image(self.image_paths[index])

@@ -46,6 +46,10 @@ class MHPV1Reader(Reader):
                 mask=dict(
                     classes=CLASSES
                 )
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                mask=['mask']
             )
         )
 

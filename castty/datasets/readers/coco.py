@@ -58,6 +58,10 @@ class COCOAPIReader(Reader):
                     classes=self.classes
                 ),
             ),
+            tag_mapping=dict(
+                image=['image'],
+                bbox=['bbox']
+            ),
             api=self.coco_api,
             ids=self.cat_ids
         )

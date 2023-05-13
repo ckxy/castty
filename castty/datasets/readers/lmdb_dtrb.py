@@ -77,6 +77,10 @@ class LmdbDTRBReader(Reader):
         self._info = dict(
             forcat=dict(
                 seq=dict(),
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                seq=['seq'],
             )
         )
 

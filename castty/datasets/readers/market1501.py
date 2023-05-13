@@ -145,6 +145,10 @@ class Market1501AttritubesReader(Reader):
                     classes=self.grouped_classes
                 ),
             ),
+            tag_mapping=dict(
+                image=['image'],
+                label=['label']
+            )
         )
 
     def __getitem__(self, index):
@@ -188,10 +192,11 @@ class Market1501AttritubesReader(Reader):
         grouped_labels = []
         for i, gc in enumerate(self.grouped_classes):
             if len(gc) == 1:
-                gl = np.array(labels[i]).astype(np.int32)
+                gl = np.array(labels[i]).astype(np.int32).reshape(1)
             else:
                 gl = np.zeros(len(gc)).astype(np.int32)
                 gl[labels[i]] = 1
+
             grouped_labels.append(gl)
 
         return dict(

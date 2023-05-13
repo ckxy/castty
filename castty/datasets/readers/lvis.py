@@ -41,6 +41,10 @@ class LVISAPIReader(Reader):
                     classes=self.thing_classes
                 ),
             ),
+            tag_mapping=dict(
+                image=['image'],
+                bbox=['bbox']
+            )
         )
 
     def load_lvis_json(self):

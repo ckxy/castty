@@ -175,7 +175,7 @@ if __name__ == '__main__':
     np.set_printoptions(precision=4, suppress=True)
     # torch.set_printoptions(precision=4, threshold=None, edgeitems=None, linewidth=None, profile=None)
 
-    cfg = load_config_far_away('configs/point.py')
+    cfg = load_config_far_away('configs/wtw.py')
     data_manager = DataManager(cfg.test_data)
     dataloader = data_manager.load_data()
     info = data_manager.info

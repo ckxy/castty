@@ -36,6 +36,12 @@ class WTWReader(Reader):
                 point=dict(
                     classes=[str(i) for i in range(4)],
                 ),
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                bbox=['bbox'],
+                point=['point'],
+                # mask=['mask']
             )
         )
 
@@ -146,6 +152,12 @@ class WTWSTReader(WTWReader):
                 point=dict(
                     classes=[str(i) for i in range(4)],
                 ),
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                bbox=['bbox'],
+                point=['point'],
+                # mask=['mask']
             )
         )
 

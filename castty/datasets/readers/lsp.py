@@ -37,6 +37,10 @@ class LSPReader(Reader):
                 point=dict(
                     classes=[str(i) for i in range(16)],
                 )
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                point=['point']
             )
         )
 

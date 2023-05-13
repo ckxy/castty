@@ -34,6 +34,10 @@ class LabelmeMaskReader(Reader):
                 mask=dict(
                     classes=self.classes
                 )
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                mask=['mask']
             )
         )
 

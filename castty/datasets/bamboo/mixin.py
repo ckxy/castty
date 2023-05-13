@@ -7,10 +7,19 @@ def identity(item, meta=None, **param):
 
 class DataAugMixin(object):
     def __init__(self, tag_mapping=None, forward_mapping=None, backward_mapping=None):
+        self.tag_mapping_backward = TAG_MAPPING
         if tag_mapping is None:
             self.tag_mapping = TAG_MAPPING
         else:
             self.tag_mapping = tag_mapping
+
+            for k, v in tag_mapping.items():
+                if k not in self.tag_mapping_backward.keys():
+                    raise ValueError
+
+                for tag in v:
+                    if tag not in self.tag_mapping_backward[k]:
+                        self.tag_mapping_backward[k].append(v)
 
         if forward_mapping is None:
             self.forward_mapping = dict()
@@ -41,7 +50,8 @@ class DataAugMixin(object):
         return data_dict
 
     def backward(self, data_dict, **param):
-        for map2func, tags in self.tag_mapping.items():
+        # print(type(self).__name__, self.tag_mapping_backward, 'b')
+        for map2func, tags in self.tag_mapping_backward.items():
             if map2func not in self.backward_mapping.keys():
                 continue
             for tag in tags:

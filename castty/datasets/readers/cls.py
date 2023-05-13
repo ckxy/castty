@@ -40,6 +40,10 @@ class ImageFolderReader(Reader):
                     classes=self.classes
                 ),
             ),
+            tag_mapping=dict(
+                image=['image'],
+                label=['label']
+            )
         )
 
     def __getitem__(self, index):

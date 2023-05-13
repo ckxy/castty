@@ -14,7 +14,7 @@ __all__ = ['CalcHeatmapByPoint', 'CalcCenterNetGrids']
 
 @INTERNODE.register_module()
 class CalcHeatmapByPoint(BaseInternode):
-    def __init__(self, ratio=1, sigma=1, resample=False):
+    def __init__(self, ratio=1, sigma=1, resample=False, **kwargs):
         self.ratio = ratio
         self.sigma = sigma
         self.resample = resample

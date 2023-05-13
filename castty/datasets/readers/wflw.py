@@ -32,6 +32,11 @@ class WFLWReader(Reader):
                 point=dict(
                     classes=[str(i) for i in range(98)],
                 ),
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                bbox=['bbox'],
+                point=['point']
             )
         )
 
@@ -101,6 +106,11 @@ class WFLWSIReader(Reader):
                 point=dict(
                     classes=[str(i) for i in range(98)],
                 ),
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                bbox=['bbox'],
+                point=['point']
             )
         )
 

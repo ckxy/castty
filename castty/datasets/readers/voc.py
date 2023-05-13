@@ -54,12 +54,11 @@ class VOCReader(Reader):
                     classes=self.classes,
                     extra_meta=['difficult']
                 )
+            ), 
+            tag_mapping=dict(
+                image=['image'],
+                bbox=['bbox']
             )
-        )
-
-        self._tag_mapping = dict(
-            image=['image'],
-            bbox=['bbox'],
         )
 
     @staticmethod
@@ -170,6 +169,10 @@ class VOCSegReader(Reader):
                 mask=dict(
                     classes=self.classes
                 )
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                mask=['mask']
             )
         )
 
@@ -226,6 +229,10 @@ class SBDReader(Reader):
                 mask=dict(
                     classes=self.classes
                 )
+            ),
+            tag_mapping=dict(
+                image=['image'],
+                mask=['mask']
             )
         )
 

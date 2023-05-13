@@ -20,12 +20,12 @@ test_data = dict(
         num_threads=0,
         pin_memory=False,
         collator=[
-            # dict(type='ListCollateFN', names=('image_meta', 'bbox','bbox_meta', 'point', 'point_meta', 'tsr_l_row', 'tsr_c_row', 'tsr_l_col', 'tsr_c_col')),
-            dict(type='ListCollateFN', names=('image_meta', 'point_meta')),
+            dict(type='ListCollateFN', names=('image_meta', 'bbox','bbox_meta', 'point', 'point_meta', 'tsr_l_row', 'tsr_c_row', 'tsr_l_col', 'tsr_c_col')),
+            # dict(type='ListCollateFN', names=('image_meta', 'point_meta')),
         ]
     ),
     dataset=dict(
-        reader=dict(type='WTWSTReader', root='../datasets/wtw/test'),
+        reader=dict(type='WTWReader', root='../datasets/wtw/test'),
         # reader=dict(type='COCOAPIReader', use_pil=True, use_keypoint=True, set_path='../datasets/coco/annotations/person_keypoints_val2017.json', img_root='../datasets/coco/val2017'),
         internodes=[
             dict(type='DataSource'),
@@ -50,8 +50,8 @@ test_data = dict(
             # dict(type='CalcTSRGT'),
             dict(type='ToTensor'),
             # dict(type='CalcCenterNetGrids', ratio=0.25, num_classes=1, use_point=True),
-            dict(type='CalcPTSGrids', ratio=1),
-            # dict(type='CalcTSRGT'),
+            # dict(type='CalcPTSGrids', ratio=1),
+            dict(type='CalcTSRGT'),
         ],
     ),
 )

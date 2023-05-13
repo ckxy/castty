@@ -34,6 +34,10 @@ class ICDARDetReader(Reader):
             forcat=dict(
                 poly=dict(classes=['text'])
             ),
+            tag_mapping=dict(
+                image=['image'],
+                poly=['poly'],
+            )
         )
 
     def __getitem__(self, index):
