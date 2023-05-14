@@ -42,11 +42,11 @@ mask = [[459.847, 566.848 ],
 
 
 mode = [
-    'label',
-    'bbox',
-    'mask',
-    'point',
-    'poly'
+    # 'label',
+    # 'bbox',
+    # 'mask',
+    # 'point',
+    # 'poly'
 ]
 
 test_data = dict(
@@ -57,15 +57,16 @@ test_data = dict(
         pin_memory=False,
         collator=[
             dict(type='ListCollateFN', names=('image_meta',)),
-            dict(type='LabelCollateFN', names=('label',)),
-            dict(type='BboxCollateFN', names=('bbox',)),
-            dict(type='ListCollateFN', names=('bbox_meta',)),
-            dict(type='ListCollateFN', names=('point_meta',)),
-            dict(type='ListCollateFN', names=('poly', 'poly_meta')),
+            # dict(type='LabelCollateFN', names=('label',)),
+            # dict(type='BboxCollateFN', names=('bbox',)),
+            # dict(type='ListCollateFN', names=('bbox_meta',)),
+            # dict(type='ListCollateFN', names=('point_meta',)),
+            # dict(type='ListCollateFN', names=('poly', 'poly_meta')),
         ]
     ),
     dataset=dict(
         reader=dict(type='FondReader', mode=mode, image='images/test900.jpg', label=label, bbox=bbox, mask=mask, point=point, poly=poly, use_pil=True),
+        # tag_mapping=dict(image=['image', 'aimg']),
         internodes=[
             dict(type='DataSource'),
             # dict(type='MixUp', internodes=[

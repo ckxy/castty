@@ -150,7 +150,7 @@ class Crop(CropInternode):
         ymin = random.randint(0, h - self.size[1])
         xmax = xmin + self.size[0]
         ymax = ymin + self.size[1]
-        xmin, ymin, xmax, ymax = 0, 200, 600, 600
+        # xmin, ymin, xmax, ymax = 0, 200, 600, 600
         return xmin, ymin, xmax, ymax
 
     def __repr__(self):

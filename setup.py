@@ -15,7 +15,7 @@ def get_requirements():
 
 
 PACKAGE_NAME = 'castty'
-VERSION = '0.1.0'
+VERSION = '1.0.0'
 AUTHOR = 'ckxy'
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ __all__ = ['EraseTags', 'RenameTag', 'CopyTag']
 
 @INTERNODE.register_module()
 class EraseTags(BaseInternode):
-    def __init__(self, tags):
+    def __init__(self, tags, **kwargs):
         if isinstance(tags, str):
             assert not tags.startswith('intl_')
 
@@ -36,7 +36,7 @@ class EraseTags(BaseInternode):
 
 @INTERNODE.register_module()
 class RenameTag(BaseInternode):
-    def __init__(self, old_name, new_name):
+    def __init__(self, old_name, new_name, **kwargs):
         assert not old_name.startswith('intl_')
         assert not new_name.startswith('intl_')
 
@@ -63,7 +63,7 @@ class RenameTag(BaseInternode):
 
 @INTERNODE.register_module()
 class CopyTag(BaseInternode):
-    def __init__(self, src_tag, dst_tag):
+    def __init__(self, src_tag, dst_tag, **kwargs):
         assert not src_tag.startswith('intl_')
         assert not dst_tag.startswith('intl_')
 

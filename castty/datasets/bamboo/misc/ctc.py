@@ -32,6 +32,8 @@ class CTCEncode(BaseInternode):
 		else:
 			self.character = dict_character + ['[CTCblank]']
 
+		BaseInternode.__init__(self, **kwargs)
+
 	def forward(self, data_dict, **kwargs):
 		data_dict['seq_length'] = torch.IntTensor(1).fill_(len(data_dict['seq']))
 

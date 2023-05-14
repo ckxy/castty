@@ -26,9 +26,9 @@ test_data = dict(
         ]
     ),
     dataset=dict(
-        reader=dict(type='MPIIReader', root='../datasets/mpii', set_path='../datasets/mpii/mpii_human_pose_v1_u12_2/mpii_human_pose_v1_u12_1.mat'),
+        # reader=dict(type='MPIIReader', root='../datasets/mpii', set_path='../datasets/mpii/mpii_human_pose_v1_u12_2/mpii_human_pose_v1_u12_1.mat'),
         # reader=dict(type='LSPReader', root='../datasets/lsp', set_path='../datasets/lsp/LEEDS_annotations.json', is_test=False),
-        # reader=dict(type='WFLWSIReader', root='../datasets/WFLW/WFLW', txt_path='WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_train.txt', use_pil=True),
+        reader=dict(type='WFLWReader', root='../datasets/WFLW/WFLW', txt_path='WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_train.txt', use_pil=True),
         internodes=[
             dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
@@ -102,12 +102,12 @@ test_data = dict(
             # dict(type='HueEnhancement', hue=(0.5, 0.5)),
             # dict(type='Flip', horizontal=True),
             # dict(type='AdaptiveCrop'),
-            # dict(type='WFLWCrop'),
+            dict(type='WFLWCrop'),
             # dict(type='AdaptiveTranslate'),
             # dict(type='MinIOGCrop', threshs=(-1, 0.1, 0.3, 0.5, 0.7, 0.9)),
             # dict(type='GridMask', use_w=True, use_h=True, rotate=0, offset=False, invert=False, ratio=0.5),
             # dict(type='ToPILImage'),
-            dict(type='CalcHeatmapByPoint', ratio=1),
+            # dict(type='CalcHeatmapByPoint', ratio=1),
             dict(type='ToTensor'),
             # dict(type='CalcCenterNetGrids', ratio=0.25, num_classes=1, use_bbox=False, use_point=True),
         ],

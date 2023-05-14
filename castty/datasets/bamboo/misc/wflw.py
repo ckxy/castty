@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from copy import deepcopy
 from ..builder import INTERNODE
 from ..crop import CropInternode
 from ...utils.common import get_image_size
@@ -18,7 +19,11 @@ class WFLWCrop(CropInternode):
         self.expand = expand
         self.return_offset = return_offset
 
-        super(WFLWCrop, self).__init__(use_base_filter=False, **kwargs)
+        # super(WFLWCrop, self).__init__(use_base_filter=False, **kwargs)
+        kwargs_without_tm = deepcopy(kwargs)
+        if 'tag_mapping' in kwargs_without_tm.keys():
+            kwargs_without_tm.pop('tag_mapping')
+        CropInternode.__init__(self, tag_mapping=dict(image=['image'], point=['point']), use_base_filter=False, **kwargs_without_tm)
 
     def calc_cropping(self, data_dict):
         box2point = data_dict.pop('bbox_meta')['box2point'].tolist()
@@ -41,14 +46,11 @@ class WFLWCrop(CropInternode):
         return x1, y1, x2, y2
 
     def forward(self, data_dict, **kwargs):
-        data_dict = super(WFLWCrop, self).forward(data_dict)
+        data_dict = super(WFLWCrop, self).forward(data_dict, **kwargs)
 
         if self.return_offset:
             data_dict['wflw_offset'] = box[:2].astype(np.float32)
 
-        return data_dict
-
-    def backward(self, data_dict):
         return data_dict
 
     def __repr__(self):

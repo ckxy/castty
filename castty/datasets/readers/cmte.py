@@ -1,11 +1,9 @@
 import os
-import ntpath
-from addict import Dict
+import numpy as np
 from copy import deepcopy
-from PIL import Image
 from .reader import Reader
-from .utils import read_image_paths
 from .builder import READER
+from .utils import read_image_paths
 
 
 __all__ = ['C2NReader', 'CMTETestReader']
@@ -13,11 +11,10 @@ __all__ = ['C2NReader', 'CMTETestReader']
 
 @READER.register_module()
 class C2NReader(Reader):
-    def __init__(self, root, preload=True, **kwargs):
+    def __init__(self, root, **kwargs):
         super(C2NReader, self).__init__(**kwargs)
 
         self.root = root
-        self.preload = preload
 
         id_root = os.path.join(self.root, 'train')
         tr_root = os.path.join(self.root, '2n_trans')
@@ -25,101 +22,87 @@ class C2NReader(Reader):
         assert os.path.exists(tr_root)
 
         id_paths = read_image_paths(id_root)
-        names = [os.path.splitext(ntpath.basename(id_))[0] for id_ in id_paths]
+        names = [os.path.splitext(os.path.basename(id_))[0] for id_ in id_paths]
         assert len(id_paths) == len(set(names))
         self.n = len(id_paths)
 
-        self.l = []
+        l = []
         for i in range(len(id_paths)):
-            self.l.append((i, i))
-            self.l.append((-1, i))
+            l.append((i, i))
+            l.append((-1, i))
 
-        if self.preload:
-            self.preload_data = []
+        self.preload_data = []
 
-            for ai, bi in self.l:
-                if ai == bi:
-                    self.preload_data.append(dict(
-                        a_image=self.read_image(id_paths[ai]),
-                        a_star_image=self.read_image(id_paths[ai]),
-                        b_image=self.read_image(id_paths[bi]),
-                        a_path=id_paths[ai],
-                        a_star_path=id_paths[ai],
-                        b_path=id_paths[bi],
-                        a_label=ai,
-                        b_label=bi
-                    ))
-                else:
-                    b_path = read_image_paths(os.path.join(tr_root, names[bi]))[0]
-                    a_label = names.index(os.path.splitext(os.path.basename(b_path))[0])
-                    a_path = id_paths[a_label]
-
-                    a_img = self.read_image(a_path)
-                    b_img = self.read_image(b_path)
-                    assert a_img.size == b_img.size
-
-                    self.preload_data.append(dict(
-                        a_image=a_img,
-                        a_star_image=self.read_image(id_paths[bi]),
-                        b_image=b_img,
-                        a_path=a_path,
-                        a_star_path=id_paths[bi],
-                        b_path=b_path,
-                        a_label=a_label,
-                        b_label=bi
-                    ))
-
-        self.data_lines = [0] * len(self.l)
-        assert len(self.data_lines) > 0
-
-    def get_dataset_info(self):
-        return range(len(self.data_lines)), Dict({})
-
-    def get_data_info(self, index):
-        return
-
-    def __call__(self, index):
-        # index = data_dict
-        if self.preload:
-            return deepcopy(self.preload_data[index % (2 * self.n)])
-        else:
-            ai, bi = self.l[index % (2 * self.n)]
+        for ai, bi in l:
             if ai == bi:
-                return dict(
-                    a_image=self.read_image(id_paths[ai]),
-                    a_star_image=self.read_image(id_paths[ai]),
-                    b_image=self.read_image(id_paths[bi]),
-                    a_path=id_paths[ai],
-                    a_star_path=id_paths[ai],
-                    b_path=id_paths[bi],
-                    a_label=ai,
-                    b_label=bi
-                )
+                a_image = self.read_image(id_paths[ai])
+                b_image = self.read_image(id_paths[bi])
+
+                a_label = np.zeros(self.n).astype(np.int32)
+                a_label[ai] = 1
+                b_label = np.zeros(self.n).astype(np.int32)
+                b_label[bi] = 1
+
+                self.preload_data.append(dict(
+                    image=a_image,
+                    a_star_image=a_image,
+                    b_image=b_image,
+                    image_meta=dict(ori_size=a_image.size, path=id_paths[ai]),
+                    a_star_image_meta=dict(ori_size=a_image.size, path=id_paths[ai]),
+                    b_image_meta=dict(ori_size=b_image.size, path=id_paths[bi]),
+                    label=[a_label],
+                    b_label=[b_label]
+                ))
             else:
                 b_path = read_image_paths(os.path.join(tr_root, names[bi]))[0]
-                a_label = names.index(os.path.splitext(os.path.basename(b_path))[0])
-                a_path = id_paths[a_label]
+                ai = names.index(os.path.splitext(os.path.basename(b_path))[0])
+                a_path = id_paths[ai]
 
-                a_img = self.read_image(a_path)
-                b_img = self.read_image(b_path)
-                assert a_img.size == b_img.size
+                a_image = self.read_image(a_path)
+                a_star_image = self.read_image(id_paths[bi])
+                b_image = self.read_image(b_path)
+                assert a_image.size == b_image.size
 
-                return dict(
-                    a_image=a_img,
-                    a_star_image=self.read_image(id_paths[bi]),
-                    b_image=b_img,
-                    a_path=a_path,
-                    a_star_path=id_paths[bi],
-                    b_path=b_path,
-                    a_label=a_label,
-                    b_label=bi
-                )
+                a_label = np.zeros(self.n).astype(np.int32)
+                a_label[ai] = 1
+                b_label = np.zeros(self.n).astype(np.int32)
+                b_label[bi] = 1
+
+                self.preload_data.append(dict(
+                    image=a_image,
+                    a_star_image=a_star_image,
+                    b_image=b_image,
+                    image_meta=dict(ori_size=a_image.size, path=a_path),
+                    a_star_image_meta=dict(ori_size=a_image.size, path=id_paths[bi]),
+                    b_image_meta=dict(ori_size=b_image.size, path=b_path),
+                    label=[a_label],
+                    b_label=[b_label]
+                ))
+
+        self._info = dict(
+            forcat=dict(
+                label=dict(
+                    classes=[str(i) for i in range(self.n)]
+                ),
+            ),
+            tag_mapping=dict(
+                image=['image', 'a_star_image', 'b_image'],
+                label=['label', 'b_label']
+            )
+        )
+
+    def __getitem__(self, index):
+        index = 1
+        return deepcopy(self.preload_data[index % (2 * self.n)])
+
+    def __len__(self):
+        return 2 * self.n
 
     def __repr__(self):
-        return 'C2NReader(root={}, preload={}, n={}, {})'.format(self.root, self.preload, self.n, super(C2NReader, self).__repr__())
+        return 'C2NReader(root={}, n={}, {})'.format(self.root, self.n, super(C2NReader, self).__repr__())
 
 
-@READER.register_module()
+# @READER.register_module()
 class CMTETestReader(Reader):
     def __init__(self, **kwargs):
         super(CMTETestReader, self).__init__(**kwargs)

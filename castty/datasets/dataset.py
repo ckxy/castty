@@ -1,7 +1,6 @@
-# from .bamboo import Bamboo
 import torch.utils.data as data
+from .bamboo.builder import build_bamboo
 from .readers.builder import build_reader
-from .bamboo.builder import build_internode
 
 
 class Dataset(data.Dataset):
@@ -11,7 +10,9 @@ class Dataset(data.Dataset):
         self.reader = build_reader(cfg.reader)
         self._info = self.reader.info
         # self.bamboo = Bamboo(cfg.internodes, tag_mapping=self._info['tag_mapping'])
-        self.bamboo = build_internode(dict(type='Bamboo', internodes=cfg.internodes), tag_mapping=self._info['tag_mapping'])
+        # self.bamboo = build_internode(dict(type='Bamboo', internodes=cfg.internodes), tag_mapping=self._info['tag_mapping'])
+        tag_mapping = cfg.tag_mapping if cfg.tag_mapping else self._info['tag_mapping']
+        self.bamboo = build_bamboo(internodes=cfg.internodes, tag_mapping=tag_mapping)
 
         forcat = self._info.pop('forcat')
         self._info.update(forcat)

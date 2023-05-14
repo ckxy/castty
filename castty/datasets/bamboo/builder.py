@@ -1,5 +1,6 @@
 from ...utils.registry import Registry, build_from_cfg
 
+
 INTERNODE = Registry('internode')
 
 
@@ -27,3 +28,7 @@ def build_internode(cfg, **default_args):
         return build_from_cfg(tmp_cfg, INTERNODE, default_args)
 
     return build_from_cfg(cfg, INTERNODE, default_args)
+
+
+def build_bamboo(internodes, **default_args):
+    return build_internode(dict(type='Bamboo', internodes=internodes), **default_args)

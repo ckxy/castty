@@ -79,6 +79,8 @@ class DBEncode(BaseInternode):
         self.thr_max = thr_max
         self.min_short_size = min_short_size
 
+        BaseInternode.__init__(self, **kwargs)
+
     def find_invalid(self, polys, ignore_flags):
         for idx, poly in enumerate(polys):
             if not ignore_flags[idx] and self.invalid_polygon(poly):

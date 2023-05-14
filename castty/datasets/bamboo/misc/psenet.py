@@ -74,6 +74,8 @@ class PSEEncode(BaseInternode):
         self.shrink_ratio = shrink_ratio
         self.max_shrink = max_shrink
 
+        BaseInternode.__init__(self, **kwargs)
+
     def forward(self, data_dict, **kwargs):
         assert 'class_id' in data_dict['poly_meta'].keys()
         labels = data_dict['poly_meta']['class_id']

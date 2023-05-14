@@ -28,6 +28,8 @@ class CalcHeatmapByPoint(BaseInternode):
         # print(self.w.numpy(), self.w.numpy().shape)
         # exit()
 
+        BaseInternode.__init__(self, **kwargs)
+
     def calc_heatmap(self, size, pt, vis):
         w, h = size
         w = int(self.ratio * w)
@@ -140,6 +142,8 @@ class CalcCenterNetGrids(BaseInternode):
         self.num_classes = num_classes
         self.use_bbox = use_bbox
         self.use_point = use_point
+
+        BaseInternode.__init__(self, **kwargs)
 
     def forward(self, data_dict, **kwargs):
         w, h = get_image_size(data_dict['image'])

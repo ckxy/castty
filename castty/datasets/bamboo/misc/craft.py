@@ -22,15 +22,14 @@ class CalcLinkMap(BaseInternode):
         self.l1 = (0.5 - ratio / 2) / (0.5 + ratio / 2)
         self.l2 = (0.5 + ratio / 2) / (0.5 - ratio / 2)
 
-        super(CalcLinkMap, self).__init__(**kwargs)
+        BaseInternode.__init__(self, **kwargs)
 
-    def forward_poly(self, data_dict, **kwargs):
-        target_tag = data_dict['intl_base_target_tag']
+    def forward(self, data_dict, **kwargs):
         # res_polys = []
         w, h = get_image_size(data_dict['image'])
         mask = Image.new('P', (w, h), 0)
 
-        for poly in data_dict[target_tag]:
+        for poly in data_dict['poly']:
             if len(poly) % 2 != 0 or len(poly) < 2:
                 continue
 

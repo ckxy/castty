@@ -19,7 +19,7 @@ class DataAugMixin(object):
 
                 for tag in v:
                     if tag not in self.tag_mapping_backward[k]:
-                        self.tag_mapping_backward[k].append(v)
+                        self.tag_mapping_backward[k].append(tag)
 
         if forward_mapping is None:
             self.forward_mapping = dict()
@@ -43,7 +43,7 @@ class DataAugMixin(object):
                 continue
             for tag in tags:
                 if tag in data_dict.keys():
-                    item, meta = self.forward_mapping[tag](data_dict[tag], data_dict.get(tag + '_meta', None), **param)
+                    item, meta = self.forward_mapping[map2func](data_dict[tag], data_dict.get(tag + '_meta', None), **param)
                     data_dict[tag] = item
                     if meta is not None:
                         data_dict[tag + '_meta'] = meta
@@ -56,7 +56,7 @@ class DataAugMixin(object):
                 continue
             for tag in tags:
                 if tag in data_dict.keys():
-                    item, meta = self.backward_mapping[tag](data_dict[tag], data_dict.get(tag + '_meta', None), **param)
+                    item, meta = self.backward_mapping[map2func](data_dict[tag], data_dict.get(tag + '_meta', None), **param)
                     data_dict[tag] = item
                     if meta is not None:
                         data_dict[tag + '_meta'] = meta

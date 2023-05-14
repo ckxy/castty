@@ -22,6 +22,8 @@ class CalcTSRGT(BaseInternode):
         self.ratio = ratio
         self.tau = tau
 
+        BaseInternode.__init__(self, **kwargs)
+
     def calc_points_on_x(self, input_points, w):
         points = []
         ind = []

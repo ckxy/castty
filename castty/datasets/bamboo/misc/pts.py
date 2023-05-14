@@ -16,6 +16,8 @@ class CalcPTSGrids(BaseInternode):
     def __init__(self, ratio=1, **kwargs):
         self.ratio = ratio
 
+        BaseInternode.__init__(self, **kwargs)
+
     def calc_kpt2cen(self, kpt, table_id, cens, all_table_ids):
         kpx, kpy = kpt
         centers = cens[all_table_ids == table_id]
