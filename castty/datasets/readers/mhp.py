@@ -70,7 +70,8 @@ class MHPV1Reader(Reader):
         return dict(
             image=img,
             image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
-            mask=mask_all
+            mask=mask_all,
+            mask_meta=dict(ori_size=(w, h)),
         )
 
     def __len__(self):

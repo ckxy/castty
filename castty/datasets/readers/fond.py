@@ -89,7 +89,7 @@ class FondReader(Reader):
             res['bbox_meta'] = bbox_meta
         if 'mask' in self.mode:
             res['mask'] = mask
-            # res['mask_meta'] = dict(ori_size=(w, h))
+            res['mask_meta'] = dict(ori_size=(w, h))
         if 'point' in self.mode:
             res['point'] = points
             res['point_meta'] = point_meta

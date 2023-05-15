@@ -64,7 +64,8 @@ class LabelmeMaskReader(Reader):
         return dict(
             image=img,
             image_meta=dict(ori_size=(w, h), path=path),
-            mask=mask
+            mask=mask,
+            mask_meta=dict(ori_size=(w, h))
         )
 
     def __len__(self):

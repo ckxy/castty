@@ -24,14 +24,14 @@ test_data = dict(
         num_threads=0,
         pin_memory=False,
         collator=[
-            dict(type='ListCollateFN', names=('image_meta',)),
+            dict(type='ListCollateFN', names=('image_meta', 'mask_meta')),
         ]
     ),
     dataset=dict(
-        # reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='val', classes=classes),
+        reader=dict(type='VOCSegReader', use_pil=False, root='../datasets/voc/VOCdevkit/VOC2012', split='val', classes=classes),
         # reader=dict(type='SBDReader', use_pil=False, root='../datasets/voc/benchmark_RELEASE/dataset', split='train', classes=classes),
         # reader=dict(type='MHPV1Reader', use_pil=False, root='../datasets/LV-MHP-v1', split='train'),
-        reader=dict(type='LabelmeMaskReader', use_pil=False, root='../datasets/waterleveld', classes=['__background__', 'wlr']),
+        # reader=dict(type='LabelmeMaskReader', use_pil=False, root='../datasets/waterleveld', classes=['__background__', 'wlr']),
         internodes=[
             dict(type='DataSource'),
             # dict(type='MixUp', internodes=[
