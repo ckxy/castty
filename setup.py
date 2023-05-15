@@ -4,6 +4,7 @@ import numpy
 from setuptools import setup, find_packages
 from distutils.core import Extension
 
+
 logger = logging.getLogger()
 logging.basicConfig(format='%(levelname)s - %(message)s')
 
@@ -17,6 +18,7 @@ def get_requirements():
 PACKAGE_NAME = 'castty'
 VERSION = '1.0.0'
 AUTHOR = 'ckxy'
+
 
 if __name__ == '__main__':
     logger.info(f"Installing {PACKAGE_NAME} (v: {VERSION}) ...")

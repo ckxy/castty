@@ -6,9 +6,6 @@ from .builder import READER
 from ..utils.structures import Meta
 from ..utils.common import get_image_size
 
-from text_renderer.render import Render
-from text_renderer.config import get_cfg
-
 
 __all__ = ['TextGenReader']
 
@@ -21,6 +18,9 @@ class TextGenReader(Reader):
         assert os.path.exists(path)
 
         self.path = path
+
+        from text_renderer.render import Render
+        from text_renderer.config import get_cfg
 
         generator_cfgs = get_cfg(path)
         self.renders = []

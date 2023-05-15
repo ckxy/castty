@@ -3,7 +3,6 @@
 import os
 import re
 import six
-import lmdb
 import numpy as np
 from PIL import Image
 from .reader import Reader
@@ -30,6 +29,7 @@ class LmdbDTRBReader(Reader):
         self.data_filtering_off = data_filtering_off
         self.sensitive = sensitive
 
+        import lmdb
         self.env = lmdb.open(root, max_readers=32, readonly=True, lock=False, readahead=False, meminit=False)
         if not self.env:
             raise FileNotFoundError(f'cannot create lmdb from {root}')
