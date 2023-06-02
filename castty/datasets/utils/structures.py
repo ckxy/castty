@@ -2,6 +2,8 @@ import numpy as np
 
 
 class Meta(dict):
+    filter_flag = False
+    
     def __init__(self, *args, **kwargs):
         tmp = None
         for k, v in kwargs.items():
@@ -14,7 +16,7 @@ class Meta(dict):
             tmp = v
 
         super(Meta, self).__init__(*args, **kwargs)
-        self.filter_flag = False
+        # self.filter_flag = False
 
     # def get(self, key):
     #     return super(Meta, self).__getitem__(key)

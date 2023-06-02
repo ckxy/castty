@@ -283,6 +283,7 @@ class ResizeAndPadding(Bamboo):
         # exit()
 
     def calc_intl_param_backward(self, data_dict):
+        res = dict()
         if 'ori_size' in data_dict.keys():
             w, h = data_dict['ori_size']
 
@@ -291,16 +292,32 @@ class ResizeAndPadding(Bamboo):
                 intl_resize_size = (nw, nh)
             elif isinstance(self.internodes[0], InternodeWarpper) and hasattr(self.internodes[0].internode, 'calc_scale_and_new_size'):
                 _, (nw, nh) = self.internodes[0].internode.calc_scale_and_new_size(w, h)
-                intl_resize_size= (nw, nh)
+                intl_resize_size = (nw, nh)
             else:
                 intl_resize_size = (w, h)
 
             # data_dict['intl_resize_and_padding_reverse_flag'] = True
-            return dict(intl_resize_and_padding_reverse_flag=True, intl_resize_size=intl_resize_size)
-        else:
-            return dict(intl_resize_and_padding_reverse_flag=False, intl_resize_size=None)
+            # return dict(intl_resize_and_padding_reverse_flag=True, intl_resize_size=intl_resize_size)
+            res['intl_resize_and_padding_reverse_flag'] = True
+            res['intl_resize_size'] = intl_resize_size
+        elif 'image_meta' in data_dict.keys():
+            w, h = data_dict['image_meta']['ori_size']
 
-    def backward(self, data_dict, intl_resize_and_padding_reverse_flag, intl_resize_size, **kwargs):
+            if hasattr(self.internodes[0], 'calc_scale_and_new_size'):
+                _, (nw, nh) = self.internodes[0].calc_scale_and_new_size(w, h)
+                intl_resize_size = (nw, nh)
+            elif isinstance(self.internodes[0], InternodeWarpper) and hasattr(self.internodes[0].internode, 'calc_scale_and_new_size'):
+                _, (nw, nh) = self.internodes[0].internode.calc_scale_and_new_size(w, h)
+                intl_resize_size = (nw, nh)
+            else:
+                intl_resize_size = (w, h)
+
+            res['intl_resize_and_padding_reverse_flag'] = True
+            res['intl_resize_size'] = intl_resize_size
+
+        return res
+
+    def backward(self, data_dict, intl_resize_and_padding_reverse_flag=None, intl_resize_size=None, **kwargs):
         if intl_resize_and_padding_reverse_flag:
             data_dict['intl_resize_and_padding_reverse_flag'] = True
             ori_size = data_dict['ori_size']

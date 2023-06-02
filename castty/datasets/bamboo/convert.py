@@ -25,7 +25,9 @@ def pil2cv2(image, meta=None, **kwargs):
 
 @INTERNODE.register_module()
 class ToTensor(DataAugMixin, BaseInternode):
-    def __init__(self, tag_mapping=dict(image=['image'], mask=['mask']), **kwargs):
+    def __init__(self, m255=False, tag_mapping=dict(image=['image'], mask=['mask']), **kwargs):
+        self.m255 = m255
+
         forward_mapping = dict(
             image=self.forward_image,
             mask=self.forward_mask
@@ -41,6 +43,8 @@ class ToTensor(DataAugMixin, BaseInternode):
     def forward_image(self, image, meta, **kwargs):
         assert is_pil(image)
         image = to_tensor(image)
+        if self.m255:
+            image = image.mul(255)
         return image, meta
 
     def forward_mask(self, mask, meta=None, **kwargs):
@@ -48,12 +52,17 @@ class ToTensor(DataAugMixin, BaseInternode):
         return mask, meta
 
     def backward_image(self, image, meta=None, **kwargs):
+        if self.m255:
+            image = image.div(255)
         image = to_pil_image(image)
         return image, meta
 
     def backward_mask(self, mask, meta=None, **kwargs):
         mask = mask.detach().cpu().numpy().astype(np.int32)
         return mask, meta
+
+    def __repr__(self):
+        return 'ToTensor(m255={})'.format(self.m255)
 
     def rper(self):
         return 'ToPILImage()'
