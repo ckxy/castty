@@ -23,7 +23,8 @@ test_data = dict(
         ]
     ),
     dataset=dict(
-        reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015', use_pil=False),
+        # reader=dict(type='ICDARDetReader', root='../datasets/ICDAR2015', use_pil=False),
+        reader=dict(type='DDI100SubsetDetReader', root='/Users/liaya/Documents/datasets/ddi_100/17'),
         internodes=[
             dict(type='DataSource'),
             # dict(type='Mosaic', internodes=[
@@ -53,11 +54,11 @@ test_data = dict(
             # dict(type='FilterSelfOverlapping'),
             # dict(type='AdaptiveCrop'),
             # dict(type='AdaptiveTranslate'),
-            dict(type='PSEEncode', num_classes=2),
+            # dict(type='PSEEncode', num_classes=2),
             # dict(type='DBEncode', num_classes=2),
             # dict(type='EraseTags', tags=['poly', 'poly_meta']),
-            dict(type='PSECrop', size=(640, 640), positive_sample_ratio=5.0 / 8.0),
-            dict(type='ToPILImage'),
+            # dict(type='PSECrop', size=(640, 640), positive_sample_ratio=5.0 / 8.0),
+            # dict(type='ToPILImage'),
             dict(type='ToTensor'),
         ],
     ),

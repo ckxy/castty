@@ -2,10 +2,12 @@ from .cat import *
 from .cls import *
 from .cmte import *
 from .coco import *
+from .ddi100 import *
 from .dukemtmc import *
 from .fond import *
 from .icdar import *
 from .image import *
+from .label_studio import *
 from .labelme import *
 from .lmdb_dtrb import *
 from .lsp import *
