@@ -16,6 +16,7 @@ from .market1501 import *
 from .mhp import *
 from .mm import *
 from .mpii import *
+from .poster_layout import *
 from .text_gen import *
 from .voc import *
 from .wflw import *

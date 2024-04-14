@@ -129,7 +129,9 @@ def draw_bbox(img, bboxes, class_ids=None, classes=None, scores=None):
                 bbox_text = '{}'.format(classes[class_ind])
             else:
                 bbox_text = '{}: {:.2f}'.format(classes[class_ind], scores[i])
-            t_size = draw.textsize(bbox_text, font)
+            # t_size = draw.textsize(bbox_text, font)
+            _, _, width, height = draw.textbbox((0, 0), text=bbox_text, font=font)
+            t_size = (width, height)
             text_box = (coor[0], coor[1] - t_size[1], coor[0] + t_size[0], coor[1])
             draw.rectangle(text_box, fill=bbox_color)
             draw.text(text_box[:2], bbox_text, fill=(0, 0, 0), font=font)
@@ -247,6 +249,7 @@ def calc_iou2(boxes1, boxes2, iou_loss=False):
     inter_section = torch.max(right_down - left_up, torch.zeros_like(right_down))
     inter_area = inter_section[..., 0] * inter_section[..., 1]
     union_area = boxes1_area + boxes2_area - inter_area
+    print(union_area)
     if not iou_loss:
         IOU = inter_area / union_area
     else:
