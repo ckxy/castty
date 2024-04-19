@@ -52,7 +52,7 @@ class CanvasLayoutReader(Reader):
             forcat=dict(
                 bbox=dict(
                     classes=self.classes,
-                    extra_meta=['difficult']
+                    extra_meta=[]
                 )
             ), 
             tag_mapping=dict(
@@ -107,3 +107,61 @@ class CanvasLayoutReader(Reader):
 
     def __repr__(self):
         return f'CanvasLayoutReader(root={self.root}, csv_path={self.csv_path}, {super(CanvasLayoutReader, self).__repr__()})'
+
+
+@READER.register_module()
+class CanvasReader(Reader):
+    def __init__(self, root, **kwargs):
+        super(CanvasLayoutReader, self).__init__(**kwargs)
+
+        assert os.path.exists(os.path.join(root, 'image_canvas'))
+        assert os.path.exists(os.path.join(root, 'saliencymaps_basnet'))
+        assert os.path.exists(os.path.join(root, 'saliencymaps_pfpn'))
+
+        self.root = root
+
+        self.image_paths = read_image_paths(os.path.join(root, 'image_canvas'))
+        self.sm_bas_paths = read_image_paths(os.path.join(root, 'saliencymaps_basnet'))
+        self.sm_pfpn_paths = read_image_paths(os.path.join(root, 'saliencymaps_pfpn'))
+
+        assert len(self.image_paths) > 0
+        assert len(self.image_paths) == len(self.sm_bas_paths)
+        assert len(self.image_paths) == len(self.sm_pfpn_paths)
+
+        self._info = dict(
+            forcat=dict(), 
+            tag_mapping=dict(
+                image=['image', 'saliency_map'],
+            )
+        )
+
+    def __getitem__(self, index):
+        image = self.read_image(self.image_paths[index])
+        saliency_map_basnet = self.read_image(self.sm_bas_paths[index])
+        saliency_map_pfpn = self.read_image(self.sm_pfpn_paths[index])
+
+        if self.use_pil:
+            saliency_map_basnet = saliency_map_basnet.convert('L')
+            saliency_map_pfpn = saliency_map_pfpn.convert('L')
+            saliency_map = Image.fromarray(np.maximum(np.array(saliency_map_basnet), np.array(saliency_map_pfpn)))
+            saliency_map = saliency_map.convert('RGB')
+        else:
+            saliency_map_basnet = cv2.cvtColor(saliency_map_basnet, cv2.COLOR_RGB2GRAY)
+            saliency_map_pfpn = cv2.cvtColor(saliency_map_pfpn, cv2.COLOR_RGB2GRAY)
+            saliency_map = np.maximum(saliency_map_basnet, saliency_map_pfpn)
+            saliency_map = cv2.cvtColor(saliency_map, cv2.COLOR_GRAY2RGB)
+
+        w, h = get_image_size(image)
+
+        return dict(
+            image=image,
+            image_meta=dict(ori_size=(w, h), path=self.image_paths[index]),
+            saliency_map=saliency_map,
+            saliency_map_meta=dict(ori_size=(w, h), path=self.sm_bas_paths[index]),
+        )
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __repr__(self):
+        return f'CanvasReader(root={self.root}, {super(CanvasReader, self).__repr__()})'

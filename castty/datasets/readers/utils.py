@@ -2,11 +2,6 @@ import os
 import cv2
 from PIL import Image, ExifTags
 
-# IMG_EXTENSIONS = [
-#     '.jpg', '.JPG', '.jpeg', '.JPEG',
-#     '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP',
-# ]
-
 IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp')
 
 
@@ -48,12 +43,4 @@ def read_image_pil(path):
 def read_image_cv2(path):
     img = cv2.imread(path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    # return Image.fromarray(img)
     return img
-
-
-# def read_image(path, use_pil=True):
-#     if use_pil:
-#         return read_image_pil(path)
-#     else:
-#         return read_image_cv2(path)

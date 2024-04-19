@@ -118,7 +118,7 @@ class VISImage(VIS):
             img = v['images']
         else:
             tmp = v['images']
-            tmp = [np.array(t).astype(np.float)[np.newaxis, ...] for t in tmp]
+            tmp = [np.array(t).astype(np.float32)[np.newaxis, ...] for t in tmp]
             tmp = np.concatenate(tmp, axis=0)
             img = tmp.transpose((0, 3, 1, 2)) / 255
 

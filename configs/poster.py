@@ -19,20 +19,23 @@ test_data = dict(
         num_threads=0,
         pin_memory=False,
         collator=[
-            dict(type='ListCollateFN', names=('image_meta', 'saliency_map_meta')),
+            # dict(type='ListCollateFN', names=('image_meta', 'remove_meta')),
+            dict(type='ListCollateFN', names=('image_meta',)),
+            dict(type='ListCollateFN', names=('image',)),
             dict(type='BboxCollateFN', names=('bbox',)),
             dict(type='ListCollateFN', names=('bbox_meta',)),
         ]
     ),
     dataset=dict(
-        reader=dict(type='CanvasLayoutReader', use_pil=True, root='../datasets/PKU_PosterLayout_Annotations/train', csv_path='../datasets/PKU_PosterLayout_Annotations/train_csv_9973.csv'),
+        # reader=dict(type='CanvasLayoutReader', use_pil=True, root='../datasets/PKU_PosterLayout_Annotations/train', csv_path='../datasets/PKU_PosterLayout_Annotations/train_csv_9973.csv'),
+        reader=dict(type='PSDParseReader', use_pil=True, root='../datasets/psddata/res'),
         internodes=[
             dict(type='DataSource'),
             # dict(type='ResizeAndPadding', resize=dict(type='Resize', size=(240, 350), keep_ratio=False)),
-            dict(type='Resize', size=(240, 350), keep_ratio=False),
-            dict(type='ToTensor'),
-            dict(type='CalcDSLabel'),
-            dict(type='DSMerge'),
+            # dict(type='Resize', size=(1024, 1024), keep_ratio=True, short=False),
+            # dict(type='ToTensor'),
+            # dict(type='CalcDSLabel'),
+            # dict(type='DSMerge'),
         ],
     ),
 )

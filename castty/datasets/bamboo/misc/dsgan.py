@@ -5,7 +5,10 @@ from ..builder import INTERNODE
 from torchvision.ops.boxes import box_area
 from ..base_internode import BaseInternode
 from ...utils.common import get_image_size
-from ....utils.bbox_tools import xyxy2xywh, xywh2xyxy, calc_iou2
+from ....utils.bbox_tools import xywh2xyxy, calc_iou2
+
+import os
+import json
 
 
 __all__ = ['CalcDSLabel']
@@ -132,6 +135,23 @@ class CalcDSLabel(BaseInternode):
 class DSMerge(BaseInternode):
     def forward(self, data_dict, **kwargs):
         data_dict['ds_image'] = torch.concat([data_dict['image'], data_dict['saliency_map'][:1, ...]])
+
+        # print(data_dict['image'])
+        # print(data_dict['bbox'])
+
+        # if len(data_dict['bbox']) == 0:
+        #     return data_dict
+
+        # path = data_dict['image_meta']['path'].split('/')
+        # path = path[path.index('res') + 1:]
+        # path = os.path.join('/Users/liaya/Documents/datasets/psddata/inpainted_poster', '__'.join(path))
+        # data_dict['image'].save(path)
+
+        # with open(os.path.join('/Users/liaya/Documents/datasets/psddata/jsons', os.path.splitext(os.path.basename(path))[0] + '.json'), 'w', encoding='utf-8') as f:
+        #     json.dump((path, data_dict['bbox'].tolist()), f, ensure_ascii=False)
+
+        # print(path)
+        # exit()
         return data_dict
 
     def __repr__(self):
