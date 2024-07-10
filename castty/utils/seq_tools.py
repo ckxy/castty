@@ -28,7 +28,8 @@ def draw_seq(img, text):
 
     # text = seq2str(seq, chars)
 
-    t_size = draw.textsize(text, font)
+    _, _, width, height = draw.textbbox((0, 0), text=text, font=font)
+    t_size = (width, height)
     draw.rectangle((0, 0, t_size[0], t_size[1]), fill=(0, 255, 255))
     draw.text((0, 0), text, fill=(0, 0, 0), font=font)
 
