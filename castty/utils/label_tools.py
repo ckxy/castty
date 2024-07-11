@@ -30,7 +30,9 @@ def draw_label(img, labels, classes):
     font_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'arial.ttf')
     font = ImageFont.truetype(font_path, int(l * 5e-2))
 
-    t_size = draw.multiline_textsize(text, font)
+    # t_size = draw.multiline_textsize(text, font)
+    _, _, width, height = draw.textbbox((0, 0), text=text, font=font)
+    t_size = (width, height)
     draw.rectangle((0, 0, t_size[0], t_size[1]), fill=(0, 255, 255))
     draw.multiline_text((0, 0), text, fill=(0, 0, 0), font=font)
 
